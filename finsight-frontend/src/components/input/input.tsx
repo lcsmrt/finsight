@@ -1,6 +1,6 @@
 import { forwardRef, InputHTMLAttributes, ReactNode } from "react";
 import { FieldWrapper, FieldWrapperProps } from "./fieldWrapper";
-import { cn } from "@/lib/utils";
+import { mergeClasses } from "@/lib/mergeClasses";
 
 type InputProps = Omit<FieldWrapperProps, "className" | "children"> &
   InputHTMLAttributes<HTMLInputElement> & {
@@ -37,7 +37,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             </span>
           )}
           <input
-            className={cn(
+            className={mergeClasses(
               "border-input ring-offset-background flex h-10 w-full rounded-md border bg-transparent px-3 py-2 text-sm shadow-sm transition-colors",
               "file:text-foreground file:border-0 file:bg-transparent file:text-sm file:font-medium",
               "placeholder:text-muted-foreground",

@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { mergeClasses } from "@/lib/mergeClasses";
 import { ReactNode } from "react";
 
 export type FieldWrapperProps = {
@@ -19,7 +19,7 @@ export const FieldWrapper = ({
   children,
 }: FieldWrapperProps) => {
   return (
-    <div className={cn("space-y-1", className)}>
+    <div className={mergeClasses("space-y-1", className)}>
       {label && (
         <label
           htmlFor={htmlFor}
