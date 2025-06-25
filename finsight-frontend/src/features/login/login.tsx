@@ -1,9 +1,11 @@
 import { useLogin } from "@/api/services/authService";
 import { PATHS } from "@/app/routing/paths";
-import { Button } from "@/components/button";
+import { Button } from "@/components/button/button";
 import { Input } from "@/components/input/input";
+import { storeItem } from "@/lib/storage";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, Loader2Icon } from "lucide-react";
+import { Eye, EyeClosed, Loader2Icon } from "lucide-react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -19,6 +21,8 @@ const loginSchema = z.object({
 type LoginSchema = z.infer<typeof loginSchema>;
 
 export const Login = () => {
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+
   const {
     register,
     formState: { errors },
@@ -35,9 +39,10 @@ export const Login = () => {
 
   const navigate = useNavigate();
 
-  const onSubmit = handleSubmit(async (data: LoginSchema) => {
+  const onSubmit = handleSubmit(async (credentials: LoginSchema) => {
     try {
-      await login(data);
+      const { data: accessToken } = await login(credentials);
+      storeItem("accessToken", accessToken);
       navigate(PATHS.home);
     } catch (error) {
       alert(error);
@@ -64,7 +69,21 @@ export const Login = () => {
           id="password"
           placeholder="Senha"
           className="bg-card/70"
-          iconRight={<Eye className="h-5 w-5" />}
+          iconRight={
+            <Button
+              className="h-8 w-8 rounded-full p-0"
+              variant="ghost"
+              onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+              type="button"
+            >
+              {isPasswordVisible ? (
+                <Eye className="h-5 w-5" />
+              ) : (
+                <EyeClosed className="h-5 w-5" />
+              )}
+            </Button>
+          }
+          type={isPasswordVisible ? "text" : "password"}
           error={errors.password?.message}
           {...register("password")}
         />

@@ -6,6 +6,12 @@ export const finsightApi = axios.create({
 
 finsightApi.interceptors.request.use(
   (config) => {
+    const accessToken = localStorage.getItem("accessToken");
+
+    if (accessToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
+    }
+
     return config;
   },
   (error) => {
