@@ -1,16 +1,16 @@
-import { useLogin } from "@/api/services/authService";
+import { useRegisterUser } from "@/api/services/authService";
 import { PATHS } from "@/app/routing/paths";
 import { Button } from "@/components/button/button";
 import { Input } from "@/components/input/input";
-import { storeItem } from "@/lib/storage";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeClosed, Loader2Icon } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import { z } from "zod";
+import z from "zod";
 
-const loginSchema = z.object({
+const registerUserSchema = z.object({
+  name: z.string().min(1, "Por favor, informe seu nome completo"),
   email: z
     .string()
     .min(1, "Por favor, informe seu e-mail")
@@ -18,9 +18,9 @@ const loginSchema = z.object({
   password: z.string().min(1, "Por favor, informe sua senha"),
 });
 
-type LoginSchema = z.infer<typeof loginSchema>;
+type RegisterUserSchema = z.infer<typeof registerUserSchema>;
 
-export const Login = () => {
+export const RegisterUser = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   const {
@@ -28,24 +28,25 @@ export const Login = () => {
     formState: { errors },
     handleSubmit,
   } = useForm({
-    resolver: zodResolver(loginSchema),
+    resolver: zodResolver(registerUserSchema),
     defaultValues: {
+      name: "",
       email: "",
       password: "",
     },
   });
 
-  const { mutateAsync: login, isPending: isLoggingIn } = useLogin();
+  const { mutateAsync: registerUuser, isPending: isRegisteringUser } =
+    useRegisterUser();
 
   const navigate = useNavigate();
 
-  const onSubmit = handleSubmit(async (credentials: LoginSchema) => {
+  const onSubmit = handleSubmit(async (credentials: RegisterUserSchema) => {
     try {
-      const { data: accessToken } = await login(credentials);
-      storeItem("accessToken", accessToken);
-      navigate(PATHS.home);
+      await registerUuser(credentials);
+      navigate(PATHS.login);
     } catch (error) {
-      alert(error);
+      console.error(error);
     }
   });
 
@@ -57,23 +58,34 @@ export const Login = () => {
       </header>
 
       <form
-        id="login-form"
+        id="register-user-form"
         className="bg-card flex flex-col items-center gap-5 rounded-lg p-5"
         onSubmit={onSubmit}
+        autoComplete="off"
       >
-        <h1 className="text-foreground text-2xl font-bold">Login</h1>
+        <h1 className="text-foreground text-2xl font-bold">Registre-se</h1>
 
         <div className="flex w-full flex-col gap-3 md:w-xl">
           <Input
-            id="email-login"
-            placeholder="E-mail"
+            id="name-register-user"
+            label="Nome"
+            placeholder="Nome completo"
+            className="bg-card/70"
+            error={errors.name?.message}
+            autoComplete="off"
+            {...register("name")}
+          />
+          <Input
+            id="email-reregister-user"
             label="E-mail"
+            placeholder="E-mail"
             className="bg-card/70"
             error={errors.email?.message}
+            autoComplete="off"
             {...register("email")}
           />
           <Input
-            id="password-login"
+            id="password-register-user"
             placeholder="Senha"
             label="Senha"
             className="bg-card/70"
@@ -93,26 +105,27 @@ export const Login = () => {
             }
             type={isPasswordVisible ? "text" : "password"}
             error={errors.password?.message}
+            autoComplete="new-password"
             {...register("password")}
           />
         </div>
 
         <div className="w-full md:w-xl">
-          <Button className="w-full" type="submit" disabled={isLoggingIn}>
-            <p className="text-sm font-semibold">Entrar</p>
-            {isLoggingIn && <Loader2Icon className="animate-spin" />}
+          <Button className="w-full" type="submit" disabled={isRegisteringUser}>
+            <p className="text-sm font-semibold">Registrar</p>
+            {isRegisteringUser && <Loader2Icon className="animate-spin" />}
           </Button>
         </div>
 
         <div className="flex flex-col items-center">
-          <p className="text-muted-foreground text-sm">Não possui uma conta?</p>
+          <p className="text-muted-foreground text-sm">Já possui uma conta?</p>
           <Button
             type="button"
             variant="link"
             className="h-fit p-0 font-bold"
-            onClick={() => navigate(PATHS.registerUser)}
+            onClick={() => navigate(PATHS.login)}
           >
-            Crie uma agora
+            Entrar
           </Button>
         </div>
       </form>

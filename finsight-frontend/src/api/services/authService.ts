@@ -16,3 +16,20 @@ export const useLogin = () => {
     mutationFn: login,
   });
 };
+
+type RegisterUserParams = {
+  name: string;
+  email: string;
+  password: string;
+};
+
+const registerUser = async (params: RegisterUserParams) => {
+  const response = await finsightApi.post("/users", params);
+  return response;
+};
+
+export const useRegisterUser = () => {
+  return useMutation({
+    mutationFn: registerUser,
+  });
+};
