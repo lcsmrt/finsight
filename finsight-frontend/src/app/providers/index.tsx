@@ -1,7 +1,8 @@
+import { tanStackQueryClient } from "@/api/clients/tanStackQuery";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactNode } from "react";
 import { BrowserRouter } from "react-router-dom";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { tanStackQueryClient } from "@/api/clients/tanStackQuery";
+import { UserProvider } from "./userProvider";
 
 type AppProviderProps = {
   children: ReactNode;
@@ -10,7 +11,9 @@ type AppProviderProps = {
 export const AppProvider = ({ children }: AppProviderProps) => {
   return (
     <QueryClientProvider client={tanStackQueryClient}>
-      <BrowserRouter>{children}</BrowserRouter>
+      <BrowserRouter>
+        <UserProvider>{children}</UserProvider>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 };

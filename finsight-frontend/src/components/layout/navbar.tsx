@@ -8,23 +8,30 @@ import {
 import { LogOut } from "lucide-react";
 import { clearStorage } from "@/lib/storage";
 import { useNavigate } from "react-router-dom";
+import { PATHS } from "@/app/routing/paths";
+import { useUser } from "@/app/providers/userProvider";
+import { getFirstAndLastInitials } from "lcs-utils";
 
 export const Navbar = () => {
   const navigate = useNavigate();
 
+  const { user } = useUser();
+
   const logout = () => {
     clearStorage();
-    navigate("/login", { replace: true });
+    navigate(PATHS.login, { replace: true });
   };
 
   return (
-    <nav className="border-border flex w-full items-center justify-between border-b p-4">
+    <nav className="border-border fixed flex w-full items-center justify-between border-b p-4">
       <h2 className="text-primary text-xl font-bold">FinSight</h2>
 
       <DropdownMenu>
         <DropdownMenuTrigger className="hover:cursor-pointer focus:outline-none">
           <Avatar>
-            <AvatarFallback>LS</AvatarFallback>
+            <AvatarFallback>
+              {getFirstAndLastInitials(user?.name ?? "")}
+            </AvatarFallback>
           </Avatar>
         </DropdownMenuTrigger>
 
@@ -34,7 +41,7 @@ export const Navbar = () => {
             onClick={logout}
           >
             LogOut
-            <LogOut />
+            <LogOut className="text-foreground" />
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

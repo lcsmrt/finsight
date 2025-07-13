@@ -41,11 +41,11 @@ export const Login = () => {
 
   const onSubmit = handleSubmit(async (credentials: LoginSchema) => {
     try {
-      const { data: accessToken } = await login(credentials);
-      storeItem("accessToken", accessToken);
+      const data = await login(credentials);
+      storeItem("accessToken", data.token);
       navigate(PATHS.home);
-    } catch (error) {
-      alert(error);
+    } catch (error: any) {
+      alert(error?.response?.data.message);
     }
   });
 
@@ -58,12 +58,12 @@ export const Login = () => {
 
       <form
         id="login-form"
-        className="bg-card flex flex-col items-center gap-5 rounded-lg p-5"
+        className="bg-card flex w-xl flex-col items-center gap-5 rounded-lg p-5"
         onSubmit={onSubmit}
       >
         <h1 className="text-foreground text-2xl font-bold">Login</h1>
 
-        <div className="flex w-full flex-col gap-3 md:w-xl">
+        <div className="flex w-full flex-col gap-3">
           <Input
             id="email-login"
             placeholder="E-mail"
@@ -97,7 +97,7 @@ export const Login = () => {
           />
         </div>
 
-        <div className="w-full md:w-xl">
+        <div className="w-full">
           <Button className="w-full" type="submit" disabled={isLoggingIn}>
             <p className="text-sm font-semibold">Entrar</p>
             {isLoggingIn && <Loader2Icon className="animate-spin" />}

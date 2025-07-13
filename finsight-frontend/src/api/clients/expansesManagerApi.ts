@@ -1,3 +1,4 @@
+import { getItemFromStorage, STORAGE_KEYS } from "@/lib/storage";
 import axios from "axios";
 
 export const finsightApi = axios.create({
@@ -6,7 +7,7 @@ export const finsightApi = axios.create({
 
 finsightApi.interceptors.request.use(
   (config) => {
-    const accessToken = localStorage.getItem("accessToken");
+    const accessToken = getItemFromStorage(STORAGE_KEYS.accessToken);
 
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;

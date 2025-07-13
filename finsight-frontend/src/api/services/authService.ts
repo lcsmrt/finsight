@@ -1,14 +1,15 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { finsightApi } from "../clients/expansesManagerApi";
 
+// LOGIN
 type LoginParams = {
   email: string;
   password: string;
 };
 
 const login = async (params: LoginParams) => {
-  const response = await finsightApi.post("/auth/login", params);
-  return response;
+  const { data } = await finsightApi.post("/auth/login", params);
+  return data;
 };
 
 export const useLogin = () => {
@@ -17,6 +18,7 @@ export const useLogin = () => {
   });
 };
 
+// CADASTRO DE USUÁRIO
 type RegisterUserParams = {
   name: string;
   email: string;
@@ -31,5 +33,24 @@ const registerUser = async (params: RegisterUserParams) => {
 export const useRegisterUser = () => {
   return useMutation({
     mutationFn: registerUser,
+  });
+};
+
+// BUSCA PERFIL DO USUÁRIO
+const getUserProfile = async () => {
+  const { data } = await finsightApi.get("/auth/profile");
+  return data;
+};
+
+export const useGetUserProfile = () => {
+  return useQuery({
+    queryFn: getUserProfile,
+    queryKey: ["profile"],
+  });
+};
+
+export const useControlledGetUserProfile = () => {
+  return useMutation({
+    mutationFn: getUserProfile,
   });
 };
