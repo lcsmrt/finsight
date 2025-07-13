@@ -59,13 +59,13 @@ export const RegisterUser = () => {
 
       <form
         id="register-user-form"
-        className="bg-card flex flex-col items-center gap-5 rounded-lg p-5"
+        className="bg-card flex w-xl flex-col items-center gap-5 rounded-lg p-5"
         onSubmit={onSubmit}
         autoComplete="off"
       >
         <h1 className="text-foreground text-2xl font-bold">Registre-se</h1>
 
-        <div className="flex w-full flex-col gap-3 md:w-xl">
+        <div className="flex w-full flex-col gap-3">
           <Input
             id="name-register-user"
             label="Nome"
@@ -110,7 +110,15 @@ export const RegisterUser = () => {
           />
         </div>
 
-        <div className="w-full md:w-xl">
+        <div className="w-full">
+          <p className="text-muted-foreground text-center text-sm">
+            Ao clicar em entrar, você concorda com os{" "}
+            <strong>Termos de Serviço</strong> da Finsight e reconhece estar
+            sujeito à nossa <strong>Política de Privacidade</strong>.{" "}
+          </p>
+        </div>
+
+        <div className="w-full">
           <Button className="w-full" type="submit" disabled={isRegisteringUser}>
             <p className="text-sm font-semibold">Registrar</p>
             {isRegisteringUser && <Loader2Icon className="animate-spin" />}
