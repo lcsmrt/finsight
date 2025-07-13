@@ -5,6 +5,8 @@ import { Route, Routes } from "react-router-dom";
 import { PATHS } from "./paths";
 import { AuthLayout } from "@/components/layout/authLayout";
 import { RegisterUser } from "@/features/registerUser/registerUser";
+import { PrivateRoute } from "./privateRoute";
+import { NotFound } from "@/features/notFound/notFound";
 
 export const AppRouter = () => {
   return (
@@ -14,9 +16,13 @@ export const AppRouter = () => {
         <Route path={PATHS.registerUser} element={<RegisterUser />} />
       </Route>
 
-      <Route element={<MainLayout />}>
-        <Route path={PATHS.home} element={<Home />} />
+      <Route element={<PrivateRoute />}>
+        <Route element={<MainLayout />}>
+          <Route path={PATHS.home} element={<Home />} />
+        </Route>
       </Route>
+
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 };
