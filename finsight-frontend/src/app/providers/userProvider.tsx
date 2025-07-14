@@ -1,9 +1,16 @@
-import { User } from "@/api/types/authTypes";
-import { createContext, ReactNode, useContext, useState } from "react";
+import { User } from "@/api/types/user";
+import {
+  createContext,
+  Dispatch,
+  ReactNode,
+  SetStateAction,
+  useContext,
+  useState,
+} from "react";
 
 type UserContextParams = {
   user: User | null;
-  setUser: (user: User) => void;
+  setUser: Dispatch<SetStateAction<User | null>>;
 };
 
 const UserContext = createContext<UserContextParams>({
