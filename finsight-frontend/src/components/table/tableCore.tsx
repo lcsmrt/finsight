@@ -14,7 +14,7 @@ import {
 } from "./basicTableParts";
 import { TableEmpty } from "./tableEmpty";
 
-export const TableContent = () => {
+export const TableCore = () => {
   const { columns, data } = useTable();
 
   const table = useReactTable({
