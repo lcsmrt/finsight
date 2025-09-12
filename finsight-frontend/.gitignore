@@ -23,3 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 public/assets/happy-cat-1h.mp3
+
+*storybook.log
+storybook-static
