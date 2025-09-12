@@ -1,7 +1,7 @@
 import { useLogin } from "@/api/services/authService";
 import { PATHS } from "@/app/routing/paths";
 import { Button } from "@/components/button/button";
-import { Input } from "@/components/input/input";
+import { Input } from "@/components/form/input";
 import { storeItem } from "@/lib/storage";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeClosed, Loader2Icon } from "lucide-react";
@@ -11,11 +11,8 @@ import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 
 const loginSchema = z.object({
-  email: z
-    .string()
-    .min(1, "Por favor, informe seu e-mail")
-    .email("E-mail inválido"),
-  password: z.string().min(1, "Por favor, informe sua senha"),
+  email: z.string().min(1, "Please enter your email").email("Invalid email"),
+  password: z.string().min(1, "Please enter your password"),
 });
 
 type LoginSchema = z.infer<typeof loginSchema>;
@@ -66,16 +63,16 @@ export const Login = () => {
         <div className="flex w-full flex-col gap-3">
           <Input
             id="email-login"
-            placeholder="E-mail"
-            label="E-mail"
+            placeholder="Email"
+            label="Email"
             className="bg-card/70"
             error={errors.email?.message}
             {...register("email")}
           />
           <Input
             id="password-login"
-            placeholder="Senha"
-            label="Senha"
+            placeholder="Password"
+            label="Password"
             className="bg-card/70"
             iconRight={
               <Button
@@ -99,20 +96,22 @@ export const Login = () => {
 
         <div className="w-full">
           <Button className="w-full" type="submit" disabled={isLoggingIn}>
-            <p className="text-sm font-semibold">Entrar</p>
+            <p className="text-sm font-semibold">Sign in</p>
             {isLoggingIn && <Loader2Icon className="animate-spin" />}
           </Button>
         </div>
 
         <div className="flex flex-col items-center">
-          <p className="text-muted-foreground text-sm">Não possui uma conta?</p>
+          <p className="text-muted-foreground text-sm">
+            Don’t have an account?
+          </p>
           <Button
             type="button"
             variant="link"
             className="h-fit p-0 font-bold"
             onClick={() => navigate(PATHS.registerUser)}
           >
-            Crie uma agora
+            Create one now
           </Button>
         </div>
       </form>

@@ -10,15 +10,15 @@ export const NotFound = () => {
       <div className="flex flex-col items-center">
         <h1 className="text-primary text-4xl font-bold">404</h1>
         <h1 className="text-center text-lg">
-          A página que você tentou acessar não existe. <br />
-          Mas em compensação, você pode apreciar o Bingus.
+          The page you tried to access does not exist. <br />
+          But on the bright side, you can enjoy Bingus.
         </h1>
         <Button
           variant="link"
           className="text-base"
           onClick={() => navigate(PATHS.home)}
         >
-          (Ou voltar para a Home...)
+          (Or go back to Home...)
         </Button>
       </div>
       <img src="/assets/bingus.webp" alt="bingus my beloved" className="w-60" />

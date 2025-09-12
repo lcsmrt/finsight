@@ -1,7 +1,7 @@
 import { useRegisterUser } from "@/api/services/authService";
 import { PATHS } from "@/app/routing/paths";
 import { Button } from "@/components/button/button";
-import { Input } from "@/components/input/input";
+import { Input } from "@/components/form/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeClosed, Loader2Icon } from "lucide-react";
 import { useState } from "react";
@@ -10,12 +10,9 @@ import { useNavigate } from "react-router-dom";
 import z from "zod";
 
 const registerUserSchema = z.object({
-  name: z.string().min(1, "Por favor, informe seu nome completo"),
-  email: z
-    .string()
-    .min(1, "Por favor, informe seu e-mail")
-    .email("E-mail inválido"),
-  password: z.string().min(1, "Por favor, informe sua senha"),
+  name: z.string().min(1, "Please enter your full name"),
+  email: z.string().min(1, "Please enter your email").email("Invalid email"),
+  password: z.string().min(1, "Please enter your password"),
 });
 
 type RegisterUserSchema = z.infer<typeof registerUserSchema>;
@@ -36,14 +33,14 @@ export const RegisterUser = () => {
     },
   });
 
-  const { mutateAsync: registerUuser, isPending: isRegisteringUser } =
+  const { mutateAsync: registerUser, isPending: isRegisteringUser } =
     useRegisterUser();
 
   const navigate = useNavigate();
 
   const onSubmit = handleSubmit(async (credentials: RegisterUserSchema) => {
     try {
-      await registerUuser(credentials);
+      await registerUser(credentials);
       navigate(PATHS.login);
     } catch (error) {
       console.error(error);
@@ -63,22 +60,22 @@ export const RegisterUser = () => {
         onSubmit={onSubmit}
         autoComplete="off"
       >
-        <h1 className="text-foreground text-2xl font-bold">Registre-se</h1>
+        <h1 className="text-foreground text-2xl font-bold">Register</h1>
 
         <div className="flex w-full flex-col gap-3">
           <Input
             id="name-register-user"
-            label="Nome"
-            placeholder="Nome completo"
+            label="Name"
+            placeholder="Full name"
             className="bg-card/70"
             error={errors.name?.message}
             autoComplete="off"
             {...register("name")}
           />
           <Input
-            id="email-reregister-user"
-            label="E-mail"
-            placeholder="E-mail"
+            id="email-register-user"
+            label="Email"
+            placeholder="Email"
             className="bg-card/70"
             error={errors.email?.message}
             autoComplete="off"
@@ -86,8 +83,8 @@ export const RegisterUser = () => {
           />
           <Input
             id="password-register-user"
-            placeholder="Senha"
-            label="Senha"
+            placeholder="Password"
+            label="Password"
             className="bg-card/70"
             iconRight={
               <Button
@@ -112,28 +109,30 @@ export const RegisterUser = () => {
 
         <div className="w-full">
           <p className="text-muted-foreground text-center text-sm">
-            Ao clicar em entrar, você concorda com os{" "}
-            <strong>Termos de Serviço</strong> da Finsight e reconhece estar
-            sujeito à nossa <strong>Política de Privacidade</strong>.{" "}
+            By clicking Sign up, you agree to FinSight’s{" "}
+            <strong>Terms of Service</strong> and acknowledge that you are
+            subject to our <strong>Privacy Policy</strong>.
           </p>
         </div>
 
         <div className="w-full">
           <Button className="w-full" type="submit" disabled={isRegisteringUser}>
-            <p className="text-sm font-semibold">Registrar</p>
+            <p className="text-sm font-semibold">Sign up</p>
             {isRegisteringUser && <Loader2Icon className="animate-spin" />}
           </Button>
         </div>
 
         <div className="flex flex-col items-center">
-          <p className="text-muted-foreground text-sm">Já possui uma conta?</p>
+          <p className="text-muted-foreground text-sm">
+            Already have an account?
+          </p>
           <Button
             type="button"
             variant="link"
             className="h-fit p-0 font-bold"
             onClick={() => navigate(PATHS.login)}
           >
-            Entrar
+            Sign in
           </Button>
         </div>
       </form>

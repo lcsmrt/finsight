@@ -1,13 +1,16 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, UseQueryOptions } from "@tanstack/react-query";
 import { finsightApi } from "../clients/expansesManagerApi";
+import { User } from "../types/user";
 
 // LOGIN
-type LoginParams = {
+type LoginReqParams = {
   email: string;
   password: string;
 };
 
-const login = async (params: LoginParams) => {
+type LoginRes = { token: string };
+
+const login = async (params: LoginReqParams): Promise<LoginRes> => {
   const { data } = await finsightApi.post("/auth/login", params);
   return data;
 };
@@ -18,39 +21,36 @@ export const useLogin = () => {
   });
 };
 
+// BUSCA PERFIL DO USUÁRIO
+const getUserProfile = async (): Promise<User> => {
+  const { data } = await finsightApi.get("/auth/profile");
+  return data;
+};
+
+export const useGetUserProfile = (
+  options?: Omit<UseQueryOptions<User>, "queryKey">,
+) => {
+  return useQuery({
+    queryFn: getUserProfile,
+    queryKey: ["profile"],
+    ...options,
+  });
+};
+
 // CADASTRO DE USUÁRIO
-type RegisterUserParams = {
+type RegisterUserReqParams = {
   name: string;
   email: string;
   password: string;
 };
 
-const registerUser = async (params: RegisterUserParams) => {
-  const response = await finsightApi.post("/users", params);
-  return response;
+const registerUser = async (params: RegisterUserReqParams): Promise<User> => {
+  const { data } = await finsightApi.post("/users", params);
+  return data;
 };
 
 export const useRegisterUser = () => {
   return useMutation({
     mutationFn: registerUser,
-  });
-};
-
-// BUSCA PERFIL DO USUÁRIO
-const getUserProfile = async () => {
-  const { data } = await finsightApi.get("/auth/profile");
-  return data;
-};
-
-export const useGetUserProfile = () => {
-  return useQuery({
-    queryFn: getUserProfile,
-    queryKey: ["profile"],
-  });
-};
-
-export const useControlledGetUserProfile = () => {
-  return useMutation({
-    mutationFn: getUserProfile,
   });
 };

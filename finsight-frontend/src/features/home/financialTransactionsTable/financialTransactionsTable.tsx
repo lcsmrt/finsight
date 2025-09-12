@@ -1,10 +1,10 @@
 import { Table } from "@/components/table";
-import { TableCore } from "@/components/table/tableCore";
+import { TableContent } from "@/components/table/tableContent";
 
-export const TransactionsTable = () => {
+export const FinancialTransactionsTable = () => {
   return (
-    <Table<any, any> columns={[]} data={[]}>
-      <TableCore />
+    <Table tableId="financialTransactionsTable" data={[]} columns={[]}>
+      <TableContent />
     </Table>
   );
 };

@@ -4,6 +4,7 @@ import { mergeClasses } from "@/lib/mergeClasses";
 
 type InputProps = Omit<FieldWrapperProps, "className" | "children"> &
   InputHTMLAttributes<HTMLInputElement> & {
+    wrapperClassName?: string;
     iconLeft?: ReactNode;
     iconRight?: ReactNode;
   };
@@ -12,7 +13,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
   (
     {
       className,
-      type,
+      wrapperClassName,
       label,
       error,
       description,
@@ -29,6 +30,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         label={label}
         error={error}
         description={description}
+        className={wrapperClassName}
       >
         <div className="relative">
           {iconLeft && (
@@ -45,9 +47,10 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
               "disabled:cursor-not-allowed disabled:opacity-50",
               iconLeft && "pl-11",
               iconRight && "pr-11",
+              error && "border-destructive",
               className,
             )}
-            type={type}
+            type="text"
             ref={ref}
             {...props}
           />

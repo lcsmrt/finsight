@@ -31,6 +31,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 export const useUser = () => {
   const context = useContext(UserContext);
   if (!context)
-    throw new Error("O hook useUser deve ser usado dentro de um UserProvider");
+    throw new Error("The useUser hook must be used within a UserProvider");
   return context;
 };
