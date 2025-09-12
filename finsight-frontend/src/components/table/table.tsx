@@ -1,34 +1,56 @@
+import {
+  ColumnDef,
+  getCoreRowModel,
+  Table as TableType,
+  useReactTable,
+} from "@tanstack/react-table";
 import { createContext, ReactNode, useContext } from "react";
-import { ColumnDef } from "@tanstack/react-table";
 
-type TableContextValue<TData, TValue> = {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
-};
-
-const TableContext = createContext<TableContextValue<any, any> | null>(null);
-
-type TableProps<TData, TValue> = {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
+type TableProps<T> = {
+  data: T[];
+  columns: ColumnDef<T, any>[];
+  tableId: string;
   children: ReactNode;
 };
 
-export const Table = <TData, TValue>({
-  columns,
+interface TableContextType {
+  table: TableType<any>;
+}
+
+const TableContext = createContext<TableContextType | null>(null);
+
+export const Table = <T,>({
   data,
+  columns,
+  tableId,
   children,
-}: TableProps<TData, TValue>) => {
+}: TableProps<T>) => {
+  const table = useReactTable({
+    data,
+    columns,
+    columnResizeMode: "onChange",
+    columnResizeDirection: "ltr",
+    getCoreRowModel: getCoreRowModel(),
+    manualSorting: true,
+    debugTable: true,
+    debugHeaders: true,
+    debugColumns: true,
+  });
+
   return (
-    <TableContext.Provider value={{ columns, data }}>
-      {children}
+    <TableContext.Provider value={{ table }}>
+      <div
+        id={tableId}
+        className="border-border mx-auto w-full max-w-full overflow-x-auto border-y"
+      >
+        {children}
+      </div>
     </TableContext.Provider>
   );
 };
 
 export const useTable = () => {
   const context = useContext(TableContext);
-  if (!context)
-    throw new Error("O hook useTable deve ser usado dentro de um Table");
+  if (!context) throw new Error("useTable deve ser usado dentro de um Table");
   return context;
 };
