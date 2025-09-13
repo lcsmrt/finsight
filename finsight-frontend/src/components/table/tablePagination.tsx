@@ -48,7 +48,7 @@ export const TablePagination = ({
   return (
     <div className="bg-card sticky bottom-0 left-0 flex min-h-12 w-full items-center border-t px-3">
       {onPageSizeChange && (
-        <div className="flex w-full items-center gap-2">
+        <div className="flex w-full items-center gap-2 text-sm">
           Linhas por página:
           <Select
             value={String(size)}
@@ -72,7 +72,7 @@ export const TablePagination = ({
         </div>
       )}
 
-      <div className="flex w-full items-center justify-end gap-4">
+      <div className="flex w-full min-w-fit items-center justify-end gap-4">
         <span className="text-muted-foreground text-sm">
           {start} – {end} de {totalElements}
         </span>

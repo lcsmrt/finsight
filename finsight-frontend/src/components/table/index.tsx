@@ -1,6 +1,5 @@
 import { Table } from "./table";
-import { TableHeader } from "./tableHeader";
-import { TableBody } from "./tableBody";
+import { TableContent } from "./tableContent";
 import { TablePagination } from "./tablePagination";
 
-export { Table, TableHeader, TableBody, TablePagination };
+export { Table, TableContent, TablePagination };
