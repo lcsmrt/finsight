@@ -16,4 +16,4 @@ export type FinancialTransactionCategory = {
   spendingLimit?: number;
 };
 
-export type FinancialTransactionType = "ENTRADA" | "SAIDA";
+export type FinancialTransactionType = "CREDIT" | "DEBIT";
