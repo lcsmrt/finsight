@@ -4,18 +4,18 @@ export const STORAGE_KEYS = {
 } as const;
 
 /**
- * Armazena um valor no Local Storage.
- * @param key Chave do valor armazenado.
- * @param value Valor armazenado.
+ * Stores a value in Local Storage.
+ * @param key Storage key.
+ * @param value Value to be stored.
  */
 export function storeItem<T>(key: keyof typeof STORAGE_KEYS, value: T): void {
   localStorage.setItem(STORAGE_KEYS[key], JSON.stringify(value));
 }
 
 /**
- * Busca um valor do Local Storage.
- * @param key Chave do valor a buscar.
- * @returns Valor armazenado.
+ * Retrieves a value from Local Storage.
+ * @param key Storage key.
+ * @returns Parsed value or null if not found.
  */
 export function getItemFromStorage<T>(
   key: keyof typeof STORAGE_KEYS,
@@ -25,15 +25,15 @@ export function getItemFromStorage<T>(
 }
 
 /**
- * Remove um valor do Local Storage.
- * @param key Chave do valor a remover.
+ * Removes a value from Local Storage.
+ * @param key Storage key.
  */
 export function removeItemFromStorage(key: keyof typeof STORAGE_KEYS): void {
   localStorage.removeItem(STORAGE_KEYS[key]);
 }
 
 /**
- * Limpa tudo do Local Storage.
+ * Clears all Local Storage entries.
  */
 export function clearStorage(): void {
   localStorage.clear();

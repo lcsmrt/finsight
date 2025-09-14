@@ -2,8 +2,10 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 /**
- * Combina classes CSS condicionalmente e resolve conflitos do Tailwind.
- * Usa `clsx` para lógica condicional e `twMerge` para unificar classes.
+ * Conditionally combines CSS classes and resolves Tailwind conflicts.
+ * Uses `clsx` for conditional logic and `twMerge` for merging.
+ * @param classes Class values.
+ * @returns Combined class string.
  */
 export function mergeClasses(...classes: ClassValue[]): string {
   const combined = clsx(...classes);
