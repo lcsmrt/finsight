@@ -9,13 +9,13 @@ import { LogOut } from "lucide-react";
 import { clearStorage } from "@/lib/storage";
 import { useNavigate } from "react-router-dom";
 import { PATHS } from "@/app/routing/paths";
-import { useUser } from "@/app/providers/userProvider";
-import { getFirstAndLastInitials } from "lcs-utils";
+import { useAuth } from "@/app/providers/authProvider";
+import { getFirstAndLastInitials } from "@/utils/formatters";
 
 export const Navbar = () => {
   const navigate = useNavigate();
 
-  const { user } = useUser();
+  const { user } = useAuth();
 
   const logout = () => {
     clearStorage();

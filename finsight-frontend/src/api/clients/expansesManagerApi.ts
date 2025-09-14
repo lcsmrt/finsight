@@ -1,13 +1,19 @@
 import { getItemFromStorage, STORAGE_KEYS } from "@/lib/storage";
 import axios from "axios";
 
+let getAccessToken = () => getItemFromStorage(STORAGE_KEYS.accessToken);
+
+export const setAccessTokenAccessor = (accessor: () => string | null) => {
+  getAccessToken = accessor;
+};
+
 export const finsightApi = axios.create({
   baseURL: import.meta.env.VITE_FINSIGHT_API_URL,
 });
 
 finsightApi.interceptors.request.use(
   (config) => {
-    const accessToken = getItemFromStorage(STORAGE_KEYS.accessToken);
+    const accessToken = getAccessToken();
 
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
