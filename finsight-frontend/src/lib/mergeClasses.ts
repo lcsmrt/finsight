@@ -7,7 +7,7 @@ import { twMerge } from "tailwind-merge";
  * @param classes Class values.
  * @returns Combined class string.
  */
-export function mergeClasses(...classes: ClassValue[]): string {
+export function cn(...classes: ClassValue[]): string {
   const combined = clsx(...classes);
   return twMerge(combined);
 }

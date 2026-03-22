@@ -1,8 +1,7 @@
 import { useQuery, UseQueryOptions } from "@tanstack/react-query";
-import { finsightApi } from "../clients/expansesManagerApi";
-import { FinancialTransaction } from "../types/financialTransaction";
+import { finsightApi } from "../clients/finsightApi";
+import { FinancialTransaction } from "../dtos/financialTransaction";
 
-// GET FINANCIAL TRANSACTIONS
 /**
  * Fetches all financial transactions.
  * @returns List of financial transactions.

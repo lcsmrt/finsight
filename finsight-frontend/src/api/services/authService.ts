@@ -1,6 +1,6 @@
 import { useMutation, useQuery, UseQueryOptions } from "@tanstack/react-query";
-import { finsightApi } from "../clients/expansesManagerApi";
-import { User } from "../types/user";
+import { finsightApi } from "../clients/finsightApi";
+import { User } from "../dtos/user";
 
 // LOGIN
 type LoginReqParams = {
