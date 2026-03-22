@@ -1,4 +1,4 @@
-import { FinancialTransactionsTable } from "./components/TransactionsTable";
+import { FinancialTransactionsTable } from "./components/FinancialTransactionsTable";
 
 export const Home = () => {
   return (

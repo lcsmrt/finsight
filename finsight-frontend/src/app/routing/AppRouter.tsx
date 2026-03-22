@@ -5,7 +5,7 @@ import { Route, Routes } from "react-router-dom";
 import { PATHS } from "./paths";
 import { AuthLayout } from "@/components/layout/AuthLayout";
 import { RegisterUser } from "@/features/registerUser/RegisterUserPage";
-import { PrivateRoute } from "./privateRoute";
+import { PrivateRoute } from "./PrivateRoute";
 import { NotFound } from "@/features/notFound/NotFoundPage";
 
 export const AppRouter = () => {
