@@ -1,0 +1,177 @@
+import { FinancialTransaction } from "@/api/dtos/financialTransaction";
+import {
+  useDeleteFinancialTransaction,
+  useGetFinancialTransactions,
+} from "@/api/services/useFinancialTransactionService";
+import { Badge } from "@/components/badge/Badge";
+import { Button } from "@/components/button/Button";
+import { useConfirm } from "@/components/dialog/useConfirmDialog";
+import { SectionHeader } from "@/components/sectionHeader/SectionHeader";
+import { Table } from "@/components/table";
+import { TableContent } from "@/components/table/TableContent";
+import { cn } from "@/lib/mergeClasses";
+import { formatCurrency, formatDate } from "@/utils/formatters";
+import { useQueryClient } from "@tanstack/react-query";
+import { ColumnDef } from "@tanstack/react-table";
+import { PencilIcon, PlusIcon, TagIcon, Trash2Icon } from "lucide-react";
+import { useState } from "react";
+import { CategoriesManageDialog } from "./CategoriesManageDialog";
+import { TransactionFormDrawer } from "./TransactionFormDrawer";
+
+const displayColumns: ColumnDef<FinancialTransaction>[] = [
+  {
+    id: "description",
+    accessorKey: "description",
+    header: "Descrição",
+    cell: ({ row }) => row.original.description,
+  },
+  {
+    id: "category",
+    accessorKey: "category",
+    header: "Categoria",
+    cell: ({ row }) => {
+      const category = row.original.category;
+      if (category) {
+        return <Badge variant="outline">{category.description}</Badge>;
+      }
+      return null;
+    },
+  },
+  {
+    id: "amount",
+    accessorKey: "amount",
+    header: "Valor",
+    cell: ({ row }) => {
+      const formattedAmount = formatCurrency(row.original.amount, "BRL");
+      const type = row.original.type;
+      return (
+        <div
+          className={cn(
+            type === "DEBIT" && "text-destructive",
+            type === "CREDIT" && "text-success",
+          )}
+        >{`${type === "DEBIT" ? "- " : ""}${formattedAmount}`}</div>
+      );
+    },
+  },
+  {
+    id: "startDate",
+    accessorKey: "startDate",
+    header: "Data",
+    cell: ({ row }) => formatDate(row.original.startDate, "dd/MM/yyyy"),
+  },
+];
+
+export const TransactionsTable = () => {
+  const { data: financialTransactionsData } = useGetFinancialTransactions();
+  const queryClient = useQueryClient();
+  const confirm = useConfirm();
+
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<
+    FinancialTransaction | undefined
+  >();
+  const [isCategoriesDialogOpen, setIsCategoriesDialogOpen] = useState(false);
+
+  const deleteMutation = useDeleteFinancialTransaction({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["financialTransactions"] });
+    },
+  });
+
+  const handleEdit = (transaction: FinancialTransaction) => {
+    setEditingTransaction(transaction);
+    setIsDrawerOpen(true);
+  };
+
+  const handleDelete = async (transaction: FinancialTransaction) => {
+    const confirmed = await confirm({
+      title: "Excluir transação",
+      description:
+        "Tem certeza que deseja excluir esta transação? Esta ação não pode ser desfeita.",
+      confirmLabel: "Excluir",
+      cancelLabel: "Cancelar",
+      variant: "destructive",
+    });
+    if (confirmed) {
+      deleteMutation.mutate(transaction.id);
+    }
+  };
+
+  const handleOpenCreate = () => {
+    setEditingTransaction(undefined);
+    setIsDrawerOpen(true);
+  };
+
+  const columns: ColumnDef<FinancialTransaction>[] = [
+    ...displayColumns,
+    {
+      id: "actions",
+      header: "",
+      cell: ({ row }) => (
+        <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-focus-within/row:opacity-100 group-hover/row:opacity-100">
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            className="text-muted-foreground hover:bg-accent hover:text-foreground rounded p-1"
+            onClick={() => handleEdit(row.original)}
+          >
+            <PencilIcon className="h-4 w-4" />
+          </Button>
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            className="text-muted-foreground hover:bg-accent hover:text-destructive rounded p-1"
+            onClick={() => handleDelete(row.original)}
+          >
+            <Trash2Icon className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <section className="flex flex-col gap-4 py-4">
+      <SectionHeader
+        title="Transações"
+        subtitle={`${financialTransactionsData?.length ?? 0} transações`}
+      >
+        <div className="flex gap-4">
+          <Button
+            variant="outline"
+            onClick={() => setIsCategoriesDialogOpen(true)}
+          >
+            <TagIcon className="h-4 w-4" />
+            Gerenciar categorias
+          </Button>
+          <Button onClick={handleOpenCreate}>
+            <PlusIcon className="h-4 w-4" />
+            Nova transação
+          </Button>
+        </div>
+      </SectionHeader>
+
+      <Table
+        tableId="financialTransactionsTable"
+        data={financialTransactionsData || []}
+        columns={columns}
+      >
+        <TableContent />
+      </Table>
+
+      <TransactionFormDrawer
+        open={isDrawerOpen}
+        onOpenChange={setIsDrawerOpen}
+        transaction={editingTransaction}
+      />
+
+      <CategoriesManageDialog
+        open={isCategoriesDialogOpen}
+        onOpenChange={setIsCategoriesDialogOpen}
+      />
+    </section>
+  );
+};

@@ -1,9 +1,13 @@
-import { useLogin } from "@/api/services/authService";
+import { useLogin } from "@/api/services/useAuthService";
 import { PATHS } from "@/app/routing/paths";
 import { Button } from "@/components/button/Button";
 import { Field, FieldError, FieldLabel } from "@/components/input/base/Field";
 import { Input } from "@/components/input/base/Input";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/input/base/InputGroup";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/input/base/InputGroup";
 import { storeItem } from "@/lib/storage";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeClosed, Loader2Icon } from "lucide-react";
@@ -39,20 +43,16 @@ export const Login = () => {
   const navigate = useNavigate();
 
   const onSubmit = handleSubmit(async (credentials: LoginSchema) => {
-    try {
-      const data = await login(credentials);
-      storeItem("accessToken", data.token);
+    await login(credentials).then((res) => {
+      storeItem("accessToken", res.token);
       navigate(PATHS.home);
-    } catch (error: any) {
-      alert(error?.response?.data.message);
-    }
+    });
   });
 
   return (
     <>
       <header className="flex flex-1 items-end gap-2">
-        <Eye className="text-primary h-10 w-10" />
-        <h1 className="text-primary text-3xl font-bold">FinSight</h1>
+        <img src={"/finsigh-icon.png"} alt="FinSight logo" className="h-12" />
       </header>
 
       <form
@@ -97,7 +97,9 @@ export const Login = () => {
                 </Button>
               </InputGroupAddon>
             </InputGroup>
-            {errors.password && <FieldError>{errors.password.message}</FieldError>}
+            {errors.password && (
+              <FieldError>{errors.password.message}</FieldError>
+            )}
           </Field>
         </div>
 

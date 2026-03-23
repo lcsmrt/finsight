@@ -9,7 +9,7 @@ import {
   useComboboxAnchor,
 } from "@/components/input/base/Combobox";
 import { cn } from "@/lib/mergeClasses";
-import { XIcon } from "lucide-react";
+import { PlusIcon, XIcon } from "lucide-react";
 import * as React from "react";
 
 type WithId = { id: number | string };
@@ -33,6 +33,7 @@ export interface StandardCombobox<T extends WithId> {
   disabled?: boolean;
   className?: string;
   clearable?: boolean;
+  onCreateOption?: (search: string) => void;
 }
 
 export function StandardCombobox<T extends WithId>({
@@ -50,6 +51,7 @@ export function StandardCombobox<T extends WithId>({
   disabled,
   className,
   clearable,
+  onCreateOption,
 }: StandardCombobox<T>) {
   const anchor = useComboboxAnchor();
   const [internalSearch, setInternalSearch] = React.useState("");
@@ -127,7 +129,24 @@ export function StandardCombobox<T extends WithId>({
           showTrigger={false}
           disabled={disabled}
         />
-        <ComboboxEmpty>{emptyMessage}</ComboboxEmpty>
+        {displayedItems.length === 0 && onCreateOption && searchTerm.trim() ? (
+          <div className="p-1">
+            <button
+              type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                onCreateOption(searchTerm);
+                if (!isSearchControlled) setInternalSearch("");
+              }}
+              className="flex w-full cursor-pointer items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-primary hover:bg-accent"
+            >
+              <PlusIcon className="h-3.5 w-3.5 shrink-0" />
+              Criar &ldquo;{searchTerm}&rdquo;
+            </button>
+          </div>
+        ) : (
+          <ComboboxEmpty>{emptyMessage}</ComboboxEmpty>
+        )}
         <ComboboxList>
           {(item: T) => (
             <ComboboxItem key={String(item.id)} value={item}>

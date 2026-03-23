@@ -1,15 +1,19 @@
-import { useRegisterUser } from "@/api/services/authService";
+import { useRegisterUser } from "@/api/services/useAuthService";
 import { PATHS } from "@/app/routing/paths";
 import { Button } from "@/components/button/Button";
 import { Field, FieldError, FieldLabel } from "@/components/input/base/Field";
 import { Input } from "@/components/input/base/Input";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/input/base/InputGroup";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/input/base/InputGroup";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeClosed, Loader2Icon } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import z from "zod";
+import { z } from "zod";
 
 const registerUserSchema = z.object({
   name: z.string().min(1, "Please enter your full name"),
@@ -112,7 +116,9 @@ export const RegisterUser = () => {
                 </Button>
               </InputGroupAddon>
             </InputGroup>
-            {errors.password && <FieldError>{errors.password.message}</FieldError>}
+            {errors.password && (
+              <FieldError>{errors.password.message}</FieldError>
+            )}
           </Field>
         </div>
 

@@ -1,5 +1,5 @@
 import { setAccessTokenAccessor } from "@/api/clients/finsightApi";
-import { useGetUserProfile } from "@/api/services/authService";
+import { useGetUserProfile } from "@/api/services/useAuthService";
 import { User } from "@/api/dtos/user";
 import {
   getItemFromStorage,
@@ -51,18 +51,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [accessToken]);
 
   const loadUserData = async (currentToken: string) => {
-    try {
-      if (!currentToken) return;
-      const { data: userProfile } = await getUserProfile();
-      if (!userProfile) return;
-      setUser(userProfile);
-    } catch (error) {
-      console.error("Error loading user data:", error);
-      setUser(null);
-      setAccessToken(null);
-    } finally {
-      setIsInitializing(false);
-    }
+    if (!currentToken) return;
+
+    await getUserProfile()
+      .then(({ data: userProfile }) => {
+        if (userProfile) setUser(userProfile);
+      })
+      .catch(() => {
+        setUser(null);
+        setAccessToken(null);
+      })
+      .finally(() => {
+        setIsInitializing(false);
+      });
   };
 
   return (

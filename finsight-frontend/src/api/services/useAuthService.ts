@@ -1,21 +1,22 @@
 import { useMutation, useQuery, UseQueryOptions } from "@tanstack/react-query";
 import { finsightApi } from "../clients/finsightApi";
 import { User } from "../dtos/user";
+import { MutationOptions } from "../types/mutationOptions";
+import { buildMutationOptions } from "../utils/buildMutationOptions";
 
-// LOGIN
-type LoginReqParams = {
+type LoginRequestParams = {
   email: string;
   password: string;
 };
 
-type LoginRes = { token: string };
+type LoginResponse = { token: string };
 
 /**
  * Sends login request.
  * @param params Login credentials.
  * @returns Login response with token.
  */
-const login = async (params: LoginReqParams): Promise<LoginRes> => {
+const login = async (params: LoginRequestParams): Promise<LoginResponse> => {
   const { data } = await finsightApi.post("/auth/login", params);
   return data;
 };
@@ -23,13 +24,15 @@ const login = async (params: LoginReqParams): Promise<LoginRes> => {
 /**
  * Hook for performing user login.
  */
-export const useLogin = () => {
+export const useLogin = (
+  options?: MutationOptions<LoginResponse, LoginRequestParams>,
+) => {
   return useMutation({
     mutationFn: login,
+    ...buildMutationOptions({ successMessage: "Login realizado com sucesso." }, options),
   });
 };
 
-// GET USER PROFILE
 /**
  * Fetches the authenticated user's profile.
  * @returns User data.
@@ -52,7 +55,6 @@ export const useGetUserProfile = (
   });
 };
 
-// USER REGISTRATION
 type RegisterUserReqParams = {
   name: string;
   email: string;
@@ -72,8 +74,9 @@ const registerUser = async (params: RegisterUserReqParams): Promise<User> => {
 /**
  * Hook for performing user registration.
  */
-export const useRegisterUser = () => {
+export const useRegisterUser = (options?: MutationOptions<User, RegisterUserReqParams>) => {
   return useMutation({
     mutationFn: registerUser,
+    ...buildMutationOptions({ successMessage: "Usuário cadastrado com sucesso." }, options),
   });
 };

@@ -23,12 +23,12 @@ export const Navbar = () => {
   };
 
   return (
-    <nav className="border-border fixed flex w-full items-center justify-between border-b p-4">
-      <h2 className="text-primary text-xl font-bold">FinSight</h2>
+    <nav className="border-border fixed flex h-16 w-full items-center justify-between border-b px-4">
+      <img src={"/finsigh-icon.png"} alt="FinSight Logo" className="h-8" />
 
       <DropdownMenu>
         <DropdownMenuTrigger className="hover:cursor-pointer focus:outline-none">
-          <Avatar>
+          <Avatar size="lg">
             <AvatarFallback>
               {getFirstAndLastInitials(user?.name ?? "")}
             </AvatarFallback>

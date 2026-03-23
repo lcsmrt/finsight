@@ -1,9 +1,9 @@
-import { FinancialTransactionsTable } from "./components/FinancialTransactionsTable";
+import { TransactionsTable } from "./components/TransactionsTable";
 
 export const Home = () => {
   return (
-    <div className="flex h-screen flex-col items-center justify-center">
-      <FinancialTransactionsTable />
-    </div>
+    <section className="flex flex-col gap-6">
+      <TransactionsTable />
+    </section>
   );
 };

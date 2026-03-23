@@ -17,3 +17,23 @@ export type FinancialTransactionCategory = {
 };
 
 export type FinancialTransactionType = "CREDIT" | "DEBIT";
+
+export type CreateFinancialTransactionBody = {
+  type: FinancialTransactionType;
+  amount: number;
+  description: string;
+  categoryId?: number;
+  startDate: string;
+  endDate?: string;
+};
+
+export type UpdateFinancialTransactionBody = Partial<CreateFinancialTransactionBody>;
+
+export type UpdateFinancialTransactionParams = { id: number } & UpdateFinancialTransactionBody;
+
+export type CreateFinancialTransactionCategoryBody = {
+  description: string;
+  spendingLimit?: number;
+};
+
+export type UpdateFinancialTransactionCategoryParams = { id: number } & Partial<CreateFinancialTransactionCategoryBody>;

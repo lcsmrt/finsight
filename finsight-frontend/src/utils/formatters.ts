@@ -21,6 +21,10 @@ export const formatCurrency = (value: number, currency: string): string => {
  * @returns Formatted date string.
  */
 export const formatDate = (date: Date | string, dateFormat: string): string => {
+  if (typeof date === "string") {
+    const [year, month, day] = date.split("T")[0].split("-").map(Number);
+    return format(new Date(year, month - 1, day), dateFormat);
+  }
   return format(date, dateFormat);
 };
 

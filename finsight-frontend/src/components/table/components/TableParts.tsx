@@ -51,7 +51,7 @@ const TableRowBase = React.forwardRef<
     ref={ref}
     role="row"
     className={cn(
-      "even:bg-muted/40 data-[state=selected]:bg-muted h-10 border-b transition-colors last:border-0",
+      "group/row even:bg-muted/40 data-[state=selected]:bg-muted h-10 border-b transition-colors last:border-0",
       className,
     )}
     {...props}

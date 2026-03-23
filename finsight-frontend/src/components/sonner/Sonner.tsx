@@ -5,15 +5,12 @@ import {
   OctagonXIcon,
   TriangleAlertIcon,
 } from "lucide-react";
-import { useTheme } from "next-themes";
 import { Toaster as Sonner, type ToasterProps } from "sonner";
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme();
-
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme="dark"
       className="toaster group"
       icons={{
         success: (
@@ -37,7 +34,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
           </div>
         ),
         loading: (
-          <div className="flex size-6 items-center justify-center rounded-full bg-muted">
+          <div className="bg-muted flex size-6 items-center justify-center rounded-full">
             <Loader2Icon className="size-4 animate-spin" />
           </div>
         ),
@@ -52,7 +49,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }
       toastOptions={{
         classNames: {
-          toast: "group flex items-start gap-3 rounded-md border bg-popover px-4 py-3 shadow-md",
+          toast:
+            "group flex items-start gap-3 rounded-md border bg-popover px-4 py-3 shadow-md",
           icon: "mt-0.5 flex shrink-0 items-center justify-center rounded-full",
           title: "text-sm font-medium ml-1",
           description: "text-xs text-muted-foreground",

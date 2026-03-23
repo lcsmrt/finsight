@@ -43,7 +43,9 @@ export const DatePicker = ({
   id,
 }: DatePickerProps) => {
   const [open, setOpen] = React.useState(false);
-  const [inputValue, setInputValue] = React.useState(value ? format(value, DATE_FORMAT) : "");
+  const [inputValue, setInputValue] = React.useState(
+    value ? format(value, DATE_FORMAT) : "",
+  );
   const anchorRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -69,43 +71,44 @@ export const DatePicker = ({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <InputGroup ref={anchorRef} className={cn("w-44", className)}>
-          <InputGroupAddon align="inline-start">
+        <InputGroupAddon align="inline-start">
+          <InputGroupButton
+            size="icon-xs"
+            disabled={disabled}
+            aria-label="Abrir calendário"
+            onClick={() => !disabled && setOpen((prev) => !prev)}
+          >
+            <CalendarIcon />
+          </InputGroupButton>
+        </InputGroupAddon>
+        <InputGroupInput
+          id={id}
+          value={inputValue}
+          placeholder={placeholder}
+          disabled={disabled}
+          onChange={(e) => setInputValue(e.target.value)}
+          onFocus={() => setOpen(false)}
+          onBlur={(e) => commitInput(e.currentTarget.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.currentTarget.blur();
+            if (e.key === "Escape")
+              setInputValue(value ? format(value, DATE_FORMAT) : "");
+          }}
+        />
+        {value && !disabled && (
+          <InputGroupAddon align="inline-end">
             <InputGroupButton
-              size="icon-xs"
-              disabled={disabled}
-              aria-label="Abrir calendário"
-              onClick={() => !disabled && setOpen((prev) => !prev)}
+              aria-label="Limpar data"
+              onClick={() => {
+                onChange?.(undefined);
+                setInputValue("");
+              }}
             >
-              <CalendarIcon />
+              <XIcon />
             </InputGroupButton>
           </InputGroupAddon>
-          <InputGroupInput
-            id={id}
-            value={inputValue}
-            placeholder={placeholder}
-            disabled={disabled}
-            onChange={(e) => setInputValue(e.target.value)}
-            onFocus={() => setOpen(false)}
-            onBlur={(e) => commitInput(e.currentTarget.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") e.currentTarget.blur();
-              if (e.key === "Escape") setInputValue(value ? format(value, DATE_FORMAT) : "");
-            }}
-          />
-          {value && !disabled && (
-            <InputGroupAddon align="inline-end">
-              <InputGroupButton
-                aria-label="Limpar data"
-                onClick={() => {
-                  onChange?.(undefined);
-                  setInputValue("");
-                }}
-              >
-                <XIcon />
-              </InputGroupButton>
-            </InputGroupAddon>
-          )}
-        </InputGroup>
+        )}
+      </InputGroup>
       <PopoverContent className="w-auto p-0" align="start" anchor={anchorRef}>
         <Calendar
           mode="single"
@@ -173,42 +176,45 @@ export const DateRangePicker = ({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <InputGroup ref={anchorRef} className={cn(numberOfMonths === 2 ? "w-68" : "w-44", className)}>
-          <InputGroupAddon align="inline-start">
+      <InputGroup
+        ref={anchorRef}
+        className={cn(numberOfMonths === 2 ? "w-68" : "w-44", className)}
+      >
+        <InputGroupAddon align="inline-start">
+          <InputGroupButton
+            size="icon-xs"
+            disabled={disabled}
+            aria-label="Abrir calendário"
+            onClick={() => !disabled && setOpen((prev) => !prev)}
+          >
+            <CalendarIcon />
+          </InputGroupButton>
+        </InputGroupAddon>
+        <InputGroupInput
+          id={id}
+          value={formatRange(value)}
+          placeholder={placeholder}
+          disabled={disabled}
+          readOnly
+          tabIndex={-1}
+          className="cursor-pointer"
+          onClick={() => !disabled && setOpen((prev) => !prev)}
+        />
+        {hasValue && !disabled && (
+          <InputGroupAddon align="inline-end">
             <InputGroupButton
-              size="icon-xs"
-              disabled={disabled}
-              aria-label="Abrir calendário"
-              onClick={() => !disabled && setOpen((prev) => !prev)}
+              aria-label="Limpar intervalo"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                onChange?.(undefined);
+              }}
             >
-              <CalendarIcon />
+              <XIcon />
             </InputGroupButton>
           </InputGroupAddon>
-          <InputGroupInput
-            id={id}
-            value={formatRange(value)}
-            placeholder={placeholder}
-            disabled={disabled}
-            readOnly
-            tabIndex={-1}
-            className="cursor-pointer"
-            onClick={() => !disabled && setOpen((prev) => !prev)}
-          />
-          {hasValue && !disabled && (
-            <InputGroupAddon align="inline-end">
-              <InputGroupButton
-                aria-label="Limpar intervalo"
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onChange?.(undefined);
-                }}
-              >
-                <XIcon />
-              </InputGroupButton>
-            </InputGroupAddon>
-          )}
-        </InputGroup>
+        )}
+      </InputGroup>
       <PopoverContent className="w-auto p-0" align="start" anchor={anchorRef}>
         <Calendar
           mode="range"
