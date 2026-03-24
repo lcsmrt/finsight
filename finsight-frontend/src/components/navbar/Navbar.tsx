@@ -40,7 +40,7 @@ export const Navbar = () => {
             className="hover:bg-muted flex h-full w-full items-center justify-between gap-2 hover:cursor-pointer"
             onClick={logout}
           >
-            LogOut
+            Logout
             <LogOut className="text-foreground" />
           </DropdownMenuItem>
         </DropdownMenuContent>

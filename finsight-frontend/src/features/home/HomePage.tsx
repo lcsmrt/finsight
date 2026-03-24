@@ -20,13 +20,13 @@ const displayColumns: ColumnDef<FinancialTransaction>[] = [
   {
     id: "description",
     accessorKey: "description",
-    header: "Descrição",
+    header: "Description",
     cell: ({ row }) => row.original.description,
   },
   {
     id: "category",
     accessorKey: "category",
-    header: "Categoria",
+    header: "Category",
     cell: ({ row }) => {
       const category = row.original.category;
       if (category) {
@@ -38,7 +38,7 @@ const displayColumns: ColumnDef<FinancialTransaction>[] = [
   {
     id: "amount",
     accessorKey: "amount",
-    header: "Valor",
+    header: "Amount",
     cell: ({ row }) => {
       const formattedAmount = formatCurrency(row.original.amount, "BRL");
       const type = row.original.type;
@@ -55,7 +55,7 @@ const displayColumns: ColumnDef<FinancialTransaction>[] = [
   {
     id: "startDate",
     accessorKey: "startDate",
-    header: "Data",
+    header: "Date",
     cell: ({ row }) => formatDate(row.original.startDate, "dd/MM/yyyy"),
   },
 ];
@@ -84,11 +84,11 @@ export const Home = () => {
 
   const handleDelete = async (transaction: FinancialTransaction) => {
     const confirmed = await confirm({
-      title: "Excluir transação",
+      title: "Confirm Deletion",
       description:
-        "Tem certeza que deseja excluir esta transação? Esta ação não pode ser desfeita.",
-      confirmLabel: "Excluir",
-      cancelLabel: "Cancelar",
+        "Are you sure you want to delete this transaction? This action cannot be undone.",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
       variant: "destructive",
     });
 
@@ -130,8 +130,8 @@ export const Home = () => {
   return (
     <section className="flex flex-col gap-6 pt-4">
       <SectionHeader
-        title="Transações"
-        subtitle={`${financialTransactionsData?.length ?? 0} transações`}
+        title="Transactions"
+        subtitle={`${financialTransactionsData?.length ?? 0} transactions`}
       >
         <div className="flex gap-4">
           <Button
@@ -139,11 +139,11 @@ export const Home = () => {
             onClick={() => setIsCategoriesDialogOpen(true)}
           >
             <TagIcon className="h-4 w-4" />
-            Gerenciar categorias
+            Manage Categories
           </Button>
           <Button onClick={handleOpenCreate}>
             <PlusIcon className="h-4 w-4" />
-            Nova transação
+            New Transaction
           </Button>
         </div>
       </SectionHeader>

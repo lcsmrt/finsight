@@ -1,21 +1,11 @@
-import { useState, useRef, useCallback, useMemo } from "react";
-import { ColumnDef } from "@tanstack/react-table";
-import { CheckIcon, PencilIcon, PlusIcon, Trash2Icon, XIcon } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
-import {
-  useGetFinancialTransactionCategories,
-  useCreateFinancialTransactionCategory,
-  useUpdateFinancialTransactionCategory,
-  useDeleteFinancialTransactionCategory,
-} from "@/api/services/useFinancialTransactionService";
 import { FinancialTransactionCategory } from "@/api/dtos/financialTransaction";
-import { Table } from "@/components/table";
-import { TableContent } from "@/components/table/TableContent";
-import { formatCurrency } from "@/utils/formatters";
-import { maskCurrency } from "@/utils/string/masks";
+import {
+  useCreateFinancialTransactionCategory,
+  useDeleteFinancialTransactionCategory,
+  useGetFinancialTransactionCategories,
+  useUpdateFinancialTransactionCategory,
+} from "@/api/services/useFinancialTransactionService";
 import { Button } from "@/components/button/Button";
-import { Input } from "@/components/input/base/Input";
-import { useConfirm } from "@/components/dialog/useConfirmDialog";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +13,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/dialog/Dialog";
+import { useConfirm } from "@/components/dialog/useConfirmDialog";
+import { Input } from "@/components/input/base/Input";
+import { Table } from "@/components/table";
+import { TableContent } from "@/components/table/TableContent";
+import { formatCurrency } from "@/utils/formatters";
+import { maskCurrency } from "@/utils/string/masks";
+import { useQueryClient } from "@tanstack/react-query";
+import { ColumnDef } from "@tanstack/react-table";
+import {
+  CheckIcon,
+  PencilIcon,
+  PlusIcon,
+  Trash2Icon,
+  XIcon,
+} from "lucide-react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 interface CategoriesManageDialogProps {
   open: boolean;
@@ -39,7 +45,10 @@ export const CategoriesManageDialog = ({
 
   const [editingId, setEditingId] = useState<number | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
-  const [newDraft, setNewDraft] = useState({ description: "", spendingLimit: "" });
+  const [newDraft, setNewDraft] = useState({
+    description: "",
+    spendingLimit: "",
+  });
 
   // Uncontrolled refs for inline editing — no state updates on keystrokes
   const descInputRef = useRef<HTMLInputElement>(null);
@@ -47,7 +56,9 @@ export const CategoriesManageDialog = ({
   const editInitial = useRef({ description: "", spendingLimit: "" });
 
   const invalidateCategories = () => {
-    queryClient.invalidateQueries({ queryKey: ["financialTransactionCategories"] });
+    queryClient.invalidateQueries({
+      queryKey: ["financialTransactionCategories"],
+    });
   };
 
   const updateMutation = useUpdateFinancialTransactionCategory({
@@ -99,11 +110,11 @@ export const CategoriesManageDialog = ({
   const handleDelete = useCallback(
     async (cat: FinancialTransactionCategory) => {
       const confirmed = await confirm({
-        title: "Excluir categoria",
+        title: "Confirm Deletion",
         description:
-          "Tem certeza que deseja excluir esta categoria? Esta ação não pode ser desfeita.",
-        confirmLabel: "Excluir",
-        cancelLabel: "Cancelar",
+          "Are you sure you want to delete this category? This action cannot be undone.",
+        confirmLabel: "Delete",
+        cancelLabel: "Cancel",
         variant: "destructive",
       });
       if (confirmed) {
@@ -126,7 +137,7 @@ export const CategoriesManageDialog = ({
       {
         id: "description",
         accessorKey: "description",
-        header: "Nome",
+        header: "Name",
         cell: ({ row }) => {
           if (editingId === row.original.id) {
             return (
@@ -148,7 +159,7 @@ export const CategoriesManageDialog = ({
       {
         id: "spendingLimit",
         accessorKey: "spendingLimit",
-        header: "Limite de gastos",
+        header: "Spending Limit",
         cell: ({ row }) => {
           if (editingId === row.original.id) {
             return (
@@ -185,20 +196,20 @@ export const CategoriesManageDialog = ({
             return (
               <div className="flex items-center justify-end gap-1">
                 <Button
-                  size="icon"
+                  size="icon-sm"
                   variant="ghost"
                   type="button"
-                  className="text-muted-foreground hover:bg-accent hover:text-foreground rounded p-1"
+                  className="text-muted-foreground hover:text-destructive rounded p-1"
                   onClick={cancelEdit}
                   disabled={updateMutation.isPending}
                 >
                   <XIcon className="h-4 w-4" />
                 </Button>
                 <Button
-                  size="icon"
+                  size="icon-sm"
                   variant="ghost"
                   type="button"
-                  className="text-muted-foreground hover:bg-accent hover:text-foreground rounded p-1"
+                  className="text-muted-foreground hover:text-success rounded p-1"
                   onClick={saveEdit}
                   disabled={updateMutation.isPending}
                 >
@@ -232,18 +243,35 @@ export const CategoriesManageDialog = ({
         },
       },
     ],
-    [editingId, updateMutation.isPending, startEdit, cancelEdit, saveEdit, handleDelete],
+    [
+      editingId,
+      updateMutation.isPending,
+      startEdit,
+      cancelEdit,
+      saveEdit,
+      handleDelete,
+    ],
   );
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(newOpen, event) => {
+        if (!newOpen && editingId !== null) {
+          event.cancel();
+          cancelEdit();
+          return;
+        }
+        onOpenChange(newOpen);
+      }}
+    >
       <DialogContent className="sm:max-w-lg" showCloseButton>
         <DialogHeader>
-          <DialogTitle>Gerenciar categorias</DialogTitle>
+          <DialogTitle>Manage Categories</DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-col gap-2">
-          <div className="max-h-72 overflow-y-auto">
+        <div className="flex flex-col gap-3">
+          <div className="-mx-4 max-h-72 overflow-y-auto">
             <Table
               tableId="categoriesManageTable"
               data={categories || []}
@@ -256,7 +284,7 @@ export const CategoriesManageDialog = ({
           {isAddingNew ? (
             <div className="flex items-center gap-2 rounded-md border px-3 py-2">
               <Input
-                placeholder="Nome da categoria"
+                placeholder="Category name"
                 value={newDraft.description}
                 onChange={(e) =>
                   setNewDraft((d) => ({ ...d, description: e.target.value }))
@@ -284,18 +312,23 @@ export const CategoriesManageDialog = ({
                 }}
               />
               <Button
-                size="sm"
+                size="icon-sm"
                 variant="ghost"
                 type="button"
+                className="text-muted-foreground hover:text-destructive rounded p-1"
                 onClick={() => setIsAddingNew(false)}
               >
                 <XIcon className="h-3.5 w-3.5" />
               </Button>
               <Button
-                size="sm"
+                size="icon-sm"
+                variant="ghost"
                 type="button"
+                className="text-muted-foreground hover:text-success rounded p-1"
                 onClick={saveNew}
-                disabled={createMutation.isPending || !newDraft.description.trim()}
+                disabled={
+                  createMutation.isPending || !newDraft.description.trim()
+                }
               >
                 <CheckIcon className="h-3.5 w-3.5" />
               </Button>
@@ -303,13 +336,12 @@ export const CategoriesManageDialog = ({
           ) : (
             <Button
               variant="ghost"
-              size="sm"
-              className="w-full justify-start text-muted-foreground"
+              className="text-muted-foreground hover:text-success -mb-0.5 w-full justify-start"
               type="button"
               onClick={() => setIsAddingNew(true)}
             >
               <PlusIcon className="h-4 w-4" />
-              Nova categoria
+              New Category
             </Button>
           )}
         </div>
@@ -320,7 +352,8 @@ export const CategoriesManageDialog = ({
             type="button"
             onClick={() => onOpenChange(false)}
           >
-            Fechar
+            <XIcon className="h-4 w-4" />
+            Close
           </Button>
         </DialogFooter>
       </DialogContent>

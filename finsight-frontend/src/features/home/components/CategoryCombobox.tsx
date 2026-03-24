@@ -1,6 +1,10 @@
-import { useState } from "react";
-import { CheckIcon, PencilIcon, PlusIcon, Trash2Icon, XIcon } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { FinancialTransactionCategory } from "@/api/dtos/financialTransaction";
+import {
+  useDeleteFinancialTransactionCategory,
+  useGetFinancialTransactionCategories,
+} from "@/api/services/useFinancialTransactionService";
+import { Button } from "@/components/button/Button";
+import { useConfirm } from "@/components/dialog/useConfirmDialog";
 import {
   Combobox,
   ComboboxContent,
@@ -11,15 +15,12 @@ import {
   ComboboxTrigger,
   useComboboxAnchor,
 } from "@/components/input/base/Combobox";
-import { useConfirm } from "@/components/dialog/useConfirmDialog";
-import {
-  useGetFinancialTransactionCategories,
-  useCreateFinancialTransactionCategory,
-  useUpdateFinancialTransactionCategory,
-  useDeleteFinancialTransactionCategory,
-} from "@/api/services/useFinancialTransactionService";
-import { FinancialTransactionCategory } from "@/api/dtos/financialTransaction";
+import { InputGroupButton } from "@/components/input/base/InputGroup";
 import { cn } from "@/lib/mergeClasses";
+import { useQueryClient } from "@tanstack/react-query";
+import { PencilIcon, PlusIcon, Trash2Icon, XIcon } from "lucide-react";
+import { useState } from "react";
+import { useCategoryFormDialog } from "./CategoryFormDialog";
 
 interface CategoryComboboxProps {
   id?: string;
@@ -37,30 +38,16 @@ export const CategoryCombobox = ({
   const anchor = useComboboxAnchor();
   const queryClient = useQueryClient();
   const confirm = useConfirm();
+  const { openCreate, openEdit } = useCategoryFormDialog();
 
   const [search, setSearch] = useState("");
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editDraft, setEditDraft] = useState("");
 
   const { data: categories = [] } = useGetFinancialTransactionCategories();
 
   const invalidateCategories = () =>
-    queryClient.invalidateQueries({ queryKey: ["financialTransactionCategories"] });
-
-  const updateMutation = useUpdateFinancialTransactionCategory({
-    onSuccess: () => {
-      invalidateCategories();
-      setEditingId(null);
-    },
-  });
-
-  const createMutation = useCreateFinancialTransactionCategory({
-    onSuccess: (created) => {
-      invalidateCategories();
-      onValueChange(created);
-      setSearch("");
-    },
-  });
+    queryClient.invalidateQueries({
+      queryKey: ["financialTransactionCategories"],
+    });
 
   const deleteMutation = useDeleteFinancialTransactionCategory({
     onSuccess: () => {
@@ -74,43 +61,37 @@ export const CategoryCombobox = ({
       )
     : categories;
 
-  const startEdit = (cat: FinancialTransactionCategory, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setEditingId(cat.id);
-    setEditDraft(cat.description);
-  };
-
-  const saveEdit = (e?: React.SyntheticEvent) => {
-    e?.preventDefault();
-    e?.stopPropagation();
-    if (!editingId || !editDraft.trim()) return;
-    updateMutation.mutate({ id: editingId, description: editDraft.trim() });
-  };
-
-  const cancelEdit = (e?: React.SyntheticEvent) => {
-    e?.preventDefault();
-    e?.stopPropagation();
-    setEditingId(null);
-  };
-
   const handleDelete = async (
     cat: FinancialTransactionCategory,
     e: React.MouseEvent,
   ) => {
-    e.preventDefault();
     e.stopPropagation();
     const confirmed = await confirm({
-      title: "Excluir categoria",
+      title: "Confirm Deletion",
       description:
-        "Tem certeza que deseja excluir esta categoria? Esta ação não pode ser desfeita.",
-      confirmLabel: "Excluir",
-      cancelLabel: "Cancelar",
+        "Are you sure you want to delete this category? This action cannot be undone.",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
       variant: "destructive",
     });
     if (confirmed) {
       deleteMutation.mutate(cat.id);
       if (value?.id === cat.id) onValueChange(null);
+    }
+  };
+
+  const handleOpenCreate = async () => {
+    const created = await openCreate(search.trim());
+    if (created) {
+      onValueChange(created);
+      setSearch("");
+    }
+  };
+
+  const handleOpenEdit = async (cat: FinancialTransactionCategory) => {
+    const updated = await openEdit(cat);
+    if (updated && value?.id === updated.id) {
+      onValueChange(updated);
     }
   };
 
@@ -122,7 +103,6 @@ export const CategoryCombobox = ({
       items={displayedItems}
       value={value}
       onValueChange={(v) => {
-        if (editingId) return;
         onValueChange(v);
         setSearch("");
       }}
@@ -132,7 +112,7 @@ export const CategoryCombobox = ({
         <ComboboxTrigger
           showChevron={false}
           render={
-            <button
+            <Button
               type="button"
               disabled={disabled}
               className={cn(
@@ -143,27 +123,27 @@ export const CategoryCombobox = ({
           }
         >
           <span className={cn(!value && "text-muted-foreground")}>
-            {value ? value.description : "Selecione uma categoria..."}
+            {value ? value.description : "Select a category..."}
           </span>
         </ComboboxTrigger>
         {showClear && (
-          <button
+          <InputGroupButton
             type="button"
             tabIndex={-1}
-            className="absolute right-2 top-1/2 -translate-y-1/2 flex h-4 w-4 items-center justify-center rounded text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground absolute top-1/2 right-1 -translate-y-1/2"
             onClick={(e) => {
               e.stopPropagation();
               onValueChange(null);
             }}
           >
             <XIcon className="h-3 w-3" />
-          </button>
+          </InputGroupButton>
         )}
       </div>
 
       <ComboboxContent anchor={anchor}>
         <ComboboxInput
-          placeholder="Buscar..."
+          placeholder="Search..."
           value={search}
           onChange={(e) => setSearch(e.currentTarget.value)}
           showTrigger={false}
@@ -171,90 +151,58 @@ export const CategoryCombobox = ({
         />
         {displayedItems.length === 0 && search.trim() ? (
           <div className="p-1">
-            <button
+            <Button
               type="button"
-              onMouseDown={(e) => {
-                e.preventDefault();
-                createMutation.mutate({ description: search.trim() });
-                setSearch("");
-              }}
-              className="flex w-full cursor-pointer items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-primary hover:bg-accent"
+              variant="ghost"
+              size="sm"
+              onClick={handleOpenCreate}
+              className="text-primary hover:bg-accent flex w-full cursor-pointer items-center gap-1.5 rounded-md px-2 py-1.5 text-sm"
             >
               <PlusIcon className="h-3.5 w-3.5 shrink-0" />
-              Criar &ldquo;{search}&rdquo;
-            </button>
+              Create &ldquo;{search}&rdquo;
+            </Button>
           </div>
         ) : (
-          <ComboboxEmpty>Nenhum resultado</ComboboxEmpty>
+          <ComboboxEmpty>No results</ComboboxEmpty>
         )}
         <ComboboxList>
-          {(cat: FinancialTransactionCategory) =>
-            editingId === cat.id ? (
-              <ComboboxItem
-                key={String(cat.id)}
-                value={cat}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div
-                  className="flex w-full items-center gap-1"
-                  onClick={(e) => e.stopPropagation()}
-                  onMouseDown={(e) => e.stopPropagation()}
-                >
-                  <input
-                    autoFocus
-                    className="min-w-0 flex-1 rounded border border-input bg-transparent px-2 py-0.5 text-sm outline-none"
-                    value={editDraft}
-                    onChange={(e) => setEditDraft(e.target.value)}
-                    onKeyDown={(e) => {
+          {(cat: FinancialTransactionCategory) => (
+            <ComboboxItem
+              key={String(cat.id)}
+              value={cat}
+              className="group/cat px-2"
+            >
+              <div className="flex min-w-0 flex-1 items-center justify-between gap-1">
+                <span className="flex-1 truncate">{cat.description}</span>
+                <div className="flex items-center gap-0.5 opacity-0 group-hover/cat:opacity-100">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="text-muted-foreground hover:bg-background rounded p-1 hover:cursor-pointer"
+                    onClick={(e) => {
                       e.stopPropagation();
-                      if (e.key === "Enter") saveEdit(e);
-                      if (e.key === "Escape") cancelEdit(e);
+                      void handleOpenEdit(cat);
                     }}
-                  />
-                  <button
-                    type="button"
-                    className="shrink-0 rounded p-0.5 text-success hover:bg-accent"
-                    onMouseDown={saveEdit}
                   >
-                    <CheckIcon className="h-3 w-3" />
-                  </button>
-                  <button
+                    <PencilIcon className="h-3 w-3" />
+                  </Button>
+                  <Button
                     type="button"
-                    className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-accent"
-                    onMouseDown={cancelEdit}
+                    variant="ghost"
+                    size="icon-sm"
+                    className="text-muted-foreground hover:bg-background rounded p-1 hover:cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void handleDelete(cat, e);
+                    }}
                   >
-                    <XIcon className="h-3 w-3" />
-                  </button>
+                    <Trash2Icon className="h-3 w-3" />
+                  </Button>
                 </div>
-              </ComboboxItem>
-            ) : (
-              <ComboboxItem
-                key={String(cat.id)}
-                value={cat}
-                className="group/cat"
-              >
-                <div className="flex min-w-0 flex-1 items-center justify-between gap-1">
-                  <span className="flex-1 truncate">{cat.description}</span>
-                  <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover/cat:opacity-100">
-                    <button
-                      type="button"
-                      className="rounded p-0.5 text-muted-foreground hover:bg-background hover:text-foreground"
-                      onMouseDown={(e) => startEdit(cat, e)}
-                    >
-                      <PencilIcon className="h-3 w-3" />
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded p-0.5 text-muted-foreground hover:bg-background hover:text-destructive"
-                      onMouseDown={(e) => void handleDelete(cat, e)}
-                    >
-                      <Trash2Icon className="h-3 w-3" />
-                    </button>
-                  </div>
-                </div>
-              </ComboboxItem>
-            )
-          }
+              </div>
+            </ComboboxItem>
+          )}
         </ComboboxList>
       </ComboboxContent>
     </Combobox>

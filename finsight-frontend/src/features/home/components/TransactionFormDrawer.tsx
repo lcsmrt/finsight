@@ -28,6 +28,7 @@ import {
 import { FinancialTransaction } from "@/api/dtos/financialTransaction";
 import { TransactionTypeToggle } from "./TransactionTypeToggle";
 import { CategoryCombobox } from "./CategoryCombobox";
+import { SaveIcon, XIcon } from "lucide-react";
 
 const transactionFormSchema = z.object({
   type: z.enum(["DEBIT", "CREDIT"]),
@@ -40,7 +41,7 @@ const transactionFormSchema = z.object({
     .object({
       id: z.number(),
       description: z.string(),
-      spendingLimit: z.number().nullable().optional(),
+      spendingLimit: z.number().optional(),
     })
     .nullable()
     .optional(),
@@ -65,7 +66,10 @@ function buildDefaultValues(
       amount: maskCurrency(String(Math.round(transaction.amount * 100))),
       category: transaction.category ?? null,
       date: (() => {
-        const [year, month, day] = transaction.startDate.split("T")[0].split("-").map(Number);
+        const [year, month, day] = transaction.startDate
+          .split("T")[0]
+          .split("-")
+          .map(Number);
         return new Date(year, month - 1, day);
       })(),
     };
@@ -146,7 +150,7 @@ export const TransactionFormDrawer = ({
       <SheetContent side="right">
         <SheetHeader>
           <SheetTitle>
-            {isEditing ? "Editar transação" : "Nova transação"}
+            {isEditing ? "Edit Transaction" : "New Transaction"}
           </SheetTitle>
         </SheetHeader>
 
@@ -156,7 +160,7 @@ export const TransactionFormDrawer = ({
         >
           <FieldGroup>
             <Field>
-              <FieldLabel htmlFor="transaction-type">Tipo</FieldLabel>
+              <FieldLabel htmlFor="transaction-type">Type</FieldLabel>
               <TransactionTypeToggle
                 value={watch("type")}
                 onChange={(v) => setValue("type", v)}
@@ -166,11 +170,11 @@ export const TransactionFormDrawer = ({
 
             <Field>
               <FieldLabel htmlFor="transaction-description">
-                Descrição
+                Description
               </FieldLabel>
               <Input
                 id="transaction-description"
-                placeholder="Ex: Aluguel, Salário..."
+                placeholder="e.g., Rent, Salary, Groceries"
                 disabled={isPending}
                 aria-invalid={!!errors.description}
                 {...register("description")}
@@ -179,7 +183,7 @@ export const TransactionFormDrawer = ({
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="transaction-amount">Valor</FieldLabel>
+              <FieldLabel htmlFor="transaction-amount">Amount</FieldLabel>
               {(() => {
                 const { onChange, ...amountRest } = register("amount");
                 return (
@@ -202,7 +206,7 @@ export const TransactionFormDrawer = ({
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="transaction-category">Categoria</FieldLabel>
+              <FieldLabel htmlFor="transaction-category">Category</FieldLabel>
               <CategoryCombobox
                 id="transaction-category"
                 value={watch("category") ?? null}
@@ -212,11 +216,13 @@ export const TransactionFormDrawer = ({
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="transaction-date">Data</FieldLabel>
+              <FieldLabel htmlFor="transaction-date">Date</FieldLabel>
               <DatePicker
                 id="transaction-date"
                 value={watch("date")}
-                onChange={(v) => v && setValue("date", v, { shouldValidate: true })}
+                onChange={(v) =>
+                  v && setValue("date", v, { shouldValidate: true })
+                }
                 disabled={isPending}
                 className="w-full"
               />
@@ -227,19 +233,21 @@ export const TransactionFormDrawer = ({
 
         <SheetFooter>
           <Button
-            variant="ghost"
+            variant="outline"
             type="button"
             disabled={isPending}
             onClick={() => onOpenChange(false)}
           >
-            Cancelar
+            <XIcon className="h-4 w-4" />
+            Cancel
           </Button>
           <Button
             type="button"
             disabled={isPending}
             onClick={handleSubmit(onSubmit)}
           >
-            {isEditing ? "Salvar" : "Criar"}
+            <SaveIcon className="h-4 w-4" />
+            {isEditing ? "Save" : "Create"}
           </Button>
         </SheetFooter>
       </SheetContent>

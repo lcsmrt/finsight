@@ -56,8 +56,7 @@ export const RegisterUser = () => {
   return (
     <>
       <header className="flex flex-1 items-end gap-2">
-        <Eye className="text-primary h-10 w-10" />
-        <h1 className="text-primary text-3xl font-bold">FinSight</h1>
+        <img src={"/finsigh-icon.png"} alt="FinSight logo" className="h-12" />
       </header>
 
       <form

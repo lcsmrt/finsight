@@ -21,7 +21,9 @@ interface ConfirmDialogContextValue {
   confirm: (options: ConfirmOptions) => Promise<boolean>;
 }
 
-const ConfirmDialogContext = createContext<ConfirmDialogContextValue | null>(null);
+const ConfirmDialogContext = createContext<ConfirmDialogContextValue | null>(
+  null,
+);
 
 export const useConfirm = () => {
   const context = useContext(ConfirmDialogContext);
@@ -31,10 +33,16 @@ export const useConfirm = () => {
   return context.confirm;
 };
 
-export const ConfirmDialogProvider = ({ children }: { children: ReactNode }) => {
+export const ConfirmDialogProvider = ({
+  children,
+}: {
+  children: ReactNode;
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [options, setOptions] = useState<ConfirmOptions | null>(null);
-  const [resolver, setResolver] = useState<((value: boolean) => void) | null>(null);
+  const [resolver, setResolver] = useState<((value: boolean) => void) | null>(
+    null,
+  );
 
   const confirm = (opts: ConfirmOptions): Promise<boolean> => {
     setOptions(opts);
@@ -60,7 +68,7 @@ export const ConfirmDialogProvider = ({ children }: { children: ReactNode }) => 
       {options && (
         <Dialog open={isOpen} onOpenChange={(open) => !open && handleCancel()}>
           <DialogContent>
-            <DialogHeader>
+            <DialogHeader className="gap-4">
               <DialogTitle>{options.title}</DialogTitle>
               <DialogDescription>{options.description}</DialogDescription>
             </DialogHeader>
@@ -68,7 +76,10 @@ export const ConfirmDialogProvider = ({ children }: { children: ReactNode }) => 
               <Button variant="ghost" onClick={handleCancel}>
                 {options.cancelLabel || "Cancelar"}
               </Button>
-              <Button variant={options.variant || "default"} onClick={handleConfirm}>
+              <Button
+                variant={options.variant || "default"}
+                onClick={handleConfirm}
+              >
                 {options.confirmLabel || "Confirmar"}
               </Button>
             </DialogFooter>
