@@ -8,9 +8,9 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/input/base/InputGroup";
-import { storeItem } from "@/lib/storage";
+import { useAuth } from "@/app/providers/AuthProvider";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeClosed, Loader2Icon } from "lucide-react";
+import { Eye, EyeClosed } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
@@ -38,13 +38,14 @@ export const Login = () => {
     },
   });
 
+  const { setAccessToken } = useAuth();
   const { mutateAsync: login, isPending: isLoggingIn } = useLogin();
 
   const navigate = useNavigate();
 
   const onSubmit = handleSubmit(async (credentials: LoginSchema) => {
-    await login(credentials).then((res) => {
-      storeItem("accessToken", res.token);
+    await login({ body: credentials }).then((res) => {
+      setAccessToken(res.token);
       navigate(PATHS.home);
     });
   });
@@ -52,12 +53,20 @@ export const Login = () => {
   return (
     <>
       <header className="flex flex-1 items-end gap-2">
-        <img src={"/finsigh-icon.png"} alt="FinSight logo" className="h-12" />
+        <img
+          src={"/finsigh-icon.png"}
+          alt="FinSight logo"
+          className="h-12"
+          style={{
+            imageRendering: "pixelated",
+            filter: "drop-shadow(0 0 10px hsl(var(--primary) / 0.7))",
+          }}
+        />
       </header>
 
       <form
         id="login-form"
-        className="bg-card flex w-xl flex-col items-center gap-5 rounded-lg p-5"
+        className="bg-card ring-primary/15 flex w-xl flex-col items-center gap-5 rounded-lg p-5 ring-1"
         onSubmit={onSubmit}
       >
         <h1 className="text-foreground text-2xl font-bold">Login</h1>
@@ -104,9 +113,8 @@ export const Login = () => {
         </div>
 
         <div className="w-full">
-          <Button className="w-full" type="submit" disabled={isLoggingIn}>
+          <Button className="w-full" type="submit" isLoading={isLoggingIn}>
             <p className="text-sm font-semibold">Sign in</p>
-            {isLoggingIn && <Loader2Icon className="animate-spin" />}
           </Button>
         </div>
 

@@ -1,23 +1,18 @@
 import { useMutation, useQuery, UseQueryOptions } from "@tanstack/react-query";
 import { finsightApi } from "../clients/finsightApi";
-import { User } from "../dtos/user";
+import { RegisterUserRequest, User } from "../dtos/user";
 import { MutationOptions } from "../types/mutationOptions";
 import { buildMutationOptions } from "../utils/buildMutationOptions";
-
-type LoginRequestParams = {
-  email: string;
-  password: string;
-};
-
-type LoginResponse = { token: string };
+import { LoginRequest, LoginResponse } from "../dtos";
 
 /**
  * Sends login request.
  * @param params Login credentials.
  * @returns Login response with token.
  */
-const login = async (params: LoginRequestParams): Promise<LoginResponse> => {
-  const { data } = await finsightApi.post("/auth/login", params);
+const login = async (params: LoginRequest): Promise<LoginResponse> => {
+  const { body } = params;
+  const { data } = await finsightApi.post("/auth/login", body);
   return data;
 };
 
@@ -25,11 +20,11 @@ const login = async (params: LoginRequestParams): Promise<LoginResponse> => {
  * Hook for performing user login.
  */
 export const useLogin = (
-  options?: MutationOptions<LoginResponse, LoginRequestParams>,
+  options?: MutationOptions<LoginResponse, LoginRequest>,
 ) => {
   return useMutation({
     mutationFn: login,
-    ...buildMutationOptions({ successMessage: "Login realizado com sucesso." }, options),
+    ...buildMutationOptions({ showSuccessToast: false }, options),
   });
 };
 
@@ -55,28 +50,28 @@ export const useGetUserProfile = (
   });
 };
 
-type RegisterUserReqParams = {
-  name: string;
-  email: string;
-  password: string;
-};
-
 /**
  * Sends a user registration request.
  * @param params Registration data.
  * @returns Created user.
  */
-const registerUser = async (params: RegisterUserReqParams): Promise<User> => {
-  const { data } = await finsightApi.post("/users", params);
+const registerUser = async (params: RegisterUserRequest): Promise<User> => {
+  const { body } = params;
+  const { data } = await finsightApi.post("/users", body);
   return data;
 };
 
 /**
  * Hook for performing user registration.
  */
-export const useRegisterUser = (options?: MutationOptions<User, RegisterUserReqParams>) => {
+export const useRegisterUser = (
+  options?: MutationOptions<User, RegisterUserRequest>,
+) => {
   return useMutation({
     mutationFn: registerUser,
-    ...buildMutationOptions({ successMessage: "Usuário cadastrado com sucesso." }, options),
+    ...buildMutationOptions(
+      { successMessage: "Usuário cadastrado com sucesso." },
+      options,
+    ),
   });
 };

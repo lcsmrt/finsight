@@ -1,5 +1,5 @@
 import * as React from "react";
-import { format, parse, isValid } from "date-fns";
+import { format, parse, isValid, isSameDay } from "date-fns";
 import { CalendarIcon, XIcon } from "lucide-react";
 import type { DateRange, Matcher } from "react-day-picker";
 import { Calendar } from "@/components/calendar/Calendar";
@@ -171,7 +171,9 @@ export const DateRangePicker = ({
 
   function handleSelect(range: DateRange | undefined) {
     onChange?.(range);
-    if (range?.from && range?.to) setOpen(false);
+    if (range?.from && range?.to && !isSameDay(range.from, range.to)) {
+      setOpen(false);
+    }
   }
 
   return (

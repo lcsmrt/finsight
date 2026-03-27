@@ -1,45 +1,49 @@
-Use this skill to propose a structure for a new React web feature: $ARGUMENTS
+Propose a folder structure for a new feature: $ARGUMENTS
 
-Read `.github/skills/feature-structure/SKILL.md` and its reference files for the full rules, then apply them.
+Keep the feature small and cohesive. Do not over-engineer. Do not create folders that don't have content yet.
 
-Keep the feature small and cohesive.
-Do not over-engineer.
-Do not create folders that are not needed.
+---
 
-## Folder roles
+## Folder Roles
 
-- `pages/`: route-level pages and page-specific components
-- `components/`: UI components used only by this feature
-- `hooks/`: feature-specific logic hooks
-- `api/`: DTOs and service hooks for this feature's API calls
-- `utils/`: pure helper functions used only by this feature
-- `mock/`: mock data or fixtures (optional — only when needed during development)
+| Folder        | What goes here                                              |
+| ------------- | ----------------------------------------------------------- |
+| `components/` | UI components used only within this feature                 |
+| `hooks/`      | Feature-specific logic hooks (state, effects, handlers)     |
+| `utils/`      | Pure helper functions used only by this feature             |
 
-## Core rules
+For simple features, there may be no subfolders at all — just a `FeaturePage.tsx` at the root.
 
-- keep code inside the feature by default
-- move to shared `src/*` only after real reuse across multiple features
-- if something has domain language in its name, it probably stays inside the feature
-- a feature may have one or many pages
-- do not split into multiple features only because one page navigates to another
-- related features should be grouped under a module folder
+Note: In finSight, the current `home` feature keeps everything flat (`HomePage.tsx` + `components/`). API service hooks live in `src/api/services/` globally, not inside each feature.
 
-## Feature complexity levels
+---
 
-| Level         | Folders                           | Examples                  |
-| ------------- | --------------------------------- | ------------------------- |
-| Minimal       | `pages/`                          | auth, permissions         |
-| Standard      | `pages/` + `components/` + `api/` | role, client, environment |
-| Enhanced      | Standard + `hooks/`               | user, checklist           |
-| Comprehensive | Enhanced + `utils/`               | dashboard                 |
+## Core Rules
 
-Do not start at Comprehensive. Start at the appropriate level and grow only when needed.
+- Keep code inside the feature by default
+- Move to `src/components/`, `src/hooks/`, etc. only after real reuse across 2+ features
+- If something has domain language in its name, it stays inside the feature
+- A feature can have one or many pages; don't split just because pages link to each other
+- Group related features under a module folder when they share domain context
 
-## Expected output
+---
 
-1. propose the smallest valid feature tree
-2. explain which folders are needed
-3. do not add unnecessary folders
-4. keep feature-specific code local
-5. call out anything that should move to shared `src/*` only if reuse is clear
-6. export pages from `index.ts` for easy routing imports
+## Complexity Levels
+
+| Level         | Structure                         | When                                                 |
+| ------------- | --------------------------------- | ---------------------------------------------------- |
+| Minimal       | `FeaturePage.tsx` only            | Single page, no sub-components, no custom hooks      |
+| Standard      | + `components/`                   | Page needs sub-components                            |
+| Enhanced      | + `hooks/`                        | Page has enough logic to warrant extraction          |
+| Comprehensive | + `utils/`                        | Needs pure helpers not appropriate for a hook        |
+
+Start at the smallest level that fits. Grow only when needed.
+
+---
+
+## Expected Output
+
+1. Propose the smallest valid folder tree for the feature
+2. Explain why each folder is included
+3. Identify anything that belongs in shared `src/` (only if reuse is certain)
+4. Export the page(s) from an `index.ts` for clean routing imports

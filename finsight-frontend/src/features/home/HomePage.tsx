@@ -6,63 +6,40 @@ import {
 import { Badge } from "@/components/badge/Badge";
 import { Button } from "@/components/button/Button";
 import { useConfirm } from "@/components/dialog/useConfirmDialog";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/input/base/InputGroup";
 import { SectionHeader } from "@/components/sectionHeader/SectionHeader";
-import { cn } from "@/lib/mergeClasses";
-import { formatCurrency, formatDate } from "@/utils/formatters";
-import { ColumnDef } from "@tanstack/react-table";
-import { PencilIcon, PlusIcon, TagIcon, Trash2Icon } from "lucide-react";
+import { Table, TableContent, TablePagination } from "@/components/table";
+import { PlusIcon, SearchIcon, TagIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 import { CategoriesManageDialog } from "./components/CategoriesManageDialog";
+import { TransactionFilterPopover } from "./components/TransactionFilterPopover";
 import { TransactionFormDrawer } from "./components/TransactionFormDrawer";
-import { Table, TableContent } from "@/components/table";
-
-const displayColumns: ColumnDef<FinancialTransaction>[] = [
-  {
-    id: "description",
-    accessorKey: "description",
-    header: "Description",
-    cell: ({ row }) => row.original.description,
-  },
-  {
-    id: "category",
-    accessorKey: "category",
-    header: "Category",
-    cell: ({ row }) => {
-      const category = row.original.category;
-      if (category) {
-        return <Badge variant="outline">{category.description}</Badge>;
-      }
-      return null;
-    },
-  },
-  {
-    id: "amount",
-    accessorKey: "amount",
-    header: "Amount",
-    cell: ({ row }) => {
-      const formattedAmount = formatCurrency(row.original.amount, "BRL");
-      const type = row.original.type;
-      return (
-        <div
-          className={cn(
-            type === "DEBIT" && "text-destructive",
-            type === "CREDIT" && "text-success",
-          )}
-        >{`${type === "DEBIT" ? "- " : ""}${formattedAmount}`}</div>
-      );
-    },
-  },
-  {
-    id: "startDate",
-    accessorKey: "startDate",
-    header: "Date",
-    cell: ({ row }) => formatDate(row.original.startDate, "dd/MM/yyyy"),
-  },
-];
+import { buildTransactionColumns } from "./components/transactionColumns";
+import { useTransactionFilters } from "./hooks/useTransactionFilters";
 
 export const Home = () => {
-  const { data: financialTransactionsData } = useGetFinancialTransactions();
-  const { mutate: deleteTransaction } = useDeleteFinancialTransaction();
+  const {
+    queryParams,
+    chips,
+    description,
+    setDescription,
+    appliedFilters,
+    onApplyFilters,
+    onClearFilters,
+    onPageChange,
+    onPageSizeChange,
+    sorting,
+    onSortChange,
+  } = useTransactionFilters();
+
+  const { data: financialTransactionsData, isLoading: isLoadingTransactions } =
+    useGetFinancialTransactions(queryParams);
+  const { mutate: deleteTransaction, isPending: isDeleting } =
+    useDeleteFinancialTransaction();
 
   const confirm = useConfirm();
 
@@ -71,6 +48,17 @@ export const Home = () => {
     FinancialTransaction | undefined
   >();
   const [isCategoriesDialogOpen, setIsCategoriesDialogOpen] = useState(false);
+
+  const pagination = financialTransactionsData
+    ? {
+        number: financialTransactionsData.page,
+        size: financialTransactionsData.size,
+        totalElements: financialTransactionsData.totalElements,
+        totalPages: financialTransactionsData.totalPages,
+        first: financialTransactionsData.page === 0,
+        last: financialTransactionsData.last,
+      }
+    : undefined;
 
   const handleOpenCreate = () => {
     setEditingTransaction(undefined);
@@ -97,41 +85,17 @@ export const Home = () => {
     }
   };
 
-  const columns: ColumnDef<FinancialTransaction>[] = [
-    ...displayColumns,
-    {
-      id: "actions",
-      header: "",
-      cell: ({ row }) => (
-        <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-focus-within/row:opacity-100 group-hover/row:opacity-100">
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            className="text-muted-foreground hover:bg-accent hover:text-foreground rounded p-1"
-            onClick={() => handleEdit(row.original)}
-          >
-            <PencilIcon className="h-4 w-4" />
-          </Button>
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            className="text-muted-foreground hover:bg-accent hover:text-destructive rounded p-1"
-            onClick={() => handleDelete(row.original)}
-          >
-            <Trash2Icon className="h-4 w-4" />
-          </Button>
-        </div>
-      ),
-    },
-  ];
+  const columns = buildTransactionColumns({
+    onEdit: handleEdit,
+    onDelete: handleDelete,
+    isDeleting,
+  });
 
   return (
     <section className="flex flex-col gap-6 pt-4">
       <SectionHeader
         title="Transactions"
-        subtitle={`${financialTransactionsData?.length ?? 0} transactions`}
+        subtitle={`${financialTransactionsData?.totalElements ?? 0} transactions`}
       >
         <div className="flex gap-4">
           <Button
@@ -148,12 +112,71 @@ export const Home = () => {
         </div>
       </SectionHeader>
 
+      <div className="flex flex-col gap-2 px-2">
+        <div className="flex gap-2">
+          <InputGroup className="max-w-xs">
+            <InputGroupInput
+              placeholder="Search transactions..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-64 pl-9"
+            />
+            <InputGroupAddon>
+              <SearchIcon className="text-muted-foreground pointer-events-none h-4 w-4" />
+            </InputGroupAddon>
+          </InputGroup>
+
+          <TransactionFilterPopover
+            appliedFilters={appliedFilters}
+            onApply={onApplyFilters}
+          />
+        </div>
+
+        {chips.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            {chips.map((chip) => (
+              <Badge key={chip.key} variant="outline" className="gap-1 pr-1">
+                {chip.label}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-4 w-4 rounded"
+                  onClick={chip.onRemove}
+                >
+                  <XIcon className="h-3 w-3" />
+                </Button>
+              </Badge>
+            ))}
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              className="text-muted-foreground h-auto p-0 text-xs"
+              onClick={onClearFilters}
+            >
+              Clear all
+            </Button>
+          </div>
+        )}
+      </div>
+
       <Table
         tableId="financialTransactionsTable"
-        data={financialTransactionsData || []}
+        data={financialTransactionsData?.content || []}
         columns={columns}
       >
-        <TableContent />
+        <TableContent
+          sorting={sorting}
+          onSortChange={onSortChange}
+          emptyState="No transactions found."
+          isLoading={isLoadingTransactions}
+        />
+        <TablePagination
+          pagination={pagination}
+          onPageChange={onPageChange}
+          onPageSizeChange={onPageSizeChange}
+        />
       </Table>
 
       <TransactionFormDrawer

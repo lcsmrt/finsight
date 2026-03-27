@@ -1,17 +1,9 @@
-import { useEffect } from "react";
-import { maskCurrency } from "@/utils/string/masks";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { format } from "date-fns";
-import { useQueryClient } from "@tanstack/react-query";
+import { FinancialTransaction } from "@/api/dtos/financialTransaction";
 import {
-  Sheet,
-  SheetContent,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/sheet/Sheet";
+  useCreateFinancialTransaction,
+  useUpdateFinancialTransaction,
+} from "@/api/services/useFinancialTransactionService";
+import { Button } from "@/components/button/Button";
 import {
   Field,
   FieldError,
@@ -20,15 +12,22 @@ import {
 } from "@/components/input/base/Field";
 import { Input } from "@/components/input/base/Input";
 import { DatePicker } from "@/components/input/DatePicker";
-import { Button } from "@/components/button/Button";
 import {
-  useCreateFinancialTransaction,
-  useUpdateFinancialTransaction,
-} from "@/api/services/useFinancialTransactionService";
-import { FinancialTransaction } from "@/api/dtos/financialTransaction";
-import { TransactionTypeToggle } from "./TransactionTypeToggle";
-import { CategoryCombobox } from "./CategoryCombobox";
+  Sheet,
+  SheetContent,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/sheet/Sheet";
+import { maskCurrency } from "@/utils/string/masks";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { format } from "date-fns";
 import { SaveIcon, XIcon } from "lucide-react";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { CategoryCombobox } from "./CategoryCombobox";
+import { TransactionTypeToggle } from "./TransactionTypeToggle";
 
 const transactionFormSchema = z.object({
   type: z.enum(["DEBIT", "CREDIT"]),
@@ -41,7 +40,7 @@ const transactionFormSchema = z.object({
     .object({
       id: z.number(),
       description: z.string(),
-      spendingLimit: z.number().optional(),
+      spendingLimit: z.number().nullish(),
     })
     .nullable()
     .optional(),
@@ -88,7 +87,6 @@ export const TransactionFormDrawer = ({
   onOpenChange,
   transaction,
 }: TransactionFormDrawerProps) => {
-  const queryClient = useQueryClient();
   const isEditing = !!transaction;
 
   const {
@@ -107,25 +105,22 @@ export const TransactionFormDrawer = ({
     reset(buildDefaultValues(transaction));
   }, [transaction, open, reset]);
 
-  const invalidateTransactions = () => {
-    queryClient.invalidateQueries({ queryKey: ["financialTransactions"] });
-  };
-
-  const createMutation = useCreateFinancialTransaction({
-    onSuccess: () => {
-      invalidateTransactions();
-      onOpenChange(false);
-    },
+  const {
+    mutate: createFinancialTransaction,
+    isPending: isCreatingFinancialTransaction,
+  } = useCreateFinancialTransaction({
+    onSuccess: () => onOpenChange(false),
   });
 
-  const updateMutation = useUpdateFinancialTransaction({
-    onSuccess: () => {
-      invalidateTransactions();
-      onOpenChange(false);
-    },
+  const {
+    mutate: updateFinancialTransaction,
+    isPending: isUpdatingFinancialTransaction,
+  } = useUpdateFinancialTransaction({
+    onSuccess: () => onOpenChange(false),
   });
 
-  const isPending = createMutation.isPending || updateMutation.isPending;
+  const isPending =
+    isCreatingFinancialTransaction || isUpdatingFinancialTransaction;
 
   const onSubmit = (values: TransactionFormValues) => {
     const startDate = format(values.date, "yyyy-MM-dd");
@@ -139,9 +134,9 @@ export const TransactionFormDrawer = ({
     };
 
     if (isEditing) {
-      updateMutation.mutate({ id: transaction.id, ...body });
+      updateFinancialTransaction({ params: { id: transaction.id }, body });
     } else {
-      createMutation.mutate(body);
+      createFinancialTransaction({ body });
     }
   };
 
@@ -243,7 +238,7 @@ export const TransactionFormDrawer = ({
           </Button>
           <Button
             type="button"
-            disabled={isPending}
+            isLoading={isPending}
             onClick={handleSubmit(onSubmit)}
           >
             <SaveIcon className="h-4 w-4" />

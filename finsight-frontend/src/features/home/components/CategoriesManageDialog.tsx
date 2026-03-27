@@ -1,10 +1,10 @@
-import { FinancialTransactionCategory } from "@/api/dtos/financialTransaction";
+import { FinancialTransactionCategory } from "@/api/dtos";
 import {
   useCreateFinancialTransactionCategory,
   useDeleteFinancialTransactionCategory,
   useGetFinancialTransactionCategories,
   useUpdateFinancialTransactionCategory,
-} from "@/api/services/useFinancialTransactionService";
+} from "@/api/services/useFinancialTransactionCategoryService";
 import { Button } from "@/components/button/Button";
 import {
   Dialog,
@@ -19,7 +19,6 @@ import { Table } from "@/components/table";
 import { TableContent } from "@/components/table/TableContent";
 import { formatCurrency } from "@/utils/formatters";
 import { maskCurrency } from "@/utils/string/masks";
-import { useQueryClient } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
 import {
   CheckIcon,
@@ -39,8 +38,7 @@ export const CategoriesManageDialog = ({
   open,
   onOpenChange,
 }: CategoriesManageDialogProps) => {
-  const { data: categories } = useGetFinancialTransactionCategories();
-  const queryClient = useQueryClient();
+  const { data: categories, isLoading: isLoadingCategories } = useGetFinancialTransactionCategories();
   const confirm = useConfirm();
 
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -50,35 +48,29 @@ export const CategoriesManageDialog = ({
     spendingLimit: "",
   });
 
-  // Uncontrolled refs for inline editing — no state updates on keystrokes
   const descInputRef = useRef<HTMLInputElement>(null);
   const limitInputRef = useRef<HTMLInputElement>(null);
   const editInitial = useRef({ description: "", spendingLimit: "" });
 
-  const invalidateCategories = () => {
-    queryClient.invalidateQueries({
-      queryKey: ["financialTransactionCategories"],
-    });
-  };
-
-  const updateMutation = useUpdateFinancialTransactionCategory({
-    onSuccess: () => {
-      invalidateCategories();
-      setEditingId(null);
-    },
+  const {
+    mutate: updateFinancialTransactionCategory,
+    isPending: isUpdatingFinancialTransactionCategory,
+  } = useUpdateFinancialTransactionCategory({
+    onSuccess: () => setEditingId(null),
   });
 
-  const createMutation = useCreateFinancialTransactionCategory({
+  const {
+    mutate: createFinancialTransactionCategory,
+    isPending: isCreatingFinancialTransactionCategory,
+  } = useCreateFinancialTransactionCategory({
     onSuccess: () => {
-      invalidateCategories();
       setIsAddingNew(false);
       setNewDraft({ description: "", spendingLimit: "" });
     },
   });
 
-  const deleteMutation = useDeleteFinancialTransactionCategory({
-    onSuccess: invalidateCategories,
-  });
+  const { mutate: deleteFinancialTransactionCategory } =
+    useDeleteFinancialTransactionCategory();
 
   const parseLimit = (masked: string) => {
     const digits = masked.replace(/\D/g, "");
@@ -100,12 +92,14 @@ export const CategoriesManageDialog = ({
 
   const saveEdit = useCallback(() => {
     if (!editingId) return;
-    updateMutation.mutate({
-      id: editingId,
-      description: descInputRef.current?.value ?? "",
-      spendingLimit: parseLimit(limitInputRef.current?.value ?? ""),
+    updateFinancialTransactionCategory({
+      params: { id: editingId },
+      body: {
+        description: descInputRef.current?.value ?? "",
+        spendingLimit: parseLimit(limitInputRef.current?.value ?? ""),
+      },
     });
-  }, [editingId, updateMutation.mutate]);
+  }, [editingId, updateFinancialTransactionCategory]);
 
   const handleDelete = useCallback(
     async (cat: FinancialTransactionCategory) => {
@@ -118,17 +112,19 @@ export const CategoriesManageDialog = ({
         variant: "destructive",
       });
       if (confirmed) {
-        deleteMutation.mutate(cat.id);
+        deleteFinancialTransactionCategory(cat.id);
       }
     },
-    [confirm, deleteMutation.mutate],
+    [confirm, deleteFinancialTransactionCategory],
   );
 
   const saveNew = () => {
     if (!newDraft.description.trim()) return;
-    createMutation.mutate({
-      description: newDraft.description.trim(),
-      spendingLimit: parseLimit(newDraft.spendingLimit),
+    createFinancialTransactionCategory({
+      body: {
+        description: newDraft.description.trim(),
+        spendingLimit: parseLimit(newDraft.spendingLimit),
+      },
     });
   };
 
@@ -201,7 +197,7 @@ export const CategoriesManageDialog = ({
                   type="button"
                   className="text-muted-foreground hover:text-destructive rounded p-1"
                   onClick={cancelEdit}
-                  disabled={updateMutation.isPending}
+                  disabled={isUpdatingFinancialTransactionCategory}
                 >
                   <XIcon className="h-4 w-4" />
                 </Button>
@@ -211,41 +207,42 @@ export const CategoriesManageDialog = ({
                   type="button"
                   className="text-muted-foreground hover:text-success rounded p-1"
                   onClick={saveEdit}
-                  disabled={updateMutation.isPending}
+                  disabled={isUpdatingFinancialTransactionCategory}
                 >
                   <CheckIcon className="h-4 w-4" />
                 </Button>
               </div>
             );
+          } else {
+            return (
+              <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-focus-within/row:opacity-100 group-hover/row:opacity-100">
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="text-muted-foreground hover:bg-accent hover:text-foreground rounded p-1"
+                  onClick={() => startEdit(row.original)}
+                >
+                  <PencilIcon className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="text-muted-foreground hover:bg-accent hover:text-destructive rounded p-1"
+                  onClick={() => handleDelete(row.original)}
+                >
+                  <Trash2Icon className="h-4 w-4" />
+                </Button>
+              </div>
+            );
           }
-          return (
-            <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-focus-within/row:opacity-100 group-hover/row:opacity-100">
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                className="text-muted-foreground hover:bg-accent hover:text-foreground rounded p-1"
-                onClick={() => startEdit(row.original)}
-              >
-                <PencilIcon className="h-4 w-4" />
-              </Button>
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                className="text-muted-foreground hover:bg-accent hover:text-destructive rounded p-1"
-                onClick={() => handleDelete(row.original)}
-              >
-                <Trash2Icon className="h-4 w-4" />
-              </Button>
-            </div>
-          );
         },
       },
     ],
     [
       editingId,
-      updateMutation.isPending,
+      isUpdatingFinancialTransactionCategory,
       startEdit,
       cancelEdit,
       saveEdit,
@@ -274,10 +271,10 @@ export const CategoriesManageDialog = ({
           <div className="-mx-4 max-h-72 overflow-y-auto">
             <Table
               tableId="categoriesManageTable"
-              data={categories || []}
+              data={categories?.content || []}
               columns={columns}
             >
-              <TableContent />
+              <TableContent isLoading={isLoadingCategories} />
             </Table>
           </div>
 
@@ -327,7 +324,8 @@ export const CategoriesManageDialog = ({
                 className="text-muted-foreground hover:text-success rounded p-1"
                 onClick={saveNew}
                 disabled={
-                  createMutation.isPending || !newDraft.description.trim()
+                  isCreatingFinancialTransactionCategory ||
+                  !newDraft.description.trim()
                 }
               >
                 <CheckIcon className="h-3.5 w-3.5" />

@@ -20,12 +20,14 @@ import {
 type AuthContextParams = {
   user: User | null;
   setUser: Dispatch<SetStateAction<User | null>>;
+  setAccessToken: Dispatch<SetStateAction<string | null>>;
   isInitializing: boolean;
 };
 
 const AuthContext = createContext<AuthContextParams>({
   user: null,
   setUser: () => {},
+  setAccessToken: () => {},
   isInitializing: true,
 });
 
@@ -67,7 +69,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, isInitializing }}>
+    <AuthContext.Provider value={{ user, setUser, setAccessToken, isInitializing }}>
       {children}
     </AuthContext.Provider>
   );

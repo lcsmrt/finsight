@@ -10,6 +10,8 @@ type TableContentProps<TData> = {
   onSortChange?: (sorting: Sorting<TData>[]) => void;
   stickyHeader?: boolean;
   renderSubComponent?: (row: Row<TData>) => ReactNode;
+  emptyState?: ReactNode;
+  isLoading?: boolean;
 };
 
 export const TableContent = <TData,>({
@@ -17,6 +19,8 @@ export const TableContent = <TData,>({
   onSortChange,
   stickyHeader,
   renderSubComponent,
+  emptyState,
+  isLoading,
 }: TableContentProps<TData>) => {
   const { table } = useTable();
 
@@ -28,7 +32,12 @@ export const TableContent = <TData,>({
         onSortChange={onSortChange}
         isSticky={stickyHeader}
       />
-      <TableBody table={table} renderSubComponent={renderSubComponent} />
+      <TableBody
+        table={table}
+        renderSubComponent={renderSubComponent}
+        emptyState={emptyState}
+        isLoading={isLoading}
+      />
     </TableBase>
   );
 };

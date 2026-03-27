@@ -9,7 +9,7 @@ import {
   InputGroupInput,
 } from "@/components/input/base/InputGroup";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeClosed, Loader2Icon } from "lucide-react";
+import { Eye, EyeClosed } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
@@ -46,7 +46,7 @@ export const RegisterUser = () => {
 
   const onSubmit = handleSubmit(async (credentials: RegisterUserSchema) => {
     try {
-      await registerUser(credentials);
+      await registerUser({ body: credentials });
       navigate(PATHS.login);
     } catch (error) {
       console.error(error);
@@ -56,12 +56,20 @@ export const RegisterUser = () => {
   return (
     <>
       <header className="flex flex-1 items-end gap-2">
-        <img src={"/finsigh-icon.png"} alt="FinSight logo" className="h-12" />
+        <img
+          src={"/finsigh-icon.png"}
+          alt="FinSight logo"
+          className="h-12"
+          style={{
+            imageRendering: "pixelated",
+            filter: "drop-shadow(0 0 10px hsl(var(--primary) / 0.7))",
+          }}
+        />
       </header>
 
       <form
         id="register-user-form"
-        className="bg-card flex w-xl flex-col items-center gap-5 rounded-lg p-5"
+        className="bg-card ring-primary/15 flex w-xl flex-col items-center gap-5 rounded-lg p-5 ring-1"
         onSubmit={onSubmit}
         autoComplete="off"
       >
@@ -130,9 +138,12 @@ export const RegisterUser = () => {
         </div>
 
         <div className="w-full">
-          <Button className="w-full" type="submit" disabled={isRegisteringUser}>
+          <Button
+            className="w-full"
+            type="submit"
+            isLoading={isRegisteringUser}
+          >
             <p className="text-sm font-semibold">Sign up</p>
-            {isRegisteringUser && <Loader2Icon className="animate-spin" />}
           </Button>
         </div>
 

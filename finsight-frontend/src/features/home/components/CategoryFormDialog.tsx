@@ -1,21 +1,9 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useQueryClient } from "@tanstack/react-query";
-import { SaveIcon, XIcon } from "lucide-react";
-import { FinancialTransactionCategory } from "@/api/dtos/financialTransaction";
+import { FinancialTransactionCategory } from "@/api/dtos";
 import {
   useCreateFinancialTransactionCategory,
   useUpdateFinancialTransactionCategory,
-} from "@/api/services/useFinancialTransactionService";
+} from "@/api/services/useFinancialTransactionCategoryService";
+import { Button } from "@/components/button/Button";
 import {
   Dialog,
   DialogContent,
@@ -30,8 +18,19 @@ import {
   FieldLabel,
 } from "@/components/input/base/Field";
 import { Input } from "@/components/input/base/Input";
-import { Button } from "@/components/button/Button";
 import { maskCurrency } from "@/utils/string/masks";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { SaveIcon, XIcon } from "lucide-react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 const categoryFormSchema = z.object({
   description: z.string().min(1, "Name is required"),
@@ -77,7 +76,6 @@ export const CategoryFormDialog = ({
   onSuccess,
 }: CategoryFormDialogProps) => {
   const isEditing = !!category;
-  const queryClient = useQueryClient();
 
   const {
     register,
@@ -93,41 +91,46 @@ export const CategoryFormDialog = ({
     reset(buildDefaultValues(category, defaultDescription));
   }, [category, defaultDescription, open, reset]);
 
-  const invalidateCategories = () =>
-    queryClient.invalidateQueries({
-      queryKey: ["financialTransactionCategories"],
-    });
-
-  const createMutation = useCreateFinancialTransactionCategory({
+  const {
+    mutate: createFinancialTransactionCategory,
+    isPending: isCreatingFinancialTransactionCategory,
+  } = useCreateFinancialTransactionCategory({
     onSuccess: (created) => {
-      invalidateCategories();
       onSuccess?.(created);
       onOpenChange(false);
     },
   });
 
-  const updateMutation = useUpdateFinancialTransactionCategory({
+  const {
+    mutate: updateFinancialTransactionCategory,
+    isPending: isUpdatingFinancialTransactionCategory,
+  } = useUpdateFinancialTransactionCategory({
     onSuccess: (updated) => {
-      invalidateCategories();
       onSuccess?.(updated);
       onOpenChange(false);
     },
   });
 
-  const isPending = createMutation.isPending || updateMutation.isPending;
+  const isPending =
+    isCreatingFinancialTransactionCategory ||
+    isUpdatingFinancialTransactionCategory;
 
   const onSubmit = (values: CategoryFormValues) => {
     const spendingLimit = parseLimit(values.spendingLimit);
     if (isEditing) {
-      updateMutation.mutate({
-        id: category.id,
-        description: values.description,
-        spendingLimit,
+      updateFinancialTransactionCategory({
+        params: { id: category.id },
+        body: {
+          description: values.description,
+          spendingLimit,
+        },
       });
     } else {
-      createMutation.mutate({
-        description: values.description,
-        spendingLimit,
+      createFinancialTransactionCategory({
+        body: {
+          description: values.description,
+          spendingLimit,
+        },
       });
     }
   };
@@ -193,7 +196,7 @@ export const CategoryFormDialog = ({
           </Button>
           <Button
             type="button"
-            disabled={isPending}
+            isLoading={isPending}
             onClick={handleSubmit(onSubmit)}
           >
             <SaveIcon className="h-4 w-4" />

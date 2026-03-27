@@ -4,18 +4,18 @@ import { resolveErrorMessage } from "./resolveErrorMessage";
 import { resolveSuccessMessage } from "./resolveSuccessMessage";
 import { toast } from "sonner";
 
-interface MutationDefaults {
-  successMessage?: string;
-  errorMessage?: string;
-}
+type MutationDefaults<TData, TVariables> = Omit<
+  MutationOptions<TData, TVariables>,
+  "onSuccess" | "onError"
+>;
 
 /**
- * Builds TanStack mutation callbacks with default toast handling and optional overrides.
- * @param defaults Default messages shown when the caller doesn't provide custom ones.
- * @param options External options that can override messages, toggle toasts, or add extra callbacks.
+ * Builds TanStack mutation callbacks with toast handling.
+ * @param defaults Service-level defaults (messages, toast flags). All fields optional.
+ * @param options Caller overrides — same shape, takes precedence over defaults.
  */
 export function buildMutationOptions<TData, TVariables>(
-  defaults: MutationDefaults,
+  defaults?: MutationDefaults<TData, TVariables>,
   options?: MutationOptions<TData, TVariables>,
 ): Pick<UseMutationOptions<TData, Error, TVariables>, "onSuccess" | "onError"> {
   const {
@@ -23,9 +23,9 @@ export function buildMutationOptions<TData, TVariables>(
     errorMessage,
     showSuccessToast = true,
     showErrorToast = true,
-    onSuccess,
-    onError,
-  } = options ?? {};
+  } = { ...defaults, ...options };
+
+  const { onSuccess, onError } = options ?? {};
 
   return {
     onSuccess: (data, variables) => {
@@ -35,7 +35,7 @@ export function buildMutationOptions<TData, TVariables>(
             message: successMessage,
             data,
             variables,
-            fallbackMessage: defaults.successMessage,
+            fallbackMessage: "Operação realizada com sucesso.",
           }),
         );
       }
@@ -46,7 +46,7 @@ export function buildMutationOptions<TData, TVariables>(
         toast.error(
           resolveErrorMessage({
             error,
-            fallbackMessage: errorMessage ?? defaults.errorMessage,
+            fallbackMessage: errorMessage ?? "Ocorreu um erro.",
           }),
         );
       }

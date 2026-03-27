@@ -1,38 +1,191 @@
-Use this skill to create or modify a form: $ARGUMENTS
+Create a form component: $ARGUMENTS
 
-Read `.github/skills/form-creation/SKILL.md` and its reference files for the full patterns, then apply them.
+Forms use **react-hook-form** + **zod** + **@hookform/resolvers/zod**.
+Field layout uses the project's `Field`, `FieldGroup`, `FieldLabel`, `FieldError` components.
+Forms live inside a **Sheet** (create/edit), **Dialog** (small auxiliary), or **Page** (complex).
 
-This project builds forms using **react-hook-form** with **zod** schema validation and **@hookform/resolvers**.
+---
 
-## Stack
+## Schema
 
-| Library                   | Purpose                                       |
-| ------------------------- | --------------------------------------------- |
-| `react-hook-form`         | Form state, registration, validation triggers |
-| `zod`                     | Schema definition and type inference          |
-| `@hookform/resolvers/zod` | Connects zod schema to react-hook-form        |
+Define a zod schema and infer the TypeScript type from it at module scope:
 
-## Architecture Overview
+```tsx
+import { z } from "zod";
 
-1. **Schema** — defined at module scope with `z.object()`. Type inferred via `z.infer<>`. Default values constant alongside. See `.github/skills/form-creation/references/schema.md`.
+const transactionFormSchema = z.object({
+  type: z.enum(["DEBIT", "CREDIT"]),
+  description: z.string().min(1, "Obrigatório"),
+  amount: z.string().min(1, "Obrigatório"),
+  date: z.date({ required_error: "Obrigatório" }),
+  category: z.object({ id: z.number(), description: z.string() }).nullable().optional(),
+});
 
-2. **Anatomy** — forms use the `Field`, `FieldLabel`, `FieldError`, `FieldGroup` base components for layout. Error display and submit button state follow a consistent pattern. See `.github/skills/form-creation/references/anatomy.md`.
+type TransactionFormValues = z.infer<typeof transactionFormSchema>;
+```
 
-3. **Input binding** — native inputs use `register()`. Custom inputs (combobox, date picker, checkbox) use `watch()` + `setValue()`. See `.github/skills/form-creation/references/input-binding.md`.
+Keep schema and type in the same file as the form unless reused elsewhere.
 
-4. **Edit mode** — populate the form from remote data using a `useEffect` with `reset()`. See `.github/skills/form-creation/references/edit-mode.md`.
+---
 
-5. **Submit** — two escalating patterns:
-   - **Simple** (sheet/dialog form): inline `onSubmit` calling `mutateAsync` directly
-   - **Complex** (full page, multi-mutation): extracted `useXxxFormSubmit` hook
-   See `.github/skills/form-creation/references/submit-patterns.md`.
+## Form Setup
 
-## When to use
+```tsx
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
-- Creating a new **form component** (sheet, dialog, or page)
-- Adding fields to an existing form
-- Implementing **edit mode** for an existing entity
-- Extracting a submit hook for complex multi-mutation flows
-- Ensuring consistent form patterns across features
+export const TransactionFormDrawer = ({ open, onOpenChange, transaction }: Props) => {
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    formState: { errors },
+  } = useForm<TransactionFormValues>({
+    resolver: zodResolver(transactionFormSchema),
+    defaultValues: buildDefaultValues(transaction),
+  });
+  // ...
+};
+```
 
-Always read the reference files before introducing custom variations.
+Use a `buildDefaultValues` helper when mapping entity → form state is non-trivial:
+
+```tsx
+function buildDefaultValues(transaction?: FinancialTransaction): Partial<TransactionFormValues> {
+  if (!transaction) return { type: "DEBIT" };
+  return {
+    type: transaction.type,
+    description: transaction.description,
+    amount: String(transaction.amount),
+    date: parseISO(transaction.startDate),
+    category: transaction.category ?? null,
+  };
+}
+```
+
+---
+
+## Input Binding
+
+**Native inputs** — spread `register()` directly:
+```tsx
+<Input {...register("description")} aria-invalid={!!errors.description} />
+```
+
+**Custom/controlled inputs** — use `watch()` + `setValue()`:
+```tsx
+<DatePicker
+  value={watch("date")}
+  onChange={(date) => setValue("date", date, { shouldValidate: true })}
+/>
+<StandardCombobox
+  value={watch("category")}
+  onValueChange={(v) => setValue("category", v, { shouldValidate: true })}
+  items={categories}
+  itemLabel={(c) => c.description}
+/>
+```
+
+**Masked inputs** — destructure register, intercept onChange:
+```tsx
+const { onChange, ...amountRest } = register("amount");
+<Input
+  {...amountRest}
+  onChange={(e) => {
+    e.target.value = maskCurrency(e.target.value);
+    onChange(e);
+  }}
+/>
+```
+
+---
+
+## Field Layout
+
+```tsx
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/input/base/Field";
+
+<FieldGroup>
+  <Field>
+    <FieldLabel>Description</FieldLabel>
+    <Input {...register("description")} aria-invalid={!!errors.description} />
+    <FieldError errors={[errors.description]} />
+  </Field>
+  <Field>
+    <FieldLabel>Amount</FieldLabel>
+    <Input {/* masked binding */} aria-invalid={!!errors.amount} />
+    <FieldError errors={[errors.amount]} />
+  </Field>
+</FieldGroup>
+```
+
+---
+
+## Edit Mode
+
+Reset the form whenever the entity or the open state changes:
+
+```tsx
+useEffect(() => {
+  reset(buildDefaultValues(transaction));
+}, [transaction, open, reset]);
+```
+
+The `open` dependency ensures the form resets to a clean state on every open, not just when the entity changes.
+
+---
+
+## Submit
+
+**Simple** — inline `onSubmit` for sheet/dialog forms:
+
+```tsx
+const createMutation = useCreateFinancialTransaction({
+  onSuccess: () => { onOpenChange(false); reset(); },
+});
+const updateMutation = useUpdateFinancialTransaction({
+  onSuccess: () => { onOpenChange(false); },
+});
+
+const onSubmit = (values: TransactionFormValues) => {
+  if (transaction) {
+    updateMutation.mutate({ params: { id: transaction.id }, body: toPayload(values) });
+  } else {
+    createMutation.mutate({ body: toPayload(values) });
+  }
+};
+
+// In JSX:
+<Button onClick={handleSubmit(onSubmit)} disabled={isPending}>Save</Button>
+```
+
+**Complex** — extract a `useXxxFormSubmit` hook when the submit involves multiple mutations, multi-step logic, or significant branching.
+
+Use a `toPayload` helper to map form values → API request body:
+
+```tsx
+function toPayload(values: TransactionFormValues): CreateFinancialTransactionRequest["body"] {
+  return {
+    type: values.type,
+    description: values.description,
+    amount: parseCurrencyToNumber(values.amount),
+    categoryId: values.category?.id,
+    startDate: format(values.date, "yyyy-MM-dd"),
+  };
+}
+```
+
+---
+
+## Mutation Toasts
+
+`buildMutationOptions` (used inside service hooks) handles success/error toasts automatically. Override per-call only when needed:
+
+```tsx
+const mutation = useCreateEntity({
+  showSuccessToast: false,   // suppress if handling manually
+  onSuccess: (data) => { /* custom behavior */ },
+});
+```

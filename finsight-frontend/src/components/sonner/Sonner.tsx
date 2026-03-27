@@ -12,6 +12,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       theme="dark"
       className="toaster group"
+      position="bottom-left"
+      closeButton
       icons={{
         success: (
           <div className="flex size-6 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600">

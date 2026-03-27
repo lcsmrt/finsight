@@ -1,5 +1,10 @@
 import { cn } from "@/lib/mergeClasses";
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "lucide-react";
 import { Button } from "../button/Button";
 import {
   Select,
@@ -41,26 +46,33 @@ export const TablePagination = ({
     last,
   } = pagination || {};
 
-  const start = page * size + 1;
+  const start = totalElements === 0 ? 0 : page * size + 1;
   const end = Math.min((page + 1) * size, totalElements);
 
   return (
     <div
       className={cn(
-        "flex min-h-12 w-full items-center px-3 bg-card border-t",
+        "bg-card flex min-h-12 w-full items-center border-t px-3",
         isSticky && "sticky bottom-0 left-0",
       )}
     >
       {onPageSizeChange && (
-        <div className="flex gap-2 items-center w-full text-sm">
-          Linhas por página:
-          <Select value={String(size)} onValueChange={(value) => onPageSizeChange(Number(value))}>
+        <div className="flex w-full items-center gap-2 text-sm">
+          Lines per page:
+          <Select
+            value={String(size)}
+            onValueChange={(value) => onPageSizeChange(Number(value))}
+          >
             <SelectTrigger className="h-8 w-20">
               <SelectValue>{size}</SelectValue>
             </SelectTrigger>
             <SelectContent side="top">
               {[5, 10, 20, 50].map((s) => (
-                <SelectItem key={s} value={String(s)} className="hover:cursor-pointer">
+                <SelectItem
+                  key={s}
+                  value={String(s)}
+                  className="hover:cursor-pointer"
+                >
                   {s}
                 </SelectItem>
               ))}
@@ -69,13 +81,18 @@ export const TablePagination = ({
         </div>
       )}
 
-      <div className="flex w-full justify-end items-center gap-4">
-        <span className="text-sm text-muted-foreground">
-          {start} – {end} de {totalElements}
+      <div className="flex w-full items-center justify-end gap-4">
+        <span className="text-muted-foreground text-sm">
+          {start} – {end} of {totalElements}
         </span>
 
-        <div className="flex gap-2 items-center">
-          <Button variant="ghost" size="sm" onClick={() => onPageChange(0)} disabled={first}>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onPageChange(0)}
+            disabled={first}
+          >
             <ChevronsLeft className="h-4 w-4" />
           </Button>
           <Button
@@ -86,8 +103,8 @@ export const TablePagination = ({
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="text-sm">
-            Página {page + 1} de {totalPages || 1}
+          <span className="text-muted-foreground text-sm">
+            Page {page + 1} of {totalPages || 1}
           </span>
           <Button
             variant="ghost"

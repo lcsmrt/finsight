@@ -1,8 +1,8 @@
-import { FinancialTransactionCategory } from "@/api/dtos/financialTransaction";
+import { FinancialTransactionCategory } from "@/api/dtos";
 import {
   useDeleteFinancialTransactionCategory,
   useGetFinancialTransactionCategories,
-} from "@/api/services/useFinancialTransactionService";
+} from "@/api/services/useFinancialTransactionCategoryService";
 import { Button } from "@/components/button/Button";
 import { useConfirm } from "@/components/dialog/useConfirmDialog";
 import {
@@ -17,15 +17,16 @@ import {
 } from "@/components/input/base/Combobox";
 import { InputGroupButton } from "@/components/input/base/InputGroup";
 import { cn } from "@/lib/mergeClasses";
-import { useQueryClient } from "@tanstack/react-query";
 import { PencilIcon, PlusIcon, Trash2Icon, XIcon } from "lucide-react";
 import { useState } from "react";
 import { useCategoryFormDialog } from "./CategoryFormDialog";
 
 interface CategoryComboboxProps {
   id?: string;
-  value: FinancialTransactionCategory | null;
-  onValueChange: (value: FinancialTransactionCategory | null) => void;
+  value: FinancialTransactionCategory | null | undefined;
+  onValueChange: (
+    value: FinancialTransactionCategory | null | undefined,
+  ) => void;
   disabled?: boolean;
 }
 
@@ -36,30 +37,20 @@ export const CategoryCombobox = ({
   disabled,
 }: CategoryComboboxProps) => {
   const anchor = useComboboxAnchor();
-  const queryClient = useQueryClient();
   const confirm = useConfirm();
   const { openCreate, openEdit } = useCategoryFormDialog();
 
   const [search, setSearch] = useState("");
 
-  const { data: categories = [] } = useGetFinancialTransactionCategories();
+  const { data: categories } = useGetFinancialTransactionCategories();
 
-  const invalidateCategories = () =>
-    queryClient.invalidateQueries({
-      queryKey: ["financialTransactionCategories"],
-    });
-
-  const deleteMutation = useDeleteFinancialTransactionCategory({
-    onSuccess: () => {
-      invalidateCategories();
-    },
-  });
+  const deleteMutation = useDeleteFinancialTransactionCategory();
 
   const displayedItems = search.trim()
-    ? categories.filter((c) =>
+    ? categories?.content?.filter((c) =>
         c.description.toLowerCase().includes(search.trim().toLowerCase()),
       )
-    : categories;
+    : categories?.content;
 
   const handleDelete = async (
     cat: FinancialTransactionCategory,
@@ -100,7 +91,7 @@ export const CategoryCombobox = ({
   return (
     <Combobox
       id={id}
-      items={displayedItems}
+      items={displayedItems || []}
       value={value}
       onValueChange={(v) => {
         onValueChange(v);
@@ -149,7 +140,7 @@ export const CategoryCombobox = ({
           showTrigger={false}
           disabled={disabled}
         />
-        {displayedItems.length === 0 && search.trim() ? (
+        {displayedItems?.length === 0 && search.trim() ? (
           <div className="p-1">
             <Button
               type="button"
