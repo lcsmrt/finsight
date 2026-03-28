@@ -27,6 +27,8 @@ import {
   Trash2Icon,
   XIcon,
 } from "lucide-react";
+import { useDebounce } from "@/hooks/useDebounce";
+import { SearchIcon } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
 
 interface CategoriesManageDialogProps {
@@ -38,8 +40,13 @@ export const CategoriesManageDialog = ({
   open,
   onOpenChange,
 }: CategoriesManageDialogProps) => {
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search);
+
   const { data: categories, isLoading: isLoadingCategories } =
-    useGetFinancialTransactionCategories();
+    useGetFinancialTransactionCategories({
+      filter: { description: debouncedSearch.trim() || undefined },
+    });
   const confirm = useConfirm();
 
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -269,6 +276,15 @@ export const CategoriesManageDialog = ({
         </DialogHeader>
 
         <div className="flex flex-col gap-3">
+          <div className="relative">
+            <SearchIcon className="text-muted-foreground absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2" />
+            <Input
+              placeholder="Search categories..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-8"
+            />
+          </div>
           <div className="-mx-4 max-h-72 overflow-y-auto [&_table]:table-fixed">
             <Table
               tableId="categoriesManageTable"

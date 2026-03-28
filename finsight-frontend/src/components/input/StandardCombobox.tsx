@@ -8,6 +8,7 @@ import {
   ComboboxTrigger,
   useComboboxAnchor,
 } from "@/components/input/base/Combobox";
+import { Spinner } from "@/components/spinner/Spinner";
 import { cn } from "@/lib/mergeClasses";
 import { PlusIcon, XIcon } from "lucide-react";
 import * as React from "react";
@@ -30,6 +31,7 @@ export interface StandardCombobox<T extends WithId> {
   onSearchChange?: (value: string) => void;
   isItemEqualToValue?: (a: T, b: T) => boolean;
   emptyMessage?: React.ReactNode;
+  loading?: boolean;
   disabled?: boolean;
   className?: string;
   clearable?: boolean;
@@ -48,6 +50,7 @@ export function StandardCombobox<T extends WithId>({
   onSearchChange,
   isItemEqualToValue = defaultEqual,
   emptyMessage = "No results",
+  loading,
   disabled,
   className,
   clearable,
@@ -131,7 +134,11 @@ export function StandardCombobox<T extends WithId>({
           showTrigger={false}
           disabled={disabled}
         />
-        {displayedItems.length === 0 && onCreateOption && searchTerm.trim() ? (
+        {loading ? (
+          <div className="text-muted-foreground flex items-center justify-center py-4">
+            <Spinner />
+          </div>
+        ) : displayedItems.length === 0 && onCreateOption && searchTerm.trim() ? (
           <div className="p-1">
             <button
               type="button"

@@ -23,6 +23,7 @@ import {
 } from "@/components/popover/Popover";
 import { format, parseISO } from "date-fns";
 import { SlidersHorizontalIcon } from "lucide-react";
+import { useDebounce } from "@/hooks/useDebounce";
 import { maskCurrency } from "@/utils/string/masks";
 import { useState } from "react";
 import type { DateRange } from "react-day-picker";
@@ -106,8 +107,13 @@ export const TransactionFilterPopover = ({
   const [draft, setDraft] = useState<FilterDraft>(() =>
     toDraft(appliedFilters),
   );
+  const [categorySearch, setCategorySearch] = useState("");
+  const debouncedCategorySearch = useDebounce(categorySearch);
 
-  const { data: categoriesData } = useGetFinancialTransactionCategories();
+  const { data: categoriesData, isFetching: isFetchingCategories } =
+    useGetFinancialTransactionCategories({
+      filter: { description: debouncedCategorySearch.trim() || undefined },
+    });
   const categories = categoriesData?.content ?? [];
 
   const handleOpenChange = (o: boolean) => {
@@ -173,6 +179,9 @@ export const TransactionFilterPopover = ({
               itemLabel={(c) => c.description}
               placeholder="All categories"
               clearable
+              searchValue={categorySearch}
+              onSearchChange={setCategorySearch}
+              loading={isFetchingCategories || categorySearch !== debouncedCategorySearch}
             />
           </Field>
 

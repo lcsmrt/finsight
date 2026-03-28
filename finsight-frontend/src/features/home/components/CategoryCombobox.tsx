@@ -16,6 +16,8 @@ import {
   useComboboxAnchor,
 } from "@/components/input/base/Combobox";
 import { InputGroupButton } from "@/components/input/base/InputGroup";
+import { Spinner } from "@/components/spinner/Spinner";
+import { useDebounce } from "@/hooks/useDebounce";
 import { cn } from "@/lib/mergeClasses";
 import { PencilIcon, PlusIcon, Trash2Icon, XIcon } from "lucide-react";
 import { useState } from "react";
@@ -41,16 +43,15 @@ export const CategoryCombobox = ({
   const { openCreate, openEdit } = useCategoryFormDialog();
 
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search);
 
-  const { data: categories } = useGetFinancialTransactionCategories();
+  const { data: categories, isFetching } = useGetFinancialTransactionCategories({
+    filter: { description: debouncedSearch.trim() || undefined },
+  });
 
   const deleteMutation = useDeleteFinancialTransactionCategory();
 
-  const displayedItems = search.trim()
-    ? categories?.content?.filter((c) =>
-        c.description.toLowerCase().includes(search.trim().toLowerCase()),
-      )
-    : categories?.content;
+  const displayedItems = categories?.content ?? [];
 
   const handleDelete = async (
     cat: FinancialTransactionCategory,
@@ -91,7 +92,7 @@ export const CategoryCombobox = ({
   return (
     <Combobox
       id={id}
-      items={displayedItems || []}
+      items={displayedItems}
       value={value}
       onValueChange={(v) => {
         onValueChange(v);
@@ -140,7 +141,11 @@ export const CategoryCombobox = ({
           showTrigger={false}
           disabled={disabled}
         />
-        {displayedItems?.length === 0 && search.trim() ? (
+        {isFetching || search !== debouncedSearch ? (
+          <div className="text-muted-foreground flex items-center justify-center py-4">
+            <Spinner />
+          </div>
+        ) : displayedItems.length === 0 && search.trim() ? (
           <div className="p-1">
             <Button
               type="button"

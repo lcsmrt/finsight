@@ -23,7 +23,7 @@ export const Navbar = () => {
   };
 
   return (
-    <nav className="border-border fixed flex h-16 w-full items-center justify-between border-b px-4">
+    <nav className="border-border bg-background fixed z-20 flex h-16 w-full items-center justify-between border-b px-4">
       <img src={"/finsigh-icon.png"} alt="FinSight Logo" className="h-8" />
 
       <DropdownMenu>

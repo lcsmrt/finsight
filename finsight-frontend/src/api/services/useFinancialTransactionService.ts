@@ -98,6 +98,31 @@ export const useUpdateFinancialTransaction = (
   });
 };
 
+const importNubankCsv = async (file: File): Promise<{ imported: number }> => {
+  const formData = new FormData();
+  formData.append("file", file);
+  const { data } = await finsightApi.post("/financial-transaction/import", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data;
+};
+
+export const useImportNubankCsv = (
+  options?: MutationOptions<{ imported: number }, File>,
+) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: importNubankCsv,
+    ...buildMutationOptions({ successMessage: "Transações importadas com sucesso." }, {
+      ...options,
+      onSuccess: (data, variables) => {
+        queryClient.invalidateQueries({ queryKey: ["financialTransactions"] });
+        options?.onSuccess?.(data, variables);
+      },
+    }),
+  });
+};
+
 const deleteFinancialTransaction = async (id: number): Promise<void> => {
   await finsightApi.delete(`/financial-transaction/${id}`);
 };
