@@ -43,12 +43,12 @@ export function StandardMultiCombobox<T extends WithId>({
   value,
   onValueChange,
   itemLabel,
-  placeholder = "Selecione...",
-  searchPlaceholder = "Buscar...",
+  placeholder = "Select...",
+  searchPlaceholder = "Search...",
   searchValue: externalSearch,
   onSearchChange,
   isItemEqualToValue = defaultEqual,
-  emptyMessage = "Nenhum resultado",
+  emptyMessage = "No results",
   disabled,
   className,
   maxVisibleChips = 3,
@@ -65,7 +65,8 @@ export function StandardMultiCombobox<T extends WithId>({
   };
 
   const handleValueChange = (val: T[]) => {
-    if (val.length === 0 && value.length > 0 && displayedItems.length === 0) return;
+    if (val.length === 0 && value.length > 0 && displayedItems.length === 0)
+      return;
     onValueChange(val);
     if (!isSearchControlled) setInternalSearch("");
   };
@@ -73,7 +74,9 @@ export function StandardMultiCombobox<T extends WithId>({
   const displayedItems = React.useMemo(() => {
     if (isSearchControlled) return items;
     const q = searchTerm.trim().toLowerCase();
-    return q ? items.filter((item) => itemLabel(item).toLowerCase().includes(q)) : items;
+    return q
+      ? items.filter((item) => itemLabel(item).toLowerCase().includes(q))
+      : items;
   }, [items, searchTerm, isSearchControlled, itemLabel]);
 
   const visibleChips = value.slice(0, maxVisibleChips);
@@ -89,14 +92,14 @@ export function StandardMultiCombobox<T extends WithId>({
       isItemEqualToValue={isItemEqualToValue}
       multiple
     >
-      <div ref={anchor} className="min-w-0 w-full">
+      <div ref={anchor} className="w-full min-w-0">
         <ComboboxTrigger
           disabled={disabled}
           showChevron={false}
           render={
             <ComboboxChips
               className={cn(
-                "focus-within:border-input focus-within:ring-0 flex-nowrap overflow-hidden w-full",
+                "focus-within:border-input w-full flex-nowrap overflow-hidden focus-within:ring-0",
                 className,
               )}
               aria-disabled={disabled || undefined}
@@ -109,7 +112,9 @@ export function StandardMultiCombobox<T extends WithId>({
             </ComboboxChip>
           ))}
           {value.length === 0 && (
-            <span className="text-muted-foreground flex-1 text-sm">{placeholder}</span>
+            <span className="text-muted-foreground flex-1 text-sm">
+              {placeholder}
+            </span>
           )}
           {overflowCount > 0 && (
             <span className="bg-muted text-muted-foreground flex h-[calc(--spacing(5.25))] shrink-0 items-center rounded-sm px-1.5 text-xs font-medium whitespace-nowrap">

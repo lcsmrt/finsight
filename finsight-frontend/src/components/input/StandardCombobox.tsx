@@ -42,12 +42,12 @@ export function StandardCombobox<T extends WithId>({
   value,
   onValueChange,
   itemLabel,
-  placeholder = "Selecione...",
-  searchPlaceholder = "Buscar...",
+  placeholder = "Select...",
+  searchPlaceholder = "Search...",
   searchValue: externalSearch,
   onSearchChange,
   isItemEqualToValue = defaultEqual,
-  emptyMessage = "Nenhum resultado",
+  emptyMessage = "No results",
   disabled,
   className,
   clearable,
@@ -73,7 +73,9 @@ export function StandardCombobox<T extends WithId>({
   const displayedItems = React.useMemo(() => {
     if (isSearchControlled) return items;
     const q = searchTerm.trim().toLowerCase();
-    return q ? items.filter((item) => itemLabel(item).toLowerCase().includes(q)) : items;
+    return q
+      ? items.filter((item) => itemLabel(item).toLowerCase().includes(q))
+      : items;
   }, [items, searchTerm, isSearchControlled, itemLabel]);
 
   const showClear = clearable && value !== null;
@@ -110,7 +112,7 @@ export function StandardCombobox<T extends WithId>({
           <button
             type="button"
             tabIndex={-1}
-            className="absolute right-2 top-1/2 -translate-y-1/2 flex h-4 w-4 items-center justify-center rounded text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground absolute top-1/2 right-2 flex h-4 w-4 -translate-y-1/2 items-center justify-center rounded"
             onClick={(e) => {
               e.stopPropagation();
               onValueChange(null);
@@ -138,7 +140,7 @@ export function StandardCombobox<T extends WithId>({
                 onCreateOption(searchTerm);
                 if (!isSearchControlled) setInternalSearch("");
               }}
-              className="flex w-full cursor-pointer items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-primary hover:bg-accent"
+              className="text-primary hover:bg-accent flex w-full cursor-pointer items-center gap-1.5 rounded-md px-2 py-1.5 text-sm"
             >
               <PlusIcon className="h-3.5 w-3.5 shrink-0" />
               Criar &ldquo;{searchTerm}&rdquo;

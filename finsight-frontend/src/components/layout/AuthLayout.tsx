@@ -10,7 +10,7 @@ export const AuthLayout = () => {
         backgroundSize: "32px 32px",
       }}
     >
-      <div className="bg-primary/8 pointer-events-none absolute h-[600px] w-[600px] rounded-full blur-[120px]" />
+      <div className="bg-primary/8 pointer-events-none absolute h-150 w-150 rounded-full blur-[120px]" />
       <Outlet />
     </main>
   );

@@ -163,8 +163,10 @@ export const RegisterUser = () => {
       </form>
 
       <footer className="flex flex-1 flex-col items-center justify-end">
-        <p className="text-muted-foreground text-xs">© 2025 Nameless Comp</p>
-        <p className="text-muted-foreground text-xs">v0.0.0 - 20250701</p>
+        <p className="text-muted-foreground text-xs">© 2026 Nameless Comp</p>
+        <p className="text-muted-foreground text-xs">
+          v1.0.0-beta.1 - 20260327
+        </p>
       </footer>
     </>
   );
