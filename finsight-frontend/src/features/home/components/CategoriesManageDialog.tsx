@@ -17,7 +17,7 @@ import { useConfirm } from "@/components/dialog/useConfirmDialog";
 import { Input } from "@/components/input/base/Input";
 import { Table } from "@/components/table";
 import { TableContent } from "@/components/table/TableContent";
-import { formatCurrency } from "@/utils/formatters";
+import { formatCurrency } from "@/utils/string/formatters";
 import { maskCurrency } from "@/utils/string/masks";
 import { ColumnDef } from "@tanstack/react-table";
 import {
@@ -38,7 +38,8 @@ export const CategoriesManageDialog = ({
   open,
   onOpenChange,
 }: CategoriesManageDialogProps) => {
-  const { data: categories, isLoading: isLoadingCategories } = useGetFinancialTransactionCategories();
+  const { data: categories, isLoading: isLoadingCategories } =
+    useGetFinancialTransactionCategories();
   const confirm = useConfirm();
 
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -195,7 +196,7 @@ export const CategoriesManageDialog = ({
                   size="icon-sm"
                   variant="ghost"
                   type="button"
-                  className="text-muted-foreground hover:text-destructive rounded p-1"
+                  className="text-muted-foreground hover:text-destructive rounded"
                   onClick={cancelEdit}
                   disabled={isUpdatingFinancialTransactionCategory}
                 >
@@ -205,7 +206,7 @@ export const CategoriesManageDialog = ({
                   size="icon-sm"
                   variant="ghost"
                   type="button"
-                  className="text-muted-foreground hover:text-success rounded p-1"
+                  className="text-muted-foreground hover:text-success rounded"
                   onClick={saveEdit}
                   disabled={isUpdatingFinancialTransactionCategory}
                 >
@@ -215,21 +216,21 @@ export const CategoriesManageDialog = ({
             );
           } else {
             return (
-              <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-focus-within/row:opacity-100 group-hover/row:opacity-100">
+              <div className="flex items-center justify-end gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-focus-within/row:opacity-100 sm:group-hover/row:opacity-100">
                 <Button
                   type="button"
-                  size="icon"
+                  size="icon-sm"
                   variant="ghost"
-                  className="text-muted-foreground hover:bg-accent hover:text-foreground rounded p-1"
+                  className="text-muted-foreground hover:bg-accent hover:text-foreground rounded"
                   onClick={() => startEdit(row.original)}
                 >
                   <PencilIcon className="h-4 w-4" />
                 </Button>
                 <Button
                   type="button"
-                  size="icon"
+                  size="icon-sm"
                   variant="ghost"
-                  className="text-muted-foreground hover:bg-accent hover:text-destructive rounded p-1"
+                  className="text-muted-foreground hover:bg-accent hover:text-destructive rounded"
                   onClick={() => handleDelete(row.original)}
                 >
                   <Trash2Icon className="h-4 w-4" />
@@ -268,7 +269,7 @@ export const CategoriesManageDialog = ({
         </DialogHeader>
 
         <div className="flex flex-col gap-3">
-          <div className="-mx-4 max-h-72 overflow-y-auto">
+          <div className="-mx-4 max-h-72 overflow-y-auto [&_table]:table-fixed">
             <Table
               tableId="categoriesManageTable"
               data={categories?.content || []}

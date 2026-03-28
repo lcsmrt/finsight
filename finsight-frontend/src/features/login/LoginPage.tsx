@@ -66,7 +66,7 @@ export const Login = () => {
 
       <form
         id="login-form"
-        className="bg-card ring-primary/15 flex w-xl flex-col items-center gap-5 rounded-lg p-5 ring-1"
+        className="bg-card ring-primary/15 flex w-full max-w-xl flex-col items-center gap-5 rounded-lg p-5 ring-1"
         onSubmit={onSubmit}
       >
         <h1 className="text-foreground text-2xl font-bold">Login</h1>

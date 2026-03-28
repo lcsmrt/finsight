@@ -2,7 +2,7 @@ import { FinancialTransaction } from "@/api/dtos/financialTransaction";
 import { Badge } from "@/components/badge/Badge";
 import { Button } from "@/components/button/Button";
 import { cn } from "@/lib/mergeClasses";
-import { formatCurrency, formatDate } from "@/utils/formatters";
+import { formatCurrency, formatDate } from "@/utils/string/formatters";
 import { ColumnDef } from "@tanstack/react-table";
 import { PencilIcon, Trash2Icon } from "lucide-react";
 
@@ -66,7 +66,7 @@ export const buildTransactionColumns = ({
     id: "actions",
     header: "",
     cell: ({ row }) => (
-      <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-focus-within/row:opacity-100 group-hover/row:opacity-100">
+      <div className="flex items-center justify-end gap-1 transition-opacity opacity-100 sm:opacity-0 sm:group-hover/row:opacity-100 sm:group-focus-within/row:opacity-100">
         <Button
           type="button"
           size="icon"

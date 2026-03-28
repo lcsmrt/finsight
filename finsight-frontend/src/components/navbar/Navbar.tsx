@@ -10,7 +10,7 @@ import { clearStorage } from "@/lib/storage";
 import { useNavigate } from "react-router-dom";
 import { PATHS } from "@/app/routing/paths";
 import { useAuth } from "@/app/providers/AuthProvider";
-import { getFirstAndLastInitials } from "@/utils/formatters";
+import { getFirstAndLastInitials } from "@/utils/string/formatters";
 
 export const Navbar = () => {
   const navigate = useNavigate();

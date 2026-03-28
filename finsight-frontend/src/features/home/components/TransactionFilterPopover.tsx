@@ -138,7 +138,7 @@ export const TransactionFilterPopover = ({
           </span>
         )}
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-80">
+      <PopoverContent align="start" className="w-[min(20rem,calc(100vw-1rem))]">
         <div className="flex flex-col gap-4 p-1">
           <Field>
             <FieldLabel>Type</FieldLabel>
@@ -186,7 +186,7 @@ export const TransactionFilterPopover = ({
 
           <Field>
             <FieldLabel>Amount</FieldLabel>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <Input
                 type="text"
                 inputMode="numeric"
@@ -196,7 +196,7 @@ export const TransactionFilterPopover = ({
                   setDraft((d) => ({ ...d, amountMin: maskCurrency(e.target.value) }))
                 }
               />
-              <span className="text-muted-foreground shrink-0">–</span>
+              <span className="text-muted-foreground hidden shrink-0 sm:block">–</span>
               <Input
                 type="text"
                 inputMode="numeric"

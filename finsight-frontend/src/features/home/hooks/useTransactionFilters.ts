@@ -1,6 +1,9 @@
-import { FinancialTransaction, FinancialTransactionSortBy } from "@/api/dtos/financialTransaction";
+import {
+  FinancialTransaction,
+  FinancialTransactionSortBy,
+} from "@/api/dtos/financialTransaction";
 import { Sorting } from "@/components/table/components/TableHeader";
-import { formatCurrency, formatDate } from "@/utils/formatters";
+import { formatCurrency, formatDate } from "@/utils/string/formatters";
 import { useEffect, useMemo, useState } from "react";
 import { AppliedFilters } from "../components/TransactionFilterPopover";
 
@@ -31,7 +34,9 @@ export const useTransactionFilters = () => {
 
   const queryParams = useMemo(() => {
     const activeSort = sorting[0];
-    const sortBy = activeSort ? SORTABLE_FIELDS[activeSort.by as string] : undefined;
+    const sortBy = activeSort
+      ? SORTABLE_FIELDS[activeSort.by as string]
+      : undefined;
     return {
       page,
       size: pageSize,
@@ -39,7 +44,9 @@ export const useTransactionFilters = () => {
         ...appliedFilters.filter,
         ...(debouncedDescription ? { description: debouncedDescription } : {}),
       },
-      ...(sortBy ? { sort: { by: sortBy, direction: activeSort.direction } } : {}),
+      ...(sortBy
+        ? { sort: { by: sortBy, direction: activeSort.direction } }
+        : {}),
     };
   }, [page, pageSize, appliedFilters.filter, debouncedDescription, sorting]);
 
@@ -52,7 +59,10 @@ export const useTransactionFilters = () => {
         key: "type",
         label: filter.type === "CREDIT" ? "Credit" : "Debit",
         onRemove: () => {
-          setAppliedFilters((p) => ({ ...p, filter: { ...p.filter, type: undefined } }));
+          setAppliedFilters((p) => ({
+            ...p,
+            filter: { ...p.filter, type: undefined },
+          }));
           setPage(0);
         },
       });
@@ -71,25 +81,41 @@ export const useTransactionFilters = () => {
       });
     }
     if (filter.startDateFrom || filter.startDateTo) {
-      const from = filter.startDateFrom ? formatDate(filter.startDateFrom, "dd/MM/yyyy") : null;
-      const to = filter.startDateTo ? formatDate(filter.startDateTo, "dd/MM/yyyy") : null;
-      const label = from && to ? `${from} – ${to}` : from ? `From ${from}` : `Until ${to!}`;
+      const from = filter.startDateFrom
+        ? formatDate(filter.startDateFrom, "dd/MM/yyyy")
+        : null;
+      const to = filter.startDateTo
+        ? formatDate(filter.startDateTo, "dd/MM/yyyy")
+        : null;
+      const label =
+        from && to ? `${from} – ${to}` : from ? `From ${from}` : `Until ${to!}`;
       result.push({
         key: "date",
         label,
         onRemove: () => {
           setAppliedFilters((p) => ({
             ...p,
-            filter: { ...p.filter, startDateFrom: undefined, startDateTo: undefined },
+            filter: {
+              ...p.filter,
+              startDateFrom: undefined,
+              startDateTo: undefined,
+            },
           }));
           setPage(0);
         },
       });
     }
     if (filter.amountMin != null || filter.amountMax != null) {
-      const min = filter.amountMin != null ? formatCurrency(filter.amountMin, "BRL") : null;
-      const max = filter.amountMax != null ? formatCurrency(filter.amountMax, "BRL") : null;
-      const label = min && max ? `${min} – ${max}` : min ? `≥ ${min}` : `≤ ${max!}`;
+      const min =
+        filter.amountMin != null
+          ? formatCurrency(filter.amountMin, "BRL")
+          : null;
+      const max =
+        filter.amountMax != null
+          ? formatCurrency(filter.amountMax, "BRL")
+          : null;
+      const label =
+        min && max ? `${min} – ${max}` : min ? `≥ ${min}` : `≤ ${max!}`;
       result.push({
         key: "amount",
         label,

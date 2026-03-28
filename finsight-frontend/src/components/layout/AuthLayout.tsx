@@ -3,7 +3,7 @@ import { Outlet } from "react-router-dom";
 export const AuthLayout = () => {
   return (
     <main
-      className="bg-background relative flex h-screen flex-col items-center justify-center gap-5 overflow-hidden p-5"
+      className="bg-background relative flex h-dvh flex-col items-center justify-center gap-5 overflow-hidden p-5"
       style={{
         backgroundImage:
           "radial-gradient(circle, hsl(var(--border)) 1px, transparent 1px)",

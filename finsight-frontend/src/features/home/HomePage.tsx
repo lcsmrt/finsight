@@ -97,29 +97,29 @@ export const Home = () => {
         title="Transactions"
         subtitle={`${financialTransactionsData?.totalElements ?? 0} transactions`}
       >
-        <div className="flex gap-4">
+        <div className="flex gap-2">
           <Button
             variant="outline"
             onClick={() => setIsCategoriesDialogOpen(true)}
           >
             <TagIcon className="h-4 w-4" />
-            Manage Categories
+            <span className="hidden sm:inline">Manage Categories</span>
           </Button>
           <Button onClick={handleOpenCreate}>
             <PlusIcon className="h-4 w-4" />
-            New Transaction
+            <span className="hidden sm:inline">New Transaction</span>
           </Button>
         </div>
       </SectionHeader>
 
       <div className="flex flex-col gap-2 px-2">
         <div className="flex gap-2">
-          <InputGroup className="max-w-xs">
+          <InputGroup className="flex-1">
             <InputGroupInput
               placeholder="Search transactions..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-64 pl-9"
+              className="w-full pl-9"
             />
             <InputGroupAddon>
               <SearchIcon className="text-muted-foreground pointer-events-none h-4 w-4" />

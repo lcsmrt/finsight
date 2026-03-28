@@ -58,7 +58,7 @@ export const TablePagination = ({
     >
       {onPageSizeChange && (
         <div className="flex w-full items-center gap-2 text-sm">
-          Lines per page:
+          <span className="hidden sm:inline">Lines per page:</span>
           <Select
             value={String(size)}
             onValueChange={(value) => onPageSizeChange(Number(value))}
@@ -82,7 +82,7 @@ export const TablePagination = ({
       )}
 
       <div className="flex w-full items-center justify-end gap-4">
-        <span className="text-muted-foreground text-sm">
+        <span className="text-muted-foreground hidden text-sm sm:block">
           {start} – {end} of {totalElements}
         </span>
 
@@ -103,7 +103,7 @@ export const TablePagination = ({
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="text-muted-foreground text-sm">
+          <span className="text-muted-foreground text-xs whitespace-nowrap sm:text-sm">
             Page {page + 1} of {totalPages || 1}
           </span>
           <Button

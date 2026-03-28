@@ -1,11 +1,13 @@
 {
-  "name": "expenses-manager-front",
+  "name": "finsight-frontend",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:dev": "tsc && vite build --mode development",
+    "build:prod": "tsc && vite build --mode production",
     "lint": "eslint .",
     "preview": "vite preview",
     "prepare": "husky",
