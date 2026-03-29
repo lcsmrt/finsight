@@ -5,7 +5,7 @@ import {
 import { Sorting } from "@/components/table/components/TableHeader";
 import { formatCurrency, formatDate } from "@/utils/string/formatters";
 import { useEffect, useMemo, useState } from "react";
-import { AppliedFilters } from "../components/TransactionFilterPopover";
+import { AppliedFilters } from "../components/transactions/TransactionFilterPopover";
 
 const SORTABLE_FIELDS: Record<string, FinancialTransactionSortBy> = {
   startDate: "startDate",

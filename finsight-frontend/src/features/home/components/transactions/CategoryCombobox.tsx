@@ -1,4 +1,5 @@
 import { FinancialTransactionCategory } from "@/api/dtos";
+import { FinancialTransactionType } from "@/api/dtos/financialTransaction";
 import {
   useDeleteFinancialTransactionCategory,
   useGetFinancialTransactionCategories,
@@ -29,14 +30,20 @@ interface CategoryComboboxProps {
   onValueChange: (
     value: FinancialTransactionCategory | null | undefined,
   ) => void;
+  type?: FinancialTransactionType;
   disabled?: boolean;
+  defaultOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export const CategoryCombobox = ({
   id,
   value,
   onValueChange,
+  type,
   disabled,
+  defaultOpen,
+  onOpenChange,
 }: CategoryComboboxProps) => {
   const anchor = useComboboxAnchor();
   const confirm = useConfirm();
@@ -46,7 +53,7 @@ export const CategoryCombobox = ({
   const debouncedSearch = useDebounce(search);
 
   const { data: categories, isFetching } = useGetFinancialTransactionCategories({
-    filter: { description: debouncedSearch.trim() || undefined },
+    filter: { description: debouncedSearch.trim() || undefined, type },
   });
 
   const deleteMutation = useDeleteFinancialTransactionCategory();
@@ -73,7 +80,7 @@ export const CategoryCombobox = ({
   };
 
   const handleOpenCreate = async () => {
-    const created = await openCreate(search.trim());
+    const created = await openCreate(search.trim(), type);
     if (created) {
       onValueChange(created);
       setSearch("");
@@ -99,6 +106,8 @@ export const CategoryCombobox = ({
         setSearch("");
       }}
       itemToStringLabel={(cat) => cat.description}
+      defaultOpen={defaultOpen}
+      onOpenChange={onOpenChange}
     >
       <div ref={anchor} className="relative">
         <ComboboxTrigger

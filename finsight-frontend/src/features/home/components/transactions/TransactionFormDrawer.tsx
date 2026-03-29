@@ -39,6 +39,7 @@ const transactionFormSchema = z.object({
   category: z
     .object({
       id: z.number(),
+      type: z.enum(["DEBIT", "CREDIT"]),
       description: z.string(),
       spendingLimit: z.number().nullish(),
     })
@@ -53,6 +54,7 @@ interface TransactionFormDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   transaction?: FinancialTransaction;
+  mode?: "create" | "edit" | "duplicate";
 }
 
 function buildDefaultValues(
@@ -86,8 +88,9 @@ export const TransactionFormDrawer = ({
   open,
   onOpenChange,
   transaction,
+  mode,
 }: TransactionFormDrawerProps) => {
-  const isEditing = !!transaction;
+  const isEditing = !!transaction && mode === "edit";
 
   const {
     register,
@@ -158,7 +161,10 @@ export const TransactionFormDrawer = ({
               <FieldLabel htmlFor="transaction-type">Type</FieldLabel>
               <TransactionTypeToggle
                 value={watch("type")}
-                onChange={(v) => setValue("type", v)}
+                onChange={(v) => {
+                  setValue("type", v);
+                  setValue("category", null);
+                }}
                 disabled={isPending}
               />
             </Field>
@@ -206,6 +212,7 @@ export const TransactionFormDrawer = ({
                 id="transaction-category"
                 value={watch("category") ?? null}
                 onValueChange={(v) => setValue("category", v)}
+                type={watch("type")}
                 disabled={isPending}
               />
             </Field>

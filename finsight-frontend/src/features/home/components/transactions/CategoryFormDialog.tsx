@@ -1,4 +1,5 @@
 import { FinancialTransactionCategory } from "@/api/dtos";
+import { FinancialTransactionType } from "@/api/dtos/financialTransaction";
 import {
   useCreateFinancialTransactionCategory,
   useUpdateFinancialTransactionCategory,
@@ -20,7 +21,12 @@ import {
 import { Input } from "@/components/input/base/Input";
 import { maskCurrency } from "@/utils/string/masks";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { SaveIcon, XIcon } from "lucide-react";
+import {
+  BanknoteArrowDownIcon,
+  BanknoteArrowUpIcon,
+  SaveIcon,
+  XIcon,
+} from "lucide-react";
 import {
   createContext,
   useContext,
@@ -33,6 +39,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 const categoryFormSchema = z.object({
+  type: z.enum(["DEBIT", "CREDIT"]),
   description: z.string().min(1, "Name is required"),
   spendingLimit: z.string(),
 });
@@ -44,15 +51,18 @@ interface CategoryFormDialogProps {
   onOpenChange: (open: boolean) => void;
   category?: FinancialTransactionCategory | null;
   defaultDescription?: string;
+  defaultType?: FinancialTransactionType;
   onSuccess?: (category: FinancialTransactionCategory) => void;
 }
 
 function buildDefaultValues(
   category?: FinancialTransactionCategory | null,
   defaultDescription?: string,
+  defaultType?: FinancialTransactionType,
 ): CategoryFormValues {
   if (category) {
     return {
+      type: category.type,
       description: category.description,
       spendingLimit:
         category.spendingLimit != null
@@ -60,7 +70,11 @@ function buildDefaultValues(
           : "",
     };
   }
-  return { description: defaultDescription ?? "", spendingLimit: "" };
+  return {
+    type: defaultType ?? "DEBIT",
+    description: defaultDescription ?? "",
+    spendingLimit: "",
+  };
 }
 
 function parseLimit(masked: string): number | undefined {
@@ -73,6 +87,7 @@ export const CategoryFormDialog = ({
   onOpenChange,
   category,
   defaultDescription,
+  defaultType,
   onSuccess,
 }: CategoryFormDialogProps) => {
   const isEditing = !!category;
@@ -80,16 +95,21 @@ export const CategoryFormDialog = ({
   const {
     register,
     handleSubmit,
+    watch,
     reset,
     formState: { errors },
   } = useForm<CategoryFormValues>({
     resolver: zodResolver(categoryFormSchema),
-    defaultValues: buildDefaultValues(category, defaultDescription),
+    defaultValues: buildDefaultValues(
+      category,
+      defaultDescription,
+      defaultType,
+    ),
   });
 
   useEffect(() => {
-    reset(buildDefaultValues(category, defaultDescription));
-  }, [category, defaultDescription, open, reset]);
+    reset(buildDefaultValues(category, defaultDescription, defaultType));
+  }, [category, defaultDescription, defaultType, open, reset]);
 
   const {
     mutate: createFinancialTransactionCategory,
@@ -116,11 +136,13 @@ export const CategoryFormDialog = ({
     isUpdatingFinancialTransactionCategory;
 
   const onSubmit = (values: CategoryFormValues) => {
-    const spendingLimit = parseLimit(values.spendingLimit);
+    const spendingLimit =
+      values.type === "DEBIT" ? parseLimit(values.spendingLimit) : undefined;
     if (isEditing) {
       updateFinancialTransactionCategory({
         params: { id: category.id },
         body: {
+          type: values.type,
           description: values.description,
           spendingLimit,
         },
@@ -128,6 +150,7 @@ export const CategoryFormDialog = ({
     } else {
       createFinancialTransactionCategory({
         body: {
+          type: values.type,
           description: values.description,
           spendingLimit,
         },
@@ -135,13 +158,29 @@ export const CategoryFormDialog = ({
     }
   };
 
+  const type = watch("type");
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
+        <DialogHeader className="flex flex-row items-start justify-between">
           <DialogTitle>
             {isEditing ? "Edit Category" : "New Category"}
           </DialogTitle>
+
+          <div className="flex items-center gap-2 pr-8 text-sm">
+            {type === "DEBIT" ? (
+              <>
+                <BanknoteArrowDownIcon className="text-destructive h-4 w-4" />
+                <span className="text-destructive font-medium">Debit</span>
+              </>
+            ) : (
+              <>
+                <BanknoteArrowUpIcon className="text-success h-4 w-4" />
+                <span className="text-success font-medium">Credit</span>
+              </>
+            )}
+          </div>
         </DialogHeader>
 
         <FieldGroup>
@@ -157,31 +196,33 @@ export const CategoryFormDialog = ({
             <FieldError errors={[errors.description]} />
           </Field>
 
-          <Field>
-            <FieldLabel htmlFor="category-spending-limit">
-              Spending Limit{" "}
-              <span className="text-muted-foreground font-normal">
-                (optional)
-              </span>
-            </FieldLabel>
-            {(() => {
-              const { onChange, ...rest } = register("spendingLimit");
-              return (
-                <Input
-                  id="category-spending-limit"
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="R$ 0,00"
-                  disabled={isPending}
-                  {...rest}
-                  onChange={(e) => {
-                    e.target.value = maskCurrency(e.target.value);
-                    onChange(e);
-                  }}
-                />
-              );
-            })()}
-          </Field>
+          {type === "DEBIT" && (
+            <Field>
+              <FieldLabel htmlFor="category-spending-limit">
+                Spending Limit{" "}
+                <span className="text-muted-foreground font-normal">
+                  (optional)
+                </span>
+              </FieldLabel>
+              {(() => {
+                const { onChange, ...rest } = register("spendingLimit");
+                return (
+                  <Input
+                    id="category-spending-limit"
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="R$ 0,00"
+                    disabled={isPending}
+                    {...rest}
+                    onChange={(e) => {
+                      e.target.value = maskCurrency(e.target.value);
+                      onChange(e);
+                    }}
+                  />
+                );
+              })()}
+            </Field>
+          )}
         </FieldGroup>
 
         <DialogFooter>
@@ -213,6 +254,7 @@ export const CategoryFormDialog = ({
 interface CategoryFormDialogContextValue {
   openCreate: (
     defaultDescription?: string,
+    defaultType?: FinancialTransactionType,
   ) => Promise<FinancialTransactionCategory | null>;
   openEdit: (
     category: FinancialTransactionCategory,
@@ -240,13 +282,19 @@ export const CategoryFormDialogProvider = ({
   const [editingCategory, setEditingCategory] =
     useState<FinancialTransactionCategory | null>(null);
   const [createDefaultDesc, setCreateDefaultDesc] = useState("");
+  const [createDefaultType, setCreateDefaultType] =
+    useState<FinancialTransactionType>("DEBIT");
   const resolverRef = useRef<
     ((cat: FinancialTransactionCategory | null) => void) | null
   >(null);
 
-  const openCreate = (defaultDescription?: string) => {
+  const openCreate = (
+    defaultDescription?: string,
+    defaultType?: FinancialTransactionType,
+  ) => {
     setEditingCategory(null);
     setCreateDefaultDesc(defaultDescription ?? "");
+    setCreateDefaultType(defaultType ?? "DEBIT");
     setOpen(true);
     return new Promise<FinancialTransactionCategory | null>((resolve) => {
       resolverRef.current = resolve;
@@ -281,6 +329,7 @@ export const CategoryFormDialogProvider = ({
         onOpenChange={(isOpen) => !isOpen && handleClose()}
         category={editingCategory}
         defaultDescription={createDefaultDesc}
+        defaultType={createDefaultType}
         onSuccess={handleSuccess}
       />
     </CategoryFormDialogContext.Provider>

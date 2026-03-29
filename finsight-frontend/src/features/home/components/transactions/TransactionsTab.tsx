@@ -3,6 +3,7 @@ import {
   useDeleteFinancialTransaction,
   useGetFinancialTransactions,
   useImportNubankCsv,
+  useUpdateFinancialTransaction,
 } from "@/api/services/useFinancialTransactionService";
 import { Badge } from "@/components/badge/Badge";
 import { Button } from "@/components/button/Button";
@@ -13,13 +14,13 @@ import {
   InputGroupInput,
 } from "@/components/input/base/InputGroup";
 import { Table, TableContent, TablePagination } from "@/components/table";
-import { UploadIcon, PlusIcon, SearchIcon, TagIcon, XIcon } from "lucide-react";
+import { PlusIcon, SearchIcon, TagIcon, UploadIcon, XIcon } from "lucide-react";
 import { useRef, useState } from "react";
-import { useTransactionFilters } from "../hooks/useTransactionFilters";
+import { useTransactionFilters } from "../../hooks/useTransactionFilters";
 import { CategoriesManageDialog } from "./CategoriesManageDialog";
 import { TransactionFilterPopover } from "./TransactionFilterPopover";
 import { TransactionFormDrawer } from "./TransactionFormDrawer";
-import { buildTransactionColumns } from "./transactionColumns";
+import { buildTransactionColumns, InlineSaveBody } from "./transactionColumns";
 
 export const TransactionsTab = () => {
   const {
@@ -40,6 +41,7 @@ export const TransactionsTab = () => {
     useGetFinancialTransactions(queryParams);
   const { mutate: deleteTransaction, isPending: isDeleting } =
     useDeleteFinancialTransaction();
+  const { mutate: updateTransaction } = useUpdateFinancialTransaction();
 
   const confirm = useConfirm();
 
@@ -47,6 +49,7 @@ export const TransactionsTab = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [mode, setMode] = useState<"create" | "edit" | "duplicate">("create");
   const [editingTransaction, setEditingTransaction] = useState<
     FinancialTransaction | undefined
   >();
@@ -75,11 +78,19 @@ export const TransactionsTab = () => {
 
   const handleOpenCreate = () => {
     setEditingTransaction(undefined);
+    setMode("create");
     setIsDrawerOpen(true);
   };
 
   const handleEdit = (transaction: FinancialTransaction) => {
     setEditingTransaction(transaction);
+    setMode("edit");
+    setIsDrawerOpen(true);
+  };
+
+  const handleDuplicate = (transaction: FinancialTransaction) => {
+    setEditingTransaction(transaction);
+    setMode("duplicate");
     setIsDrawerOpen(true);
   };
 
@@ -98,9 +109,15 @@ export const TransactionsTab = () => {
     }
   };
 
+  const handleInlineSave = (id: number, body: InlineSaveBody) => {
+    updateTransaction({ params: { id }, body });
+  };
+
   const columns = buildTransactionColumns({
+    onDuplicate: handleDuplicate,
     onEdit: handleEdit,
     onDelete: handleDelete,
+    onSave: handleInlineSave,
     isDeleting,
   });
 
@@ -210,6 +227,7 @@ export const TransactionsTab = () => {
         open={isDrawerOpen}
         onOpenChange={setIsDrawerOpen}
         transaction={editingTransaction}
+        mode={mode}
       />
 
       <CategoriesManageDialog

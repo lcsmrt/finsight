@@ -1,7 +1,7 @@
 import { cn } from "@/lib/mergeClasses";
 import { useState } from "react";
-import { OverviewTab } from "./components/OverviewTab";
-import { TransactionsTab } from "./components/TransactionsTab";
+import { OverviewTab } from "./components/overview/OverviewTab";
+import { TransactionsTab } from "./components/transactions/TransactionsTab";
 import { Button } from "@/components/button/Button";
 
 type Tab = "overview" | "transactions";
@@ -15,7 +15,7 @@ export const Home = () => {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
 
   return (
-    <section className="flex flex-col gap-6 pt-4">
+    <div className="flex flex-col gap-6 py-4">
       <div className="flex border-b px-4">
         {tabs.map((tab) => (
           <Button
@@ -35,6 +35,6 @@ export const Home = () => {
       </div>
 
       {activeTab === "overview" ? <OverviewTab /> : <TransactionsTab />}
-    </section>
+    </div>
   );
 };

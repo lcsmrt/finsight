@@ -1,4 +1,5 @@
 import { FinancialTransactionCategory } from "@/api/dtos";
+import { FinancialTransactionType } from "@/api/dtos/financialTransaction";
 import {
   useCreateFinancialTransactionCategory,
   useDeleteFinancialTransactionCategory,
@@ -30,6 +31,7 @@ import {
 import { useDebounce } from "@/hooks/useDebounce";
 import { SearchIcon } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
+import { TransactionTypeToggle } from "./TransactionTypeToggle";
 
 interface CategoriesManageDialogProps {
   open: boolean;
@@ -52,13 +54,14 @@ export const CategoriesManageDialog = ({
   const [editingId, setEditingId] = useState<number | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [newDraft, setNewDraft] = useState({
+    type: "DEBIT" as FinancialTransactionType,
     description: "",
     spendingLimit: "",
   });
 
   const descInputRef = useRef<HTMLInputElement>(null);
   const limitInputRef = useRef<HTMLInputElement>(null);
-  const editInitial = useRef({ description: "", spendingLimit: "" });
+  const editInitial = useRef({ type: "DEBIT" as FinancialTransactionType, description: "", spendingLimit: "" });
 
   const {
     mutate: updateFinancialTransactionCategory,
@@ -73,7 +76,7 @@ export const CategoriesManageDialog = ({
   } = useCreateFinancialTransactionCategory({
     onSuccess: () => {
       setIsAddingNew(false);
-      setNewDraft({ description: "", spendingLimit: "" });
+      setNewDraft({ type: "DEBIT", description: "", spendingLimit: "" });
     },
   });
 
@@ -87,6 +90,7 @@ export const CategoriesManageDialog = ({
 
   const startEdit = useCallback((cat: FinancialTransactionCategory) => {
     editInitial.current = {
+      type: cat.type,
       description: cat.description,
       spendingLimit:
         cat.spendingLimit != null
@@ -103,8 +107,9 @@ export const CategoriesManageDialog = ({
     updateFinancialTransactionCategory({
       params: { id: editingId },
       body: {
+        type: editInitial.current.type,
         description: descInputRef.current?.value ?? "",
-        spendingLimit: parseLimit(limitInputRef.current?.value ?? ""),
+        spendingLimit: editInitial.current.type === "DEBIT" ? parseLimit(limitInputRef.current?.value ?? "") : undefined,
       },
     });
   }, [editingId, updateFinancialTransactionCategory]);
@@ -130,14 +135,28 @@ export const CategoriesManageDialog = ({
     if (!newDraft.description.trim()) return;
     createFinancialTransactionCategory({
       body: {
+        type: newDraft.type,
         description: newDraft.description.trim(),
-        spendingLimit: parseLimit(newDraft.spendingLimit),
+        spendingLimit: newDraft.type === "DEBIT" ? parseLimit(newDraft.spendingLimit) : undefined,
       },
     });
   };
 
   const columns = useMemo<ColumnDef<FinancialTransactionCategory>[]>(
     () => [
+      {
+        id: "type",
+        accessorKey: "type",
+        header: "Type",
+        cell: ({ row }) => {
+          const type = editingId === row.original.id ? editInitial.current.type : row.original.type;
+          return type === "DEBIT" ? (
+            <span className="text-destructive text-xs font-medium">Debit</span>
+          ) : (
+            <span className="text-success text-xs font-medium">Credit</span>
+          );
+        },
+      },
       {
         id: "description",
         accessorKey: "description",
@@ -166,6 +185,9 @@ export const CategoriesManageDialog = ({
         header: "Spending Limit",
         cell: ({ row }) => {
           if (editingId === row.original.id) {
+            if (editInitial.current.type === "CREDIT") {
+              return <span className="text-muted-foreground">—</span>;
+            }
             return (
               <Input
                 ref={limitInputRef}
@@ -296,57 +318,65 @@ export const CategoriesManageDialog = ({
           </div>
 
           {isAddingNew ? (
-            <div className="flex items-center gap-2 rounded-md border px-3 py-2">
-              <Input
-                placeholder="Category name"
-                value={newDraft.description}
-                onChange={(e) =>
-                  setNewDraft((d) => ({ ...d, description: e.target.value }))
-                }
-                className="h-7 flex-1"
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") saveNew();
-                  if (e.key === "Escape") setIsAddingNew(false);
-                }}
+            <div className="flex flex-col gap-2 rounded-md border px-3 py-2">
+              <TransactionTypeToggle
+                value={newDraft.type}
+                onChange={(v) => setNewDraft((d) => ({ ...d, type: v, spendingLimit: "" }))}
               />
-              <Input
-                type="text"
-                inputMode="numeric"
-                placeholder="R$ 0,00"
-                value={newDraft.spendingLimit}
-                onChange={(e) => {
-                  e.target.value = maskCurrency(e.target.value);
-                  setNewDraft((d) => ({ ...d, spendingLimit: e.target.value }));
-                }}
-                className="h-7 w-32"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") saveNew();
-                  if (e.key === "Escape") setIsAddingNew(false);
-                }}
-              />
-              <Button
-                size="icon-sm"
-                variant="ghost"
-                type="button"
-                className="text-muted-foreground hover:text-destructive rounded p-1"
-                onClick={() => setIsAddingNew(false)}
-              >
-                <XIcon className="h-3.5 w-3.5" />
-              </Button>
-              <Button
-                size="icon-sm"
-                variant="ghost"
-                type="button"
-                className="text-muted-foreground hover:text-success rounded p-1"
-                onClick={saveNew}
-                disabled={
-                  isCreatingFinancialTransactionCategory ||
-                  !newDraft.description.trim()
-                }
-              >
-                <CheckIcon className="h-3.5 w-3.5" />
-              </Button>
+              <div className="flex items-center gap-2">
+                <Input
+                  placeholder="Category name"
+                  value={newDraft.description}
+                  onChange={(e) =>
+                    setNewDraft((d) => ({ ...d, description: e.target.value }))
+                  }
+                  className="h-7 flex-1"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveNew();
+                    if (e.key === "Escape") setIsAddingNew(false);
+                  }}
+                />
+                {newDraft.type === "DEBIT" && (
+                  <Input
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="R$ 0,00"
+                    value={newDraft.spendingLimit}
+                    onChange={(e) => {
+                      e.target.value = maskCurrency(e.target.value);
+                      setNewDraft((d) => ({ ...d, spendingLimit: e.target.value }));
+                    }}
+                    className="h-7 w-32"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") saveNew();
+                      if (e.key === "Escape") setIsAddingNew(false);
+                    }}
+                  />
+                )}
+                <Button
+                  size="icon-sm"
+                  variant="ghost"
+                  type="button"
+                  className="text-muted-foreground hover:text-destructive rounded p-1"
+                  onClick={() => setIsAddingNew(false)}
+                >
+                  <XIcon className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  size="icon-sm"
+                  variant="ghost"
+                  type="button"
+                  className="text-muted-foreground hover:text-success rounded p-1"
+                  onClick={saveNew}
+                  disabled={
+                    isCreatingFinancialTransactionCategory ||
+                    !newDraft.description.trim()
+                  }
+                >
+                  <CheckIcon className="h-3.5 w-3.5" />
+                </Button>
+              </div>
             </div>
           ) : (
             <Button

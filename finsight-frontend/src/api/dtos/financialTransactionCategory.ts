@@ -1,5 +1,8 @@
+import type { FinancialTransactionType } from "./financialTransaction";
+
 export type FinancialTransactionCategory = {
   id: number;
+  type: FinancialTransactionType;
   description: string;
   spendingLimit?: number | null;
 };
@@ -10,10 +13,12 @@ export type FinancialTransactionCategorySortBy =
 
 export interface PagedFinancialTransactionCategoriesFilter {
   description?: string;
+  type?: FinancialTransactionType;
 }
 
 export type CreateFinancialTransactionCategoryRequest = {
   body: {
+    type: FinancialTransactionType;
     description: string;
     spendingLimit?: number;
   };

@@ -4,9 +4,11 @@ import { DateRangePicker } from "@/components/input/DatePicker";
 import { Skeleton } from "@/components/skeleton/Skeleton";
 import { cn } from "@/lib/mergeClasses";
 import {
+  differenceInCalendarMonths,
   endOfMonth,
   endOfYear,
   format,
+  parseISO,
   startOfMonth,
   startOfYear,
   subMonths,
@@ -68,6 +70,20 @@ export const OverviewTab = () => {
 
   const { data, isLoading } = useGetDashboardSummary(filter);
 
+  const monthCount = useMemo(() => {
+    const start = parseISO(filter.startDate);
+    const end = parseISO(filter.endDate);
+    return differenceInCalendarMonths(end, start) + 1;
+  }, [filter]);
+
+  const scaledCategoryBreakdown = useMemo(() => {
+    if (!data) return [];
+    return data.categoryBreakdown.map((entry) => ({
+      ...entry,
+      limit: entry.limit != null ? entry.limit * monthCount : undefined,
+    }));
+  }, [data, monthCount]);
+
   const handlePeriodClick = (p: Period) => {
     setPeriod(p);
     setCustomRange(undefined);
@@ -100,7 +116,7 @@ export const OverviewTab = () => {
             <Skeleton className="h-28" />
             <Skeleton className="h-28" />
           </div>
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className="flex flex-col gap-6">
             <Skeleton className="h-80" />
             <Skeleton className="h-80" />
           </div>
@@ -108,8 +124,8 @@ export const OverviewTab = () => {
       ) : (
         <>
           <SummaryCards data={data} />
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <CategorySpendingChart data={data.categoryBreakdown} />
+          <div className="flex flex-col gap-6">
+            <CategorySpendingChart data={scaledCategoryBreakdown} />
             <MonthlyTrendChart data={data.monthlyTrend} />
           </div>
         </>
