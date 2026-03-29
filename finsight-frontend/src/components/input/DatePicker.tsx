@@ -28,8 +28,8 @@ export interface DatePickerProps {
 }
 
 /**
- * Seletor de data única com entrada de texto editável e calendário popover.
- * Suporta digitação no formato dd/mm/aaaa ou seleção pelo calendário.
+ * Single date picker with an editable text input and a popover calendar.
+ * Supports typing in dd/mm/yyyy format or selecting from the calendar.
  */
 export const DatePicker = ({
   value,
@@ -75,7 +75,7 @@ export const DatePicker = ({
           <InputGroupButton
             size="icon-xs"
             disabled={disabled}
-            aria-label="Abrir calendário"
+            aria-label="Open calendar"
             onClick={() => !disabled && setOpen((prev) => !prev)}
           >
             <CalendarIcon />
@@ -98,7 +98,7 @@ export const DatePicker = ({
         {value && !disabled && (
           <InputGroupAddon align="inline-end">
             <InputGroupButton
-              aria-label="Limpar data"
+              aria-label="Clear date"
               onClick={() => {
                 onChange?.(undefined);
                 setInputValue("");
@@ -150,8 +150,8 @@ function formatRange(range?: DateRange): string {
 }
 
 /**
- * Seletor de intervalo de datas com calendário de dois meses e navegação por ano/mês via dropdown.
- * Fecha automaticamente após a seleção de ambas as datas.
+ * Date range picker with a two-month calendar and year/month navigation via dropdown.
+ * Closes automatically after both dates are selected.
  */
 export const DateRangePicker = ({
   value,
@@ -186,7 +186,7 @@ export const DateRangePicker = ({
           <InputGroupButton
             size="icon-xs"
             disabled={disabled}
-            aria-label="Abrir calendário"
+            aria-label="Open calendar"
             onClick={() => !disabled && setOpen((prev) => !prev)}
           >
             <CalendarIcon />
@@ -205,7 +205,7 @@ export const DateRangePicker = ({
         {hasValue && !disabled && (
           <InputGroupAddon align="inline-end">
             <InputGroupButton
-              aria-label="Limpar intervalo"
+              aria-label="Clear range"
               onPointerDown={(e) => e.stopPropagation()}
               onClick={(e) => {
                 e.stopPropagation();

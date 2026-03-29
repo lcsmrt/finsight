@@ -171,6 +171,42 @@ Moving a feature sub-component to `src/components/` follows the same rule as alw
 
 ---
 
+## Multi-Mode Overlay State
+
+When a Sheet/Dialog/Drawer can be opened in multiple modes (create, edit, duplicate, view…), use a **discriminated union** instead of separate `useState` calls.
+
+**Why:** multiple related states (`isOpen`, `mode`, `editingItem`) can silently diverge — you can have `mode === "edit"` with `editingItem === undefined` and TypeScript won't complain. A union makes invalid combinations unrepresentable.
+
+```tsx
+type DrawerState =
+  | { open: false }
+  | { open: true; mode: "create" }
+  | { open: true; mode: "edit" | "duplicate"; item: Item };
+
+const [drawerState, setDrawerState] = useState<DrawerState>({ open: false });
+
+// Handlers are single-line — state shape enforces correctness
+const handleCreate = () => setDrawerState({ open: true, mode: "create" });
+const handleEdit = (item: Item) => setDrawerState({ open: true, mode: "edit", item });
+const handleDuplicate = (item: Item) => setDrawerState({ open: true, mode: "duplicate", item });
+```
+
+Passing into the child component:
+```tsx
+<ItemFormDrawer
+  open={drawerState.open}
+  onOpenChange={(open) => { if (!open) setDrawerState({ open: false }); }}
+  item={drawerState.open && drawerState.mode !== "create" ? drawerState.item : undefined}
+  mode={drawerState.open ? drawerState.mode : "create"}
+/>
+```
+
+**Use this pattern when** the overlay has 2+ modes that differ in title, submit label, initial values, or which mutations fire.
+
+**Keep separate `useState`** when the overlay has only a single purpose (e.g., a confirm dialog that only opens/closes).
+
+---
+
 ## UI Container Choice
 
 Before creating a modal/overlay, pick the right container:

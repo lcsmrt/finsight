@@ -35,7 +35,7 @@ export function buildMutationOptions<TData, TVariables>(
             message: successMessage,
             data,
             variables,
-            fallbackMessage: "Operação realizada com sucesso.",
+            fallbackMessage: "Operation completed successfully.",
           }),
         );
       }
@@ -46,7 +46,7 @@ export function buildMutationOptions<TData, TVariables>(
         toast.error(
           resolveErrorMessage({
             error,
-            fallbackMessage: errorMessage ?? "Ocorreu um erro.",
+            fallbackMessage: errorMessage ?? "An error occurred.",
           }),
         );
       }

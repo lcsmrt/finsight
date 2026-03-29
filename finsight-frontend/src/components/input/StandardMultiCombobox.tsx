@@ -33,7 +33,7 @@ export interface StandardMultiCombobox<T extends WithId> {
   emptyMessage?: React.ReactNode;
   disabled?: boolean;
   className?: string;
-  /** Número máximo de chips exibidos. Os demais são indicados com um badge "+N". Padrão: 3. */
+  /** Maximum number of chips displayed. The rest are indicated with a "+N" badge. Default: 3. */
   maxVisibleChips?: number;
 }
 

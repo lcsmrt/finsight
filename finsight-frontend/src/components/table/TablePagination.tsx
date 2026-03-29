@@ -15,7 +15,7 @@ import {
 } from "../input/base/Select";
 
 export type Pagination = {
-  /** Índice da página atual (0-based), espelha o campo `number` do ApiPaginatedResponse */
+  /** Current page index (0-based), mirrors the `number` field of ApiPaginatedResponse */
   number: number;
   size: number;
   totalElements: number;

@@ -31,7 +31,7 @@ import { TransactionTypeToggle } from "./TransactionTypeToggle";
 
 const transactionFormSchema = z.object({
   type: z.enum(["DEBIT", "CREDIT"]),
-  description: z.string().min(1, "Descrição é obrigatória"),
+  description: z.string().min(1, "Description is required"),
   amount: z.string().refine((v) => {
     const digits = v.replace(/\D/g, "");
     return digits.length > 0 && parseInt(digits, 10) > 0;
@@ -45,7 +45,7 @@ const transactionFormSchema = z.object({
     })
     .nullable()
     .optional(),
-  date: z.date({ required_error: "Data é obrigatória" }),
+  date: z.date({ required_error: "Date is required" }),
 });
 
 type TransactionFormValues = z.infer<typeof transactionFormSchema>;
@@ -54,7 +54,7 @@ interface TransactionFormDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   transaction?: FinancialTransaction;
-  mode?: "create" | "edit" | "duplicate";
+  mode: "create" | "edit" | "duplicate";
 }
 
 function buildDefaultValues(
@@ -90,7 +90,16 @@ export const TransactionFormDrawer = ({
   transaction,
   mode,
 }: TransactionFormDrawerProps) => {
-  const isEditing = !!transaction && mode === "edit";
+  const isEditing = mode === "edit";
+
+  const title =
+    mode === "edit"
+      ? "Edit Transaction"
+      : mode === "duplicate"
+        ? "Duplicate Transaction"
+        : "New Transaction";
+
+  const submitLabel = mode === "edit" ? "Save" : "Create";
 
   const {
     register,
@@ -147,9 +156,7 @@ export const TransactionFormDrawer = ({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right">
         <SheetHeader>
-          <SheetTitle>
-            {isEditing ? "Edit Transaction" : "New Transaction"}
-          </SheetTitle>
+          <SheetTitle>{title}</SheetTitle>
         </SheetHeader>
 
         <form
@@ -249,7 +256,7 @@ export const TransactionFormDrawer = ({
             onClick={handleSubmit(onSubmit)}
           >
             <SaveIcon className="h-4 w-4" />
-            {isEditing ? "Save" : "Create"}
+            {submitLabel}
           </Button>
         </SheetFooter>
       </SheetContent>

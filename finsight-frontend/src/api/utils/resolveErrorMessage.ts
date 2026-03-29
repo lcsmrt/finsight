@@ -22,9 +22,7 @@ export const resolveErrorMessage = ({
 
   if (error instanceof AxiosError) {
     message = error.response?.data?.message;
-  }
-
-  if (error instanceof Error) {
+  } else if (error instanceof Error) {
     message = error.message;
   }
 
@@ -32,5 +30,5 @@ export const resolveErrorMessage = ({
     return message.join(", ");
   }
 
-  return message || fallbackMessage || "Ocorreu um erro inesperado";
+  return message || fallbackMessage || "An unexpected error occurred.";
 };

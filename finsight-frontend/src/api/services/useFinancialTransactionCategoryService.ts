@@ -99,7 +99,7 @@ export const useDeleteFinancialTransactionCategory = (
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deleteFinancialTransactionCategory,
-    ...buildMutationOptions({ successMessage: "Categoria excluída com sucesso." }, {
+    ...buildMutationOptions({ successMessage: "Category deleted successfully." }, {
       ...options,
       onSuccess: (data, variables) => {
         queryClient.invalidateQueries({ queryKey: ["financialTransactionCategories"] });

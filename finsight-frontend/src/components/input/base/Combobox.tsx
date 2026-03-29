@@ -261,10 +261,10 @@ function useComboboxAnchor() {
   return React.useRef<HTMLDivElement | null>(null);
 }
 
-// 1) Re-exports simples (quando você não precisa adicionar classe/props extras)
+// 1) Simple re-exports (when you don't need to add extra classes/props)
 const ComboboxPortal = ComboboxPrimitive.Portal;
 
-// 2) Wrappers (quando você quer padronizar data-slot / className / render etc.)
+// 2) Wrappers (when you want to standardize data-slot / className / render etc.)
 function ComboboxPositioner({ className, ...props }: ComboboxPrimitive.Positioner.Props) {
   return (
     <ComboboxPrimitive.Positioner

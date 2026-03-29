@@ -70,7 +70,7 @@ export const useRegisterUser = (
   return useMutation({
     mutationFn: registerUser,
     ...buildMutationOptions(
-      { successMessage: "Usuário cadastrado com sucesso." },
+      { successMessage: "User registered successfully." },
       options,
     ),
   });

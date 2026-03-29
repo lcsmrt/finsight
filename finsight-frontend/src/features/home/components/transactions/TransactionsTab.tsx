@@ -48,11 +48,16 @@ export const TransactionsTab = () => {
   const { mutate: importCsv, isPending: isImporting } = useImportNubankCsv();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [mode, setMode] = useState<"create" | "edit" | "duplicate">("create");
-  const [editingTransaction, setEditingTransaction] = useState<
-    FinancialTransaction | undefined
-  >();
+  type DrawerState =
+    | { open: false }
+    | { open: true; mode: "create" }
+    | {
+        open: true;
+        mode: "edit" | "duplicate";
+        transaction: FinancialTransaction;
+      };
+
+  const [drawerState, setDrawerState] = useState<DrawerState>({ open: false });
   const [isCategoriesDialogOpen, setIsCategoriesDialogOpen] = useState(false);
 
   const handleImportClick = () => fileInputRef.current?.click();
@@ -76,23 +81,13 @@ export const TransactionsTab = () => {
       }
     : undefined;
 
-  const handleOpenCreate = () => {
-    setEditingTransaction(undefined);
-    setMode("create");
-    setIsDrawerOpen(true);
-  };
+  const handleOpenCreate = () => setDrawerState({ open: true, mode: "create" });
 
-  const handleEdit = (transaction: FinancialTransaction) => {
-    setEditingTransaction(transaction);
-    setMode("edit");
-    setIsDrawerOpen(true);
-  };
+  const handleEdit = (transaction: FinancialTransaction) =>
+    setDrawerState({ open: true, mode: "edit", transaction });
 
-  const handleDuplicate = (transaction: FinancialTransaction) => {
-    setEditingTransaction(transaction);
-    setMode("duplicate");
-    setIsDrawerOpen(true);
-  };
+  const handleDuplicate = (transaction: FinancialTransaction) =>
+    setDrawerState({ open: true, mode: "duplicate", transaction });
 
   const handleDelete = async (transaction: FinancialTransaction) => {
     const confirmed = await confirm({
@@ -125,7 +120,7 @@ export const TransactionsTab = () => {
     <>
       <div className="flex flex-col gap-2 px-2">
         <div className="flex gap-2">
-          <div className="jusbtify-between flex flex-1 gap-2">
+          <div className="flex flex-1 justify-between gap-2">
             <InputGroup className="flex-1 sm:max-w-sm">
               <InputGroupInput
                 placeholder="Search transactions..."
@@ -224,10 +219,16 @@ export const TransactionsTab = () => {
       </Table>
 
       <TransactionFormDrawer
-        open={isDrawerOpen}
-        onOpenChange={setIsDrawerOpen}
-        transaction={editingTransaction}
-        mode={mode}
+        open={drawerState.open}
+        onOpenChange={(open) => {
+          if (!open) setDrawerState({ open: false });
+        }}
+        transaction={
+          drawerState.open && drawerState.mode !== "create"
+            ? drawerState.transaction
+            : undefined
+        }
+        mode={drawerState.open ? drawerState.mode : "create"}
       />
 
       <CategoriesManageDialog

@@ -117,7 +117,7 @@ Use relative imports only within the same feature.
 - No comments except JSDoc; when code is clean, comments are not needed
 - No unnecessary abstractions or premature helpers
 - No large components — extract hooks or sub-components when things grow
-- Comments written in Brazilian Portuguese when needed (JSDoc only)
+- Comments written in English (JSDoc only)
 
 ---
 

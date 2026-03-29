@@ -58,7 +58,7 @@ export const useCreateFinancialTransaction = (
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createFinancialTransaction,
-    ...buildMutationOptions({ successMessage: "Transação criada com sucesso." }, {
+    ...buildMutationOptions({ successMessage: "Transaction created successfully." }, {
       ...options,
       onSuccess: (data, variables) => {
         queryClient.invalidateQueries({ queryKey: ["financialTransactions"] });
@@ -88,7 +88,7 @@ export const useUpdateFinancialTransaction = (
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: updateFinancialTransaction,
-    ...buildMutationOptions({ successMessage: "Transação atualizada com sucesso." }, {
+    ...buildMutationOptions({ successMessage: "Transaction updated successfully." }, {
       ...options,
       onSuccess: (data, variables) => {
         queryClient.invalidateQueries({ queryKey: ["financialTransactions"] });
@@ -113,7 +113,7 @@ export const useImportNubankCsv = (
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: importNubankCsv,
-    ...buildMutationOptions({ successMessage: "Transações importadas com sucesso." }, {
+    ...buildMutationOptions({ successMessage: "Transactions imported successfully." }, {
       ...options,
       onSuccess: (data, variables) => {
         queryClient.invalidateQueries({ queryKey: ["financialTransactions"] });
@@ -133,7 +133,7 @@ export const useDeleteFinancialTransaction = (
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deleteFinancialTransaction,
-    ...buildMutationOptions({ successMessage: "Transação excluída com sucesso." }, {
+    ...buildMutationOptions({ successMessage: "Transaction deleted successfully." }, {
       ...options,
       onSuccess: (data, variables) => {
         queryClient.invalidateQueries({ queryKey: ["financialTransactions"] });

@@ -11,7 +11,7 @@ type User = {
 
 const mockData: User[] = Array.from({ length: 42 }, (_, i) => ({
   id: i + 1,
-  name: `Usuário ${i + 1}`,
+  name: `User ${i + 1}`,
   email: `user${i + 1}@mail.com`,
   age: 18 + (i % 20),
 }));

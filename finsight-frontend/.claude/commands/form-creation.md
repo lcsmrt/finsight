@@ -137,6 +137,36 @@ The `open` dependency ensures the form resets to a clean state on every open, no
 
 ---
 
+## Modes
+
+When a form drawer supports multiple operations (create / edit / duplicate), accept an explicit `mode` prop — required, never optional. Derive all UI labels from it; never infer mode from the presence of an entity prop.
+
+```tsx
+type TransactionFormDrawerProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  transaction?: FinancialTransaction;
+  mode: "create" | "edit" | "duplicate";
+};
+
+const isEditing = mode === "edit";
+
+const title =
+  mode === "edit"
+    ? "Edit Transaction"
+    : mode === "duplicate"
+      ? "Duplicate Transaction"
+      : "New Transaction";
+
+const submitLabel = mode === "edit" ? "Save" : "Create";
+```
+
+**Why required:** an optional `mode?` allows callers to omit it, silently falling back to create behavior when editing — TypeScript won't catch the bug.
+
+**Why derive labels:** avoids dead branches where a mode is accepted but never differentiated in the UI.
+
+---
+
 ## Submit
 
 **Simple** — inline `onSubmit` for sheet/dialog forms:
@@ -150,8 +180,8 @@ const updateMutation = useUpdateFinancialTransaction({
 });
 
 const onSubmit = (values: TransactionFormValues) => {
-  if (transaction) {
-    updateMutation.mutate({ params: { id: transaction.id }, body: toPayload(values) });
+  if (isEditing) {
+    updateMutation.mutate({ params: { id: transaction!.id }, body: toPayload(values) });
   } else {
     createMutation.mutate({ body: toPayload(values) });
   }
