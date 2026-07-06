@@ -2,7 +2,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { finsightApi } from "../clients/finsightApi";
 import {
   CreateFinancialTransactionRequest,
+  CreateFinancialTransactionSeriesRequest,
   FinancialTransaction,
+  FinancialTransactionSeriesResponse,
   FinancialTransactionSortBy,
   PagedFinancialTransactionsFilter,
   PagedRequest,
@@ -114,6 +116,57 @@ export const useImportNubankCsv = (
   return useMutation({
     mutationFn: importNubankCsv,
     ...buildMutationOptions({ successMessage: "Transactions imported successfully." }, {
+      ...options,
+      onSuccess: (data, variables) => {
+        queryClient.invalidateQueries({ queryKey: ["financialTransactions"] });
+        options?.onSuccess?.(data, variables);
+      },
+    }),
+  });
+};
+
+const createFinancialTransactionSeries = async (
+  payload: CreateFinancialTransactionSeriesRequest,
+): Promise<FinancialTransactionSeriesResponse> => {
+  const { data } = await finsightApi.post(
+    "/financial-transaction/series",
+    payload.body,
+  );
+  return data;
+};
+
+export const useCreateFinancialTransactionSeries = (
+  options?: MutationOptions<
+    FinancialTransactionSeriesResponse,
+    CreateFinancialTransactionSeriesRequest
+  >,
+) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createFinancialTransactionSeries,
+    ...buildMutationOptions({ successMessage: "Series created successfully." }, {
+      ...options,
+      onSuccess: (data, variables) => {
+        queryClient.invalidateQueries({ queryKey: ["financialTransactions"] });
+        options?.onSuccess?.(data, variables);
+      },
+    }),
+  });
+};
+
+const deleteFinancialTransactionSeries = async (
+  seriesId: string,
+): Promise<void> => {
+  await finsightApi.delete(`/financial-transaction/series/${seriesId}`);
+};
+
+export const useDeleteFinancialTransactionSeries = (
+  options?: MutationOptions<void, string>,
+) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteFinancialTransactionSeries,
+    ...buildMutationOptions({ successMessage: "Series deleted successfully." }, {
       ...options,
       onSuccess: (data, variables) => {
         queryClient.invalidateQueries({ queryKey: ["financialTransactions"] });

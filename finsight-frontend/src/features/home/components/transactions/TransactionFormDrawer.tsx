@@ -1,9 +1,11 @@
 import { FinancialTransaction } from "@/api/dtos/financialTransaction";
 import {
   useCreateFinancialTransaction,
+  useCreateFinancialTransactionSeries,
   useUpdateFinancialTransaction,
 } from "@/api/services/useFinancialTransactionService";
 import { Button } from "@/components/button/Button";
+import { Checkbox } from "@/components/input/base/Checkbox";
 import {
   Field,
   FieldError,
@@ -19,6 +21,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/sheet/Sheet";
+import { cn } from "@/lib/mergeClasses";
 import { maskCurrency } from "@/utils/string/masks";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
@@ -29,24 +32,68 @@ import { z } from "zod";
 import { CategoryCombobox } from "./CategoryCombobox";
 import { TransactionTypeToggle } from "./TransactionTypeToggle";
 
-const transactionFormSchema = z.object({
-  type: z.enum(["DEBIT", "CREDIT"]),
-  description: z.string().min(1, "Description is required"),
-  amount: z.string().refine((v) => {
-    const digits = v.replace(/\D/g, "");
-    return digits.length > 0 && parseInt(digits, 10) > 0;
-  }, "O valor deve ser positivo"),
-  category: z
-    .object({
-      id: z.number(),
-      type: z.enum(["DEBIT", "CREDIT"]),
-      description: z.string(),
-      spendingLimit: z.number().nullish(),
-    })
-    .nullable()
-    .optional(),
-  date: z.date({ required_error: "Date is required" }),
-});
+const transactionFormSchema = z
+  .object({
+    type: z.enum(["DEBIT", "CREDIT"]),
+    description: z.string().min(1, "Description is required"),
+    amount: z.string().refine((v) => {
+      const digits = v.replace(/\D/g, "");
+      return digits.length > 0 && parseInt(digits, 10) > 0;
+    }, "O valor deve ser positivo"),
+    category: z
+      .object({
+        id: z.number(),
+        type: z.enum(["DEBIT", "CREDIT"]),
+        description: z.string(),
+        spendingLimit: z.number().nullish(),
+      })
+      .nullable()
+      .optional(),
+    date: z.date({ required_error: "Date is required" }),
+    recurring: z.boolean(),
+    recurrenceMode: z.enum(["INSTALLMENT", "RECURRING"]).optional(),
+    parcelsNumber: z.string().optional(),
+    endDate: z.date().optional(),
+  })
+  .superRefine((values, ctx) => {
+    if (!values.recurring) return;
+
+    if (!values.recurrenceMode) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Selecione parcelado ou recorrente",
+        path: ["recurrenceMode"],
+      });
+      return;
+    }
+
+    if (values.recurrenceMode === "INSTALLMENT") {
+      const digits = (values.parcelsNumber ?? "").replace(/\D/g, "");
+      if (digits.length === 0 || parseInt(digits, 10) < 2) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Informe ao menos 2 parcelas",
+          path: ["parcelsNumber"],
+        });
+      }
+    }
+
+    if (values.recurrenceMode === "RECURRING") {
+      if (!values.endDate) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Informe a data final",
+          path: ["endDate"],
+        });
+      } else if (values.endDate < values.date) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "A data final deve ser posterior à data inicial",
+          path: ["endDate"],
+        });
+      }
+    }
+  });
 
 type TransactionFormValues = z.infer<typeof transactionFormSchema>;
 
@@ -73,6 +120,7 @@ function buildDefaultValues(
           .map(Number);
         return new Date(year, month - 1, day);
       })(),
+      recurring: false,
     };
   }
   return {
@@ -81,6 +129,7 @@ function buildDefaultValues(
     amount: "",
     category: null,
     date: new Date(),
+    recurring: false,
   };
 }
 
@@ -131,12 +180,46 @@ export const TransactionFormDrawer = ({
     onSuccess: () => onOpenChange(false),
   });
 
+  const {
+    mutate: createFinancialTransactionSeries,
+    isPending: isCreatingFinancialTransactionSeries,
+  } = useCreateFinancialTransactionSeries({
+    onSuccess: () => onOpenChange(false),
+  });
+
   const isPending =
-    isCreatingFinancialTransaction || isUpdatingFinancialTransaction;
+    isCreatingFinancialTransaction ||
+    isUpdatingFinancialTransaction ||
+    isCreatingFinancialTransactionSeries;
 
   const onSubmit = (values: TransactionFormValues) => {
     const startDate = format(values.date, "yyyy-MM-dd");
     const amount = parseInt(values.amount.replace(/\D/g, ""), 10) / 100;
+
+    if (mode === "create" && values.recurring && values.recurrenceMode) {
+      createFinancialTransactionSeries({
+        body: {
+          type: values.type,
+          description: values.description,
+          amount,
+          categoryId: values.category?.id,
+          mode: values.recurrenceMode,
+          startDate,
+          parcelsNumber:
+            values.recurrenceMode === "INSTALLMENT"
+              ? parseInt(values.parcelsNumber!.replace(/\D/g, ""), 10)
+              : undefined,
+          interval:
+            values.recurrenceMode === "RECURRING" ? "MONTHLY" : undefined,
+          endDate:
+            values.recurrenceMode === "RECURRING"
+              ? format(values.endDate!, "yyyy-MM-dd")
+              : undefined,
+        },
+      });
+      return;
+    }
+
     const body = {
       type: values.type,
       description: values.description,
@@ -146,7 +229,7 @@ export const TransactionFormDrawer = ({
     };
 
     if (isEditing) {
-      updateFinancialTransaction({ params: { id: transaction.id }, body });
+      updateFinancialTransaction({ params: { id: transaction!.id }, body });
     } else {
       createFinancialTransaction({ body });
     }
@@ -237,6 +320,128 @@ export const TransactionFormDrawer = ({
               />
               <FieldError errors={[errors.date]} />
             </Field>
+
+            {mode === "create" && (
+              <>
+                <Field orientation="horizontal">
+                  <Checkbox
+                    id="transaction-recurring"
+                    checked={watch("recurring")}
+                    onCheckedChange={(checked) => {
+                      setValue("recurring", checked);
+                      if (!checked) {
+                        setValue("recurrenceMode", undefined);
+                        setValue("parcelsNumber", undefined);
+                        setValue("endDate", undefined);
+                      }
+                    }}
+                    disabled={isPending}
+                  />
+                  <FieldLabel htmlFor="transaction-recurring">
+                    Repetir ou parcelar?
+                  </FieldLabel>
+                </Field>
+
+                {watch("recurring") && (
+                  <>
+                    <Field>
+                      <FieldLabel>Modo</FieldLabel>
+                      <div className="flex w-full gap-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          disabled={isPending}
+                          onClick={() => {
+                            setValue("recurrenceMode", "INSTALLMENT", {
+                              shouldValidate: true,
+                            });
+                            setValue("endDate", undefined);
+                          }}
+                          className={cn(
+                            "flex-1 border",
+                            watch("recurrenceMode") === "INSTALLMENT"
+                              ? "border-primary/30 bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary"
+                              : "border-border text-muted-foreground hover:border-primary/30 hover:text-primary hover:bg-transparent",
+                          )}
+                        >
+                          Parcelado
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          disabled={isPending}
+                          onClick={() => {
+                            setValue("recurrenceMode", "RECURRING", {
+                              shouldValidate: true,
+                            });
+                            setValue("parcelsNumber", undefined);
+                          }}
+                          className={cn(
+                            "flex-1 border",
+                            watch("recurrenceMode") === "RECURRING"
+                              ? "border-primary/30 bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary"
+                              : "border-border text-muted-foreground hover:border-primary/30 hover:text-primary hover:bg-transparent",
+                          )}
+                        >
+                          Recorrente
+                        </Button>
+                      </div>
+                      <FieldError errors={[errors.recurrenceMode]} />
+                    </Field>
+
+                    {watch("recurrenceMode") === "INSTALLMENT" && (
+                      <Field>
+                        <FieldLabel htmlFor="transaction-parcels">
+                          Número de parcelas
+                        </FieldLabel>
+                        {(() => {
+                          const { onChange, ...parcelsRest } =
+                            register("parcelsNumber");
+                          return (
+                            <Input
+                              id="transaction-parcels"
+                              type="text"
+                              inputMode="numeric"
+                              placeholder="e.g., 12"
+                              disabled={isPending}
+                              aria-invalid={!!errors.parcelsNumber}
+                              {...parcelsRest}
+                              onChange={(e) => {
+                                e.target.value = e.target.value.replace(
+                                  /\D/g,
+                                  "",
+                                );
+                                onChange(e);
+                              }}
+                            />
+                          );
+                        })()}
+                        <FieldError errors={[errors.parcelsNumber]} />
+                      </Field>
+                    )}
+
+                    {watch("recurrenceMode") === "RECURRING" && (
+                      <Field>
+                        <FieldLabel htmlFor="transaction-end-date">
+                          Data final
+                        </FieldLabel>
+                        <DatePicker
+                          id="transaction-end-date"
+                          value={watch("endDate")}
+                          onChange={(v) =>
+                            v &&
+                            setValue("endDate", v, { shouldValidate: true })
+                          }
+                          disabled={isPending}
+                          className="w-full"
+                        />
+                        <FieldError errors={[errors.endDate]} />
+                      </Field>
+                    )}
+                  </>
+                )}
+              </>
+            )}
           </FieldGroup>
         </form>
 

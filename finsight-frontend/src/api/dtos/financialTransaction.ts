@@ -12,6 +12,7 @@ export type FinancialTransaction = {
   parcelsNumber?: number;
   startDate: string;
   endDate: string;
+  seriesId?: string;
 };
 
 export type FinancialTransactionSortBy = "startDate" | "endDate" | "amount" | "description";
@@ -40,4 +41,28 @@ export type CreateFinancialTransactionRequest = {
 export type UpdateFinancialTransactionRequest = {
   params: { id: number };
   body: Partial<CreateFinancialTransactionRequest["body"]>;
+};
+
+export type RecurrenceMode = "INSTALLMENT" | "RECURRING";
+
+export type RecurrenceInterval = "MONTHLY";
+
+export type CreateFinancialTransactionSeriesRequest = {
+  body: {
+    type: FinancialTransactionType;
+    amount: number;
+    description: string;
+    categoryId?: number;
+    mode: RecurrenceMode;
+    startDate: string;
+    parcelsNumber?: number;
+    interval?: RecurrenceInterval;
+    endDate?: string;
+  };
+};
+
+export type FinancialTransactionSeriesResponse = {
+  seriesId: string;
+  count: number;
+  occurrences: FinancialTransaction[];
 };

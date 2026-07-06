@@ -1,6 +1,7 @@
 import { FinancialTransaction } from "@/api/dtos/financialTransaction";
 import {
   useDeleteFinancialTransaction,
+  useDeleteFinancialTransactionSeries,
   useGetFinancialTransactions,
   useImportNubankCsv,
   useUpdateFinancialTransaction,
@@ -41,6 +42,8 @@ export const TransactionsTab = () => {
     useGetFinancialTransactions(queryParams);
   const { mutate: deleteTransaction, isPending: isDeleting } =
     useDeleteFinancialTransaction();
+  const { mutate: deleteFinancialTransactionSeries } =
+    useDeleteFinancialTransactionSeries();
   const { mutate: updateTransaction } = useUpdateFinancialTransaction();
 
   const confirm = useConfirm();
@@ -104,6 +107,22 @@ export const TransactionsTab = () => {
     }
   };
 
+  const handleDeleteSeries = async (transaction: FinancialTransaction) => {
+    if (!transaction.seriesId) return;
+
+    const confirmed = await confirm({
+      title: "Excluir série",
+      description:
+        "Isso vai remover TODAS as transações desta série. Deseja continuar?",
+      confirmLabel: "Excluir série",
+      variant: "destructive",
+    });
+
+    if (confirmed) {
+      deleteFinancialTransactionSeries(transaction.seriesId);
+    }
+  };
+
   const handleInlineSave = (id: number, body: InlineSaveBody) => {
     updateTransaction({ params: { id }, body });
   };
@@ -112,6 +131,7 @@ export const TransactionsTab = () => {
     onDuplicate: handleDuplicate,
     onEdit: handleEdit,
     onDelete: handleDelete,
+    onDeleteSeries: handleDeleteSeries,
     onSave: handleInlineSave,
     isDeleting,
   });

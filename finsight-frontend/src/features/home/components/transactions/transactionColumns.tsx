@@ -8,7 +8,13 @@ import { formatCurrency, formatDate } from "@/utils/string/formatters";
 import { maskCurrency, maskDate } from "@/utils/string/masks";
 import { ColumnDef } from "@tanstack/react-table";
 import { format, isValid, parse } from "date-fns";
-import { CopyIcon, PencilIcon, Trash2Icon } from "lucide-react";
+import {
+  CopyIcon,
+  ListXIcon,
+  PencilIcon,
+  RepeatIcon,
+  Trash2Icon,
+} from "lucide-react";
 import { useState } from "react";
 import { CategoryCombobox } from "./CategoryCombobox";
 
@@ -23,6 +29,7 @@ interface TransactionColumnHandlers {
   onDuplicate: (transaction: FinancialTransaction) => void;
   onEdit: (transaction: FinancialTransaction) => void;
   onDelete: (transaction: FinancialTransaction) => void;
+  onDeleteSeries?: (transaction: FinancialTransaction) => void;
   onSave: (id: number, body: InlineSaveBody) => void;
   isDeleting?: boolean;
 }
@@ -223,6 +230,7 @@ export const buildTransactionColumns = ({
   onDuplicate,
   onEdit,
   onDelete,
+  onDeleteSeries,
   onSave,
   isDeleting,
 }: TransactionColumnHandlers): ColumnDef<FinancialTransaction>[] => [
@@ -232,7 +240,15 @@ export const buildTransactionColumns = ({
     header: "Description",
     enableSorting: true,
     cell: ({ row }) => (
-      <EditableDescriptionCell transaction={row.original} onSave={onSave} />
+      <div className="flex items-center gap-1.5">
+        <EditableDescriptionCell transaction={row.original} onSave={onSave} />
+        {row.original.seriesId && (
+          <Badge variant="secondary" className="gap-1">
+            <RepeatIcon />
+            Série
+          </Badge>
+        )}
+      </div>
     ),
   },
   {
@@ -294,6 +310,20 @@ export const buildTransactionColumns = ({
         >
           <Trash2Icon className="h-4 w-4" />
         </Button>
+        {row.original.seriesId && onDeleteSeries && (
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            className="text-muted-foreground hover:bg-accent hover:text-destructive rounded p-1"
+            disabled={isDeleting}
+            aria-label="Excluir série"
+            title="Excluir série"
+            onClick={() => onDeleteSeries(row.original)}
+          >
+            <ListXIcon className="h-4 w-4" />
+          </Button>
+        )}
       </div>
     ),
   },
