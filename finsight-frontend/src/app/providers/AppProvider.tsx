@@ -4,6 +4,7 @@ import { AuthProvider } from "./AuthProvider";
 import { TanStackQueryProvider } from "./TanStackQueryProvider";
 import { ConfirmDialogProvider } from "@/components/dialog/useConfirmDialog";
 import { CategoryFormDialogProvider } from "@/features/home/components/transactions/CategoryFormDialog";
+import { PlanProvider } from "@/features/plans/PlanProvider";
 
 type AppProviderProps = {
   children: ReactNode;
@@ -14,9 +15,13 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     <BrowserRouter>
       <TanStackQueryProvider>
         <AuthProvider>
-          <ConfirmDialogProvider>
-            <CategoryFormDialogProvider>{children}</CategoryFormDialogProvider>
-          </ConfirmDialogProvider>
+          <PlanProvider>
+            <ConfirmDialogProvider>
+              <CategoryFormDialogProvider>
+                {children}
+              </CategoryFormDialogProvider>
+            </ConfirmDialogProvider>
+          </PlanProvider>
         </AuthProvider>
       </TanStackQueryProvider>
     </BrowserRouter>
