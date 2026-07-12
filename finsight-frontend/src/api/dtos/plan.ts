@@ -56,6 +56,7 @@ export type CreateInvitationRequest = {
     role: PlanRole;
     type: InvitationType;
     email?: string;
+    expiresAt?: string;
   };
 };
 

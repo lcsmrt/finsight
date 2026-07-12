@@ -35,6 +35,7 @@ const inviteSchema = z
     role: z.enum(["OWNER", "EDITOR", "CONTRIBUTOR", "VIEWER"]),
     type: z.enum(["EMAIL", "LINK"]),
     email: z.string().optional(),
+    expiresAt: z.string().optional(),
   })
   .superRefine((values, ctx) => {
     if (values.type === "EMAIL" && !values.email?.trim()) {
@@ -77,11 +78,11 @@ export const InvitePlanDialog = ({
     formState: { errors },
   } = useForm<InviteFormValues>({
     resolver: zodResolver(inviteSchema),
-    defaultValues: { role: "VIEWER", type: "EMAIL", email: "" },
+    defaultValues: { role: "VIEWER", type: "EMAIL", email: "", expiresAt: "" },
   });
 
   useEffect(() => {
-    reset({ role: "VIEWER", type: "EMAIL", email: "" });
+    reset({ role: "VIEWER", type: "EMAIL", email: "", expiresAt: "" });
     setCreatedInvitation(null);
   }, [open, reset]);
 
@@ -99,6 +100,10 @@ export const InvitePlanDialog = ({
         role: values.role,
         type: values.type,
         email: values.type === "EMAIL" ? values.email?.trim() : undefined,
+        expiresAt:
+          values.type === "LINK" && values.expiresAt
+            ? values.expiresAt
+            : undefined,
       },
     });
   };
@@ -210,6 +215,22 @@ export const InvitePlanDialog = ({
                   {...register("email")}
                 />
                 <FieldError errors={[errors.email]} />
+              </Field>
+            )}
+
+            {type === "LINK" && (
+              <Field>
+                <FieldLabel htmlFor="invite-expires-at">
+                  Expira em (opcional)
+                </FieldLabel>
+                <Input
+                  id="invite-expires-at"
+                  type="datetime-local"
+                  disabled={isPending}
+                  aria-invalid={!!errors.expiresAt}
+                  {...register("expiresAt")}
+                />
+                <FieldError errors={[errors.expiresAt]} />
               </Field>
             )}
 

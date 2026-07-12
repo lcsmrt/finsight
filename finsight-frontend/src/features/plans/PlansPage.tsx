@@ -28,6 +28,7 @@ import { useNavigate } from "react-router-dom";
 import { usePlanContext } from "./PlanProvider";
 import { CreatePlanDialog } from "./components/CreatePlanDialog";
 import { InvitePlanDialog } from "./components/InvitePlanDialog";
+import { PlanInvitationsList } from "./components/PlanInvitationsList";
 import { PlanMembersList } from "./components/PlanMembersList";
 import { RenamePlanDialog } from "./components/RenamePlanDialog";
 import { TransferOwnershipDialog } from "./components/TransferOwnershipDialog";
@@ -176,6 +177,17 @@ export const PlansPage = () => {
           </CardHeader>
           <CardContent>
             <PlanMembersList planId={activePlan.id} />
+          </CardContent>
+        </Card>
+      )}
+
+      {activePlan && isOwner && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Convites de {activePlan.name}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PlanInvitationsList planId={activePlan.id} />
           </CardContent>
         </Card>
       )}
