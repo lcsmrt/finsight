@@ -17,6 +17,7 @@ import { useMemo, useState } from "react";
 import type { DateRange } from "react-day-picker";
 import { CategorySpendingChart } from "./CategorySpendingChart";
 import { MonthlyTrendChart } from "./MonthlyTrendChart";
+import { PersonBreakdownList } from "./PersonBreakdownList";
 import { SummaryCards } from "./SummaryCards";
 
 type Period = "this-month" | "last-3m" | "last-6m" | "this-year";
@@ -145,6 +146,7 @@ export const OverviewTab = () => {
           <div className="flex flex-col gap-6">
             <CategorySpendingChart data={scaledCategoryBreakdown} />
             <MonthlyTrendChart data={data.monthlyTrend} />
+            <PersonBreakdownList data={data.personBreakdown} />
           </div>
         </>
       )}

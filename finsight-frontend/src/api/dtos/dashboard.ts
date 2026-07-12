@@ -14,12 +14,21 @@ export type MonthlyTrend = {
   expenses: number;
 };
 
+export type PersonBreakdown = {
+  userId: number;
+  name: string;
+  income: number;
+  expense: number;
+  net: number;
+};
+
 export type DashboardSummaryResponse = {
   totalIncome: number;
   totalExpenses: number;
   netBalance: number;
   categoryBreakdown: CategoryBreakdown[];
   monthlyTrend: MonthlyTrend[];
+  personBreakdown: PersonBreakdown[];
 };
 
 export type DashboardFilter = {
