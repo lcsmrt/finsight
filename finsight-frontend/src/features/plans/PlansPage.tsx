@@ -9,9 +9,11 @@ import {
 } from "@/components/card/Card";
 import { SectionHeader } from "@/components/sectionHeader/SectionHeader";
 import { Spinner } from "@/components/spinner/Spinner";
+import { PATHS } from "@/app/routing/paths";
 import { cn } from "@/lib/mergeClasses";
-import { CheckIcon, PlusIcon, UserPlusIcon } from "lucide-react";
+import { ArrowLeftIcon, CheckIcon, PlusIcon, UserPlusIcon } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { usePlanContext } from "./PlanProvider";
 import { CreatePlanDialog } from "./components/CreatePlanDialog";
 import { InvitePlanDialog } from "./components/InvitePlanDialog";
@@ -19,6 +21,7 @@ import { PlanMembersList } from "./components/PlanMembersList";
 import { ROLE_LABELS } from "./utils/planLabels";
 
 export const PlansPage = () => {
+  const navigate = useNavigate();
   const { plans, activePlan, activePlanId, setActivePlanId, isLoading } =
     usePlanContext();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -28,6 +31,16 @@ export const PlansPage = () => {
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="self-start"
+        onClick={() => navigate(PATHS.home)}
+      >
+        <ArrowLeftIcon className="h-4 w-4" />
+        Voltar
+      </Button>
+
       <SectionHeader
         title="Planos"
         subtitle="Gerencie seus planos e alterne entre eles."
