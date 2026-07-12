@@ -3,6 +3,7 @@ import { Button } from "@/components/button/Button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
@@ -40,17 +41,19 @@ export const PlanSwitcher = () => {
         />
 
         <DropdownMenuContent className="min-w-52" align="start">
-          <DropdownMenuLabel>Planos</DropdownMenuLabel>
-          <DropdownMenuRadioGroup
-            value={activePlanId != null ? String(activePlanId) : ""}
-            onValueChange={(value) => setActivePlanId(Number(value))}
-          >
-            {plans.map((plan) => (
-              <DropdownMenuRadioItem key={plan.id} value={String(plan.id)}>
-                <span className="truncate">{plan.name}</span>
-              </DropdownMenuRadioItem>
-            ))}
-          </DropdownMenuRadioGroup>
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>Planos</DropdownMenuLabel>
+            <DropdownMenuRadioGroup
+              value={activePlanId != null ? String(activePlanId) : ""}
+              onValueChange={(value) => setActivePlanId(Number(value))}
+            >
+              {plans.map((plan) => (
+                <DropdownMenuRadioItem key={plan.id} value={String(plan.id)}>
+                  <span className="truncate">{plan.name}</span>
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuGroup>
 
           <DropdownMenuSeparator />
 
