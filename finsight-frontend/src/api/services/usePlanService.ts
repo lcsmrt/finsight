@@ -6,7 +6,9 @@ import {
   PlanMember,
   PlanRole,
   RemoveMemberRequest,
+  TransferOwnershipRequest,
   UpdateMemberRoleRequest,
+  UpdatePlanRequest,
 } from "../dtos";
 import { MutationOptions } from "../types/mutationOptions";
 import { QueryOptions } from "../types/queryOptions";
@@ -149,6 +151,108 @@ export const useRemoveMember = (
             queryKey: ["planMembers", variables.params.planId],
           });
           queryClient.invalidateQueries({ queryKey: ["plans"] });
+          options?.onSuccess?.(data, variables);
+        },
+      },
+    ),
+  });
+};
+
+const renamePlan = async (payload: UpdatePlanRequest): Promise<Plan> => {
+  const { data } = await finsightApi.put<RawPlan>(
+    `/plans/${payload.params.planId}`,
+    payload.body,
+  );
+  return mapPlan(data);
+};
+
+export const useRenamePlan = (
+  options?: MutationOptions<Plan, UpdatePlanRequest>,
+) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: renamePlan,
+    ...buildMutationOptions(
+      { successMessage: "Plano renomeado com sucesso." },
+      {
+        ...options,
+        onSuccess: (data, variables) => {
+          queryClient.invalidateQueries({ queryKey: ["plans"] });
+          options?.onSuccess?.(data, variables);
+        },
+      },
+    ),
+  });
+};
+
+const deletePlan = async (planId: number): Promise<void> => {
+  await finsightApi.delete(`/plans/${planId}`);
+};
+
+export const useDeletePlan = (options?: MutationOptions<void, number>) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deletePlan,
+    ...buildMutationOptions(
+      { successMessage: "Plano arquivado com sucesso." },
+      {
+        ...options,
+        onSuccess: (data, planId) => {
+          queryClient.invalidateQueries({ queryKey: ["plans"] });
+          queryClient.invalidateQueries({ queryKey: ["planMembers", planId] });
+          options?.onSuccess?.(data, planId);
+        },
+      },
+    ),
+  });
+};
+
+const leavePlan = async (planId: number): Promise<void> => {
+  await finsightApi.post(`/plans/${planId}/leave`);
+};
+
+export const useLeavePlan = (options?: MutationOptions<void, number>) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: leavePlan,
+    ...buildMutationOptions(
+      { successMessage: "Você saiu do plano com sucesso." },
+      {
+        ...options,
+        onSuccess: (data, planId) => {
+          queryClient.invalidateQueries({ queryKey: ["plans"] });
+          queryClient.invalidateQueries({ queryKey: ["planMembers", planId] });
+          options?.onSuccess?.(data, planId);
+        },
+      },
+    ),
+  });
+};
+
+const transferOwnership = async (
+  payload: TransferOwnershipRequest,
+): Promise<void> => {
+  await finsightApi.post(
+    `/plans/${payload.params.planId}/transfer`,
+    payload.body,
+  );
+};
+
+export const useTransferOwnership = (
+  options?: MutationOptions<void, TransferOwnershipRequest>,
+) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: transferOwnership,
+    ...buildMutationOptions(
+      { successMessage: "Propriedade do plano transferida com sucesso." },
+      {
+        ...options,
+        onSuccess: (data, variables) => {
+          queryClient.invalidateQueries({ queryKey: ["plans"] });
+          queryClient.invalidateQueries({
+            queryKey: ["planMembers", variables.params.planId],
+          });
           options?.onSuccess?.(data, variables);
         },
       },

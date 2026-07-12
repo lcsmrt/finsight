@@ -31,6 +31,21 @@ export type RemoveMemberRequest = {
   params: { planId: number; userId: number };
 };
 
+export type UpdatePlanRequest = {
+  params: { planId: number };
+  body: {
+    name: string;
+  };
+};
+
+export type TransferOwnershipRequest = {
+  params: { planId: number };
+  body: {
+    newOwnerUserId: number;
+    previousOwnerRole?: PlanRole;
+  };
+};
+
 export type InvitationType = "EMAIL" | "LINK";
 
 export type InvitationStatus = "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
