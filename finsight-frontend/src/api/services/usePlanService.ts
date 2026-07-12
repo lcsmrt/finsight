@@ -5,6 +5,8 @@ import {
   Plan,
   PlanMember,
   PlanRole,
+  RemoveMemberRequest,
+  UpdateMemberRoleRequest,
 } from "../dtos";
 import { MutationOptions } from "../types/mutationOptions";
 import { QueryOptions } from "../types/queryOptions";
@@ -86,6 +88,66 @@ export const useCreatePlan = (
       {
         ...options,
         onSuccess: (data, variables) => {
+          queryClient.invalidateQueries({ queryKey: ["plans"] });
+          options?.onSuccess?.(data, variables);
+        },
+      },
+    ),
+  });
+};
+
+const updateMemberRole = async (
+  payload: UpdateMemberRoleRequest,
+): Promise<PlanMember> => {
+  const { data } = await finsightApi.put<PlanMember>(
+    `/plans/${payload.params.planId}/members/${payload.params.userId}`,
+    payload.body,
+  );
+  return data;
+};
+
+export const useUpdateMemberRole = (
+  options?: MutationOptions<PlanMember, UpdateMemberRoleRequest>,
+) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateMemberRole,
+    ...buildMutationOptions(
+      { successMessage: "Papel do membro atualizado com sucesso." },
+      {
+        ...options,
+        onSuccess: (data, variables) => {
+          queryClient.invalidateQueries({
+            queryKey: ["planMembers", variables.params.planId],
+          });
+          queryClient.invalidateQueries({ queryKey: ["plans"] });
+          options?.onSuccess?.(data, variables);
+        },
+      },
+    ),
+  });
+};
+
+const removeMember = async (payload: RemoveMemberRequest): Promise<void> => {
+  await finsightApi.delete(
+    `/plans/${payload.params.planId}/members/${payload.params.userId}`,
+  );
+};
+
+export const useRemoveMember = (
+  options?: MutationOptions<void, RemoveMemberRequest>,
+) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: removeMember,
+    ...buildMutationOptions(
+      { successMessage: "Membro removido com sucesso." },
+      {
+        ...options,
+        onSuccess: (data, variables) => {
+          queryClient.invalidateQueries({
+            queryKey: ["planMembers", variables.params.planId],
+          });
           queryClient.invalidateQueries({ queryKey: ["plans"] });
           options?.onSuccess?.(data, variables);
         },

@@ -20,6 +20,17 @@ export type CreatePlanRequest = {
   };
 };
 
+export type UpdateMemberRoleRequest = {
+  params: { planId: number; userId: number };
+  body: {
+    role: PlanRole;
+  };
+};
+
+export type RemoveMemberRequest = {
+  params: { planId: number; userId: number };
+};
+
 export type InvitationType = "EMAIL" | "LINK";
 
 export type InvitationStatus = "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED";
