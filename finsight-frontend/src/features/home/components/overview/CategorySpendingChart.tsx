@@ -10,6 +10,7 @@ import {
   ChartContainer,
   ChartTooltip,
 } from "@/components/chart/Chart";
+import { cn } from "@/lib/mergeClasses";
 import { formatCurrency } from "@/utils/string/formatters";
 import { useMemo } from "react";
 import { Bar, BarChart, XAxis, YAxis } from "recharts";
@@ -20,6 +21,7 @@ type ChartEntry = {
   categoryName: string;
   spent: number;
   limit?: number;
+  remaining?: number;
   spentBar: number;
   remainingBar: number;
   status: Status;
@@ -167,6 +169,19 @@ const CategoryTooltip = ({ active, payload }: CategoryTooltipProps) => {
             <span className="text-muted-foreground">Limit</span>
             <span className="font-mono font-medium tabular-nums">
               {formatCurrency(entry.limit, "BRL")}
+            </span>
+          </div>
+        )}
+        {entry.limit != null && entry.remaining != null && (
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-muted-foreground">Remaining</span>
+            <span
+              className={cn(
+                "font-mono font-medium tabular-nums",
+                entry.status === "over" && "text-destructive",
+              )}
+            >
+              {formatCurrency(entry.remaining, "BRL")}
             </span>
           </div>
         )}

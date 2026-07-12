@@ -78,10 +78,28 @@ export const OverviewTab = () => {
 
   const scaledCategoryBreakdown = useMemo(() => {
     if (!data) return [];
-    return data.categoryBreakdown.map((entry) => ({
-      ...entry,
-      limit: entry.limit != null ? entry.limit * monthCount : undefined,
-    }));
+    // SPEC_DEVIATION: remaining/percentUsed/overLimit are recomputed here
+    // instead of using the backend values as-is, because the limit is
+    // scaled to the selected period (monthCount) client-side, so the
+    // backend's single-month evaluation would be inconsistent with the
+    // scaled limit shown in the UI.
+    return data.categoryBreakdown.map((entry) => {
+      const limit = entry.limit != null ? entry.limit * monthCount : undefined;
+      if (limit == null) {
+        return {
+          ...entry,
+          limit: undefined,
+          remaining: undefined,
+          percentUsed: undefined,
+          overLimit: undefined,
+        };
+      }
+      const remaining = limit - entry.spent;
+      const percentUsed =
+        limit === 0 ? 0 : Math.round((entry.spent / limit) * 10000) / 100;
+      const overLimit = entry.spent > limit;
+      return { ...entry, limit, remaining, percentUsed, overLimit };
+    });
   }, [data, monthCount]);
 
   const handlePeriodClick = (p: Period) => {

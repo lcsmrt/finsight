@@ -2,6 +2,9 @@ export type CategoryBreakdown = {
   categoryName: string;
   spent: number;
   limit?: number;
+  remaining?: number;
+  percentUsed?: number;
+  overLimit?: boolean;
 };
 
 export type MonthlyTrend = {
