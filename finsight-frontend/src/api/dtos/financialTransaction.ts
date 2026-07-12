@@ -13,6 +13,10 @@ export type FinancialTransaction = {
   startDate: string;
   endDate: string;
   seriesId?: string;
+  createdBy?: {
+    id: number;
+    name: string;
+  };
 };
 
 export type FinancialTransactionSortBy = "startDate" | "endDate" | "amount" | "description";
