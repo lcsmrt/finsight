@@ -24,7 +24,7 @@ import {
 import { cn } from "@/lib/mergeClasses";
 import { maskCurrency } from "@/utils/string/masks";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format } from "date-fns";
+import { addMonths, format } from "date-fns";
 import { SaveIcon, XIcon } from "lucide-react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -53,6 +53,7 @@ const transactionFormSchema = z
     recurring: z.boolean(),
     recurrenceMode: z.enum(["INSTALLMENT", "RECURRING"]).optional(),
     parcelsNumber: z.string().optional(),
+    currentParcel: z.string().optional(),
     endDate: z.date().optional(),
   })
   .superRefine((values, ctx) => {
@@ -69,12 +70,31 @@ const transactionFormSchema = z
 
     if (values.recurrenceMode === "INSTALLMENT") {
       const digits = (values.parcelsNumber ?? "").replace(/\D/g, "");
-      if (digits.length === 0 || parseInt(digits, 10) < 2) {
+      const total = digits.length > 0 ? parseInt(digits, 10) : 0;
+      if (digits.length === 0 || total < 2) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: "Informe ao menos 2 parcelas",
           path: ["parcelsNumber"],
         });
+      }
+
+      const currentDigits = (values.currentParcel ?? "").replace(/\D/g, "");
+      if (currentDigits.length > 0) {
+        const current = parseInt(currentDigits, 10);
+        if (current < 1) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "A parcela atual deve ser ao menos 1",
+            path: ["currentParcel"],
+          });
+        } else if (total >= 2 && current > total) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "A parcela atual não pode ser maior que o total",
+            path: ["currentParcel"],
+          });
+        }
       }
     }
 
@@ -209,6 +229,12 @@ export const TransactionFormDrawer = ({
             values.recurrenceMode === "INSTALLMENT"
               ? parseInt(values.parcelsNumber!.replace(/\D/g, ""), 10)
               : undefined,
+          currentParcel: (() => {
+            if (values.recurrenceMode !== "INSTALLMENT") return undefined;
+            const digits = (values.currentParcel ?? "").replace(/\D/g, "");
+            const current = digits.length > 0 ? parseInt(digits, 10) : 1;
+            return current > 1 ? current : undefined;
+          })(),
           interval:
             values.recurrenceMode === "RECURRING" ? "MONTHLY" : undefined,
           endDate:
@@ -332,6 +358,7 @@ export const TransactionFormDrawer = ({
                       if (!checked) {
                         setValue("recurrenceMode", undefined);
                         setValue("parcelsNumber", undefined);
+                        setValue("currentParcel", undefined);
                         setValue("endDate", undefined);
                       }
                     }}
@@ -375,6 +402,7 @@ export const TransactionFormDrawer = ({
                               shouldValidate: true,
                             });
                             setValue("parcelsNumber", undefined);
+                            setValue("currentParcel", undefined);
                           }}
                           className={cn(
                             "flex-1 border",
@@ -390,34 +418,96 @@ export const TransactionFormDrawer = ({
                     </Field>
 
                     {watch("recurrenceMode") === "INSTALLMENT" && (
-                      <Field>
-                        <FieldLabel htmlFor="transaction-parcels">
-                          Número de parcelas
-                        </FieldLabel>
+                      <>
+                        <Field>
+                          <FieldLabel htmlFor="transaction-parcels">
+                            Número de parcelas
+                          </FieldLabel>
+                          {(() => {
+                            const { onChange, ...parcelsRest } =
+                              register("parcelsNumber");
+                            return (
+                              <Input
+                                id="transaction-parcels"
+                                type="text"
+                                inputMode="numeric"
+                                placeholder="e.g., 12"
+                                disabled={isPending}
+                                aria-invalid={!!errors.parcelsNumber}
+                                {...parcelsRest}
+                                onChange={(e) => {
+                                  e.target.value = e.target.value.replace(
+                                    /\D/g,
+                                    "",
+                                  );
+                                  onChange(e);
+                                }}
+                              />
+                            );
+                          })()}
+                          <FieldError errors={[errors.parcelsNumber]} />
+                        </Field>
+
+                        <Field>
+                          <FieldLabel htmlFor="transaction-current-parcel">
+                            Parcela atual
+                          </FieldLabel>
+                          {(() => {
+                            const { onChange, ...currentRest } =
+                              register("currentParcel");
+                            return (
+                              <Input
+                                id="transaction-current-parcel"
+                                type="text"
+                                inputMode="numeric"
+                                placeholder="1"
+                                disabled={isPending}
+                                aria-invalid={!!errors.currentParcel}
+                                {...currentRest}
+                                onChange={(e) => {
+                                  e.target.value = e.target.value.replace(
+                                    /\D/g,
+                                    "",
+                                  );
+                                  onChange(e);
+                                }}
+                              />
+                            );
+                          })()}
+                          <FieldError errors={[errors.currentParcel]} />
+                        </Field>
+
                         {(() => {
-                          const { onChange, ...parcelsRest } =
-                            register("parcelsNumber");
+                          const total = parseInt(
+                            (watch("parcelsNumber") ?? "").replace(/\D/g, ""),
+                            10,
+                          );
+                          const currentDigits = (
+                            watch("currentParcel") ?? ""
+                          ).replace(/\D/g, "");
+                          const current =
+                            currentDigits.length > 0
+                              ? parseInt(currentDigits, 10)
+                              : 1;
+                          const date = watch("date");
+                          if (
+                            !Number.isFinite(total) ||
+                            total < 2 ||
+                            current < 1 ||
+                            current > total ||
+                            !date
+                          ) {
+                            return null;
+                          }
+                          const lastMonth = addMonths(date, total - current);
                           return (
-                            <Input
-                              id="transaction-parcels"
-                              type="text"
-                              inputMode="numeric"
-                              placeholder="e.g., 12"
-                              disabled={isPending}
-                              aria-invalid={!!errors.parcelsNumber}
-                              {...parcelsRest}
-                              onChange={(e) => {
-                                e.target.value = e.target.value.replace(
-                                  /\D/g,
-                                  "",
-                                );
-                                onChange(e);
-                              }}
-                            />
+                            <p className="text-muted-foreground text-sm">
+                              Última parcela: {total}/{total} —{" "}
+                              {format(lastMonth, "MM/yyyy")}
+                            </p>
                           );
                         })()}
-                        <FieldError errors={[errors.parcelsNumber]} />
-                      </Field>
+                      </>
                     )}
 
                     {watch("recurrenceMode") === "RECURRING" && (

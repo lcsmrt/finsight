@@ -54,8 +54,10 @@ export type CreateFinancialTransactionSeriesRequest = {
     description: string;
     categoryId?: number;
     mode: RecurrenceMode;
+    // For installments, the month of the current parcel; for recurring, the first occurrence.
     startDate: string;
     parcelsNumber?: number;
+    currentParcel?: number;
     interval?: RecurrenceInterval;
     endDate?: string;
   };
