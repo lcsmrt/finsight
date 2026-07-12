@@ -8,6 +8,7 @@ import { RegisterUser } from "@/features/registerUser/RegisterUserPage";
 import { PrivateRoute } from "./PrivateRoute";
 import { NotFound } from "@/features/notFound/NotFoundPage";
 import { PlansPage } from "@/features/plans/PlansPage";
+import { AcceptInvitationPage } from "@/features/plans/AcceptInvitationPage";
 
 export const AppRouter = () => {
   return (
@@ -21,6 +22,10 @@ export const AppRouter = () => {
         <Route element={<MainLayout />}>
           <Route path={PATHS.home} element={<Home />} />
           <Route path={PATHS.plans} element={<PlansPage />} />
+          <Route
+            path={PATHS.acceptInvitation}
+            element={<AcceptInvitationPage />}
+          />
         </Route>
       </Route>
 

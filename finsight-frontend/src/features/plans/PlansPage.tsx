@@ -2,6 +2,7 @@ import { Badge } from "@/components/badge/Badge";
 import { Button } from "@/components/button/Button";
 import {
   Card,
+  CardAction,
   CardContent,
   CardHeader,
   CardTitle,
@@ -9,10 +10,11 @@ import {
 import { SectionHeader } from "@/components/sectionHeader/SectionHeader";
 import { Spinner } from "@/components/spinner/Spinner";
 import { cn } from "@/lib/mergeClasses";
-import { CheckIcon, PlusIcon } from "lucide-react";
+import { CheckIcon, PlusIcon, UserPlusIcon } from "lucide-react";
 import { useState } from "react";
 import { usePlanContext } from "./PlanProvider";
 import { CreatePlanDialog } from "./components/CreatePlanDialog";
+import { InvitePlanDialog } from "./components/InvitePlanDialog";
 import { PlanMembersList } from "./components/PlanMembersList";
 import { ROLE_LABELS } from "./utils/planLabels";
 
@@ -20,6 +22,9 @@ export const PlansPage = () => {
   const { plans, activePlan, activePlanId, setActivePlanId, isLoading } =
     usePlanContext();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
+
+  const canInvite = activePlan?.myRole === "OWNER";
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4">
@@ -69,6 +74,14 @@ export const PlansPage = () => {
         <Card>
           <CardHeader>
             <CardTitle>Membros de {activePlan.name}</CardTitle>
+            {canInvite && (
+              <CardAction>
+                <Button size="sm" onClick={() => setIsInviteOpen(true)}>
+                  <UserPlusIcon className="h-4 w-4" />
+                  Convidar
+                </Button>
+              </CardAction>
+            )}
           </CardHeader>
           <CardContent>
             <PlanMembersList planId={activePlan.id} />
@@ -81,6 +94,14 @@ export const PlansPage = () => {
         onOpenChange={setIsCreateOpen}
         onSuccess={(plan) => setActivePlanId(plan.id)}
       />
+
+      {activePlan && (
+        <InvitePlanDialog
+          open={isInviteOpen}
+          onOpenChange={setIsInviteOpen}
+          planId={activePlan.id}
+        />
+      )}
     </div>
   );
 };
