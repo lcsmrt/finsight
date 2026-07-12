@@ -5,6 +5,7 @@ import {
   CreateInvitationRequest,
   Invitation,
   InvitationPreview,
+  RevokeInvitationRequest,
 } from "../dtos";
 import { MutationOptions } from "../types/mutationOptions";
 import { QueryOptions } from "../types/queryOptions";
@@ -49,6 +50,52 @@ export const useGetInvitationPreview = (
     enabled: token != null,
     retry: false,
     ...options,
+  });
+};
+
+const getPlanInvitations = async (planId: number): Promise<Invitation[]> => {
+  const { data } = await finsightApi.get(`/plans/${planId}/invitations`);
+  return data;
+};
+
+export const useGetPlanInvitations = (
+  planId?: number,
+  options?: QueryOptions<Invitation[]>,
+) => {
+  return useQuery({
+    queryFn: () => getPlanInvitations(planId!),
+    queryKey: ["planInvitations", planId],
+    enabled: planId != null,
+    ...options,
+  });
+};
+
+const revokeInvitation = async (
+  payload: RevokeInvitationRequest,
+): Promise<void> => {
+  await finsightApi.delete(
+    `/plans/${payload.params.planId}/invitations/${payload.params.invitationId}`,
+  );
+};
+
+export const useRevokeInvitation = (
+  options?: MutationOptions<void, RevokeInvitationRequest>,
+) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: revokeInvitation,
+    ...buildMutationOptions(
+      { successMessage: "Convite revogado com sucesso." },
+      {
+        ...options,
+        onSuccess: (data, variables) => {
+          queryClient.invalidateQueries({
+            queryKey: ["planInvitations", variables.params.planId],
+          });
+          options?.onSuccess?.(data, variables);
+        },
+      },
+    ),
   });
 };
 

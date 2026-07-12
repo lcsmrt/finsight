@@ -67,6 +67,11 @@ export type Invitation = {
   email?: string;
   status: InvitationStatus;
   link?: string;
+  expiresAt?: string;
+};
+
+export type RevokeInvitationRequest = {
+  params: { planId: number; invitationId: number };
 };
 
 export type InvitationPreview = {
