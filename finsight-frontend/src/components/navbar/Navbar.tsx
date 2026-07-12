@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { PATHS } from "@/app/routing/paths";
 import { useAuth } from "@/app/providers/AuthProvider";
 import { getFirstAndLastInitials } from "@/utils/string/formatters";
+import { PlanSwitcher } from "@/features/plans/components/PlanSwitcher";
 
 export const Navbar = () => {
   const navigate = useNavigate();
@@ -24,7 +25,10 @@ export const Navbar = () => {
 
   return (
     <nav className="border-border bg-background fixed z-20 flex h-16 w-full items-center justify-between border-b px-4">
-      <img src={"/finsigh-icon.png"} alt="FinSight Logo" className="h-8" />
+      <div className="flex items-center gap-4">
+        <img src={"/finsigh-icon.png"} alt="FinSight Logo" className="h-8" />
+        <PlanSwitcher />
+      </div>
 
       <DropdownMenu>
         <DropdownMenuTrigger className="hover:cursor-pointer focus:outline-none">

@@ -7,6 +7,7 @@ import { AuthLayout } from "@/components/layout/AuthLayout";
 import { RegisterUser } from "@/features/registerUser/RegisterUserPage";
 import { PrivateRoute } from "./PrivateRoute";
 import { NotFound } from "@/features/notFound/NotFoundPage";
+import { PlansPage } from "@/features/plans/PlansPage";
 
 export const AppRouter = () => {
   return (
@@ -19,6 +20,7 @@ export const AppRouter = () => {
       <Route element={<PrivateRoute />}>
         <Route element={<MainLayout />}>
           <Route path={PATHS.home} element={<Home />} />
+          <Route path={PATHS.plans} element={<PlansPage />} />
         </Route>
       </Route>
 
