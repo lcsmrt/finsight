@@ -13,12 +13,16 @@ import { MutationOptions } from "../types/mutationOptions";
 import { QueryOptions } from "../types/queryOptions";
 import { buildMutationOptions } from "../utils/buildMutationOptions";
 import { buildPagedQuery } from "../utils/buildPagedQuery";
+import { usePlanContext } from "@/features/plans/PlanProvider";
 
 const getFinancialTransactionCategories = async (
+  planId: number,
   params?: PagedRequest<PagedFinancialTransactionCategoriesFilter, FinancialTransactionCategorySortBy>,
 ): Promise<PagedResponse<FinancialTransactionCategory>> => {
   const query = buildPagedQuery(params);
-  const { data } = await finsightApi.get(`/financial-transaction-category?${query}`);
+  const { data } = await finsightApi.get(
+    `/plans/${planId}/financial-transaction-category?${query}`,
+  );
   return data;
 };
 
@@ -26,17 +30,23 @@ export const useGetFinancialTransactionCategories = (
   params?: PagedRequest<PagedFinancialTransactionCategoriesFilter, FinancialTransactionCategorySortBy>,
   options?: QueryOptions<PagedResponse<FinancialTransactionCategory>>,
 ) => {
+  const { activePlanId } = usePlanContext();
   return useQuery({
-    queryFn: () => getFinancialTransactionCategories(params),
-    queryKey: ["financialTransactionCategories", params],
+    queryFn: () => getFinancialTransactionCategories(activePlanId!, params),
+    queryKey: ["financialTransactionCategories", activePlanId, params],
     ...options,
+    enabled: activePlanId != null && (options?.enabled ?? true),
   });
 };
 
 const createFinancialTransactionCategory = async (
+  planId: number,
   payload: CreateFinancialTransactionCategoryRequest,
 ): Promise<FinancialTransactionCategory> => {
-  const { data } = await finsightApi.post("/financial-transaction-category", payload.body);
+  const { data } = await finsightApi.post(
+    `/plans/${planId}/financial-transaction-category`,
+    payload.body,
+  );
   return data;
 };
 
@@ -47,8 +57,10 @@ export const useCreateFinancialTransactionCategory = (
   >,
 ) => {
   const queryClient = useQueryClient();
+  const { activePlanId } = usePlanContext();
   return useMutation({
-    mutationFn: createFinancialTransactionCategory,
+    mutationFn: (payload: CreateFinancialTransactionCategoryRequest) =>
+      createFinancialTransactionCategory(activePlanId!, payload),
     ...buildMutationOptions({ successMessage: "Categoria criada com sucesso." }, {
       ...options,
       onSuccess: (data, variables) => {
@@ -60,11 +72,12 @@ export const useCreateFinancialTransactionCategory = (
 };
 
 const updateFinancialTransactionCategory = async (
+  planId: number,
   payload: UpdateFinancialTransactionCategoryRequest,
 ): Promise<FinancialTransactionCategory> => {
   const { params, body } = payload;
   const { data } = await finsightApi.put(
-    `/financial-transaction-category/${params.id}`,
+    `/plans/${planId}/financial-transaction-category/${params.id}`,
     body,
   );
   return data;
@@ -77,8 +90,10 @@ export const useUpdateFinancialTransactionCategory = (
   >,
 ) => {
   const queryClient = useQueryClient();
+  const { activePlanId } = usePlanContext();
   return useMutation({
-    mutationFn: updateFinancialTransactionCategory,
+    mutationFn: (payload: UpdateFinancialTransactionCategoryRequest) =>
+      updateFinancialTransactionCategory(activePlanId!, payload),
     ...buildMutationOptions({ successMessage: "Categoria atualizada com sucesso." }, {
       ...options,
       onSuccess: (data, variables) => {
@@ -89,16 +104,23 @@ export const useUpdateFinancialTransactionCategory = (
   });
 };
 
-const deleteFinancialTransactionCategory = async (id: number): Promise<void> => {
-  await finsightApi.delete(`/financial-transaction-category/${id}`);
+const deleteFinancialTransactionCategory = async (
+  planId: number,
+  id: number,
+): Promise<void> => {
+  await finsightApi.delete(
+    `/plans/${planId}/financial-transaction-category/${id}`,
+  );
 };
 
 export const useDeleteFinancialTransactionCategory = (
   options?: MutationOptions<void, number>,
 ) => {
   const queryClient = useQueryClient();
+  const { activePlanId } = usePlanContext();
   return useMutation({
-    mutationFn: deleteFinancialTransactionCategory,
+    mutationFn: (id: number) =>
+      deleteFinancialTransactionCategory(activePlanId!, id),
     ...buildMutationOptions({ successMessage: "Category deleted successfully." }, {
       ...options,
       onSuccess: (data, variables) => {
