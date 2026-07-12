@@ -1,3 +1,4 @@
+import { useDeletePlan, useLeavePlan } from "@/api/services/usePlanService";
 import { Badge } from "@/components/badge/Badge";
 import { Button } from "@/components/button/Button";
 import {
@@ -7,17 +8,29 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/card/Card";
+import { useConfirm } from "@/components/dialog/useConfirmDialog";
 import { SectionHeader } from "@/components/sectionHeader/SectionHeader";
 import { Spinner } from "@/components/spinner/Spinner";
 import { PATHS } from "@/app/routing/paths";
 import { cn } from "@/lib/mergeClasses";
-import { ArrowLeftIcon, CheckIcon, PlusIcon, UserPlusIcon } from "lucide-react";
+import {
+  ArchiveIcon,
+  ArrowLeftIcon,
+  ArrowRightLeftIcon,
+  CheckIcon,
+  LogOutIcon,
+  PencilIcon,
+  PlusIcon,
+  UserPlusIcon,
+} from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePlanContext } from "./PlanProvider";
 import { CreatePlanDialog } from "./components/CreatePlanDialog";
 import { InvitePlanDialog } from "./components/InvitePlanDialog";
 import { PlanMembersList } from "./components/PlanMembersList";
+import { RenamePlanDialog } from "./components/RenamePlanDialog";
+import { TransferOwnershipDialog } from "./components/TransferOwnershipDialog";
 import { ROLE_LABELS } from "./utils/planLabels";
 
 export const PlansPage = () => {
@@ -26,8 +39,42 @@ export const PlansPage = () => {
     usePlanContext();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [isRenameOpen, setIsRenameOpen] = useState(false);
+  const [isTransferOpen, setIsTransferOpen] = useState(false);
+  const confirm = useConfirm();
+  const { mutate: deletePlan } = useDeletePlan();
+  const { mutate: leavePlan } = useLeavePlan();
 
   const canInvite = activePlan?.myRole === "OWNER";
+  const isOwner = activePlan?.myRole === "OWNER";
+
+  const handleArchivePlan = async () => {
+    if (!activePlan) return;
+    const confirmed = await confirm({
+      title: "Arquivar plano",
+      description: `Tem certeza que deseja arquivar o plano "${activePlan.name}"? Você poderá contatar o suporte para reverter isso posteriormente.`,
+      confirmLabel: "Arquivar",
+      cancelLabel: "Cancelar",
+      variant: "destructive",
+    });
+    if (confirmed) {
+      deletePlan(activePlan.id);
+    }
+  };
+
+  const handleLeavePlan = async () => {
+    if (!activePlan) return;
+    const confirmed = await confirm({
+      title: "Sair do plano",
+      description: `Tem certeza que deseja sair do plano "${activePlan.name}"?`,
+      confirmLabel: "Sair",
+      cancelLabel: "Cancelar",
+      variant: "destructive",
+    });
+    if (confirmed) {
+      leavePlan(activePlan.id);
+    }
+  };
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4">
@@ -87,14 +134,45 @@ export const PlansPage = () => {
         <Card>
           <CardHeader>
             <CardTitle>Membros de {activePlan.name}</CardTitle>
-            {canInvite && (
-              <CardAction>
-                <Button size="sm" onClick={() => setIsInviteOpen(true)}>
-                  <UserPlusIcon className="h-4 w-4" />
-                  Convidar
+            <CardAction className="flex items-center gap-2">
+              {isOwner ? (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => setIsRenameOpen(true)}
+                  >
+                    <PencilIcon className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => setIsTransferOpen(true)}
+                  >
+                    <ArrowRightLeftIcon className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="text-muted-foreground hover:bg-accent hover:text-destructive"
+                    onClick={handleArchivePlan}
+                  >
+                    <ArchiveIcon className="h-4 w-4" />
+                  </Button>
+                  {canInvite && (
+                    <Button size="sm" onClick={() => setIsInviteOpen(true)}>
+                      <UserPlusIcon className="h-4 w-4" />
+                      Convidar
+                    </Button>
+                  )}
+                </>
+              ) : (
+                <Button variant="outline" size="sm" onClick={handleLeavePlan}>
+                  <LogOutIcon className="h-4 w-4" />
+                  Sair do plano
                 </Button>
-              </CardAction>
-            )}
+              )}
+            </CardAction>
           </CardHeader>
           <CardContent>
             <PlanMembersList planId={activePlan.id} />
@@ -112,6 +190,22 @@ export const PlansPage = () => {
         <InvitePlanDialog
           open={isInviteOpen}
           onOpenChange={setIsInviteOpen}
+          planId={activePlan.id}
+        />
+      )}
+
+      {activePlan && (
+        <RenamePlanDialog
+          open={isRenameOpen}
+          onOpenChange={setIsRenameOpen}
+          plan={activePlan}
+        />
+      )}
+
+      {activePlan && (
+        <TransferOwnershipDialog
+          open={isTransferOpen}
+          onOpenChange={setIsTransferOpen}
           planId={activePlan.id}
         />
       )}
