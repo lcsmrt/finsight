@@ -4,6 +4,8 @@ import {
   useCreateFinancialTransactionSeries,
   useUpdateFinancialTransaction,
 } from "@/api/services/useFinancialTransactionService";
+import { useGetPlanMembers } from "@/api/services/usePlanService";
+import { usePlanContext } from "@/app/providers/PlanProvider";
 import { Button } from "@/components/button/Button";
 import { Checkbox } from "@/components/input/base/Checkbox";
 import {
@@ -55,8 +57,33 @@ const transactionFormSchema = z
     parcelsNumber: z.string().optional(),
     currentParcel: z.string().optional(),
     endDate: z.date().optional(),
+    splitMode: z.enum(["EQUAL", "EXACT"]),
+    participants: z.array(
+      z.object({
+        memberId: z.number(),
+        memberName: z.string(),
+        shareAmount: z.string().optional(),
+      }),
+    ),
   })
   .superRefine((values, ctx) => {
+    if (values.splitMode === "EXACT" && values.participants.length > 0) {
+      const totalDigits = values.amount.replace(/\D/g, "");
+      const totalCents = totalDigits.length > 0 ? parseInt(totalDigits, 10) : 0;
+      const sumCents = values.participants.reduce((sum, participant) => {
+        const digits = (participant.shareAmount ?? "").replace(/\D/g, "");
+        return sum + (digits.length > 0 ? parseInt(digits, 10) : 0);
+      }, 0);
+
+      if (sumCents !== totalCents) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Shares must add up to the total amount",
+          path: ["participants"],
+        });
+      }
+    }
+
     if (!values.recurring) return;
 
     if (!values.recurrenceMode) {
@@ -141,6 +168,17 @@ function buildDefaultValues(
         return new Date(year, month - 1, day);
       })(),
       recurring: false,
+      splitMode: transaction.splitMode === "EXACT" ? "EXACT" : "EQUAL",
+      participants:
+        transaction.participants.length > 1
+          ? transaction.participants.map((participant) => ({
+              memberId: participant.id,
+              memberName: participant.name,
+              shareAmount: maskCurrency(
+                String(Math.round(participant.shareAmount * 100)),
+              ),
+            }))
+          : [],
     };
   }
   return {
@@ -150,6 +188,8 @@ function buildDefaultValues(
     category: null,
     date: new Date(),
     recurring: false,
+    splitMode: "EQUAL",
+    participants: [],
   };
 }
 
@@ -160,6 +200,12 @@ export const TransactionFormDrawer = ({
   mode,
 }: TransactionFormDrawerProps) => {
   const isEditing = mode === "edit";
+
+  const { activePlanId, activePlan } = usePlanContext();
+  const { data: members = [] } = useGetPlanMembers(activePlanId ?? undefined);
+  const canAttributeToOthers =
+    activePlan?.myRole === "OWNER" || activePlan?.myRole === "EDITOR";
+  const showSplitSection = canAttributeToOthers && members.length > 1;
 
   const title =
     mode === "edit"
@@ -216,6 +262,18 @@ export const TransactionFormDrawer = ({
     const startDate = format(values.date, "yyyy-MM-dd");
     const amount = parseInt(values.amount.replace(/\D/g, ""), 10) / 100;
 
+    const participants =
+      values.participants.length > 0
+        ? values.participants.map((participant) => ({
+            memberId: participant.memberId,
+            shareAmount:
+              values.splitMode === "EXACT"
+                ? parseInt((participant.shareAmount ?? "").replace(/\D/g, ""), 10) / 100
+                : undefined,
+          }))
+        : undefined;
+    const splitMode = values.participants.length > 0 ? values.splitMode : undefined;
+
     if (mode === "create" && values.recurring && values.recurrenceMode) {
       createFinancialTransactionSeries({
         body: {
@@ -241,6 +299,8 @@ export const TransactionFormDrawer = ({
             values.recurrenceMode === "RECURRING"
               ? format(values.endDate!, "yyyy-MM-dd")
               : undefined,
+          splitMode,
+          participants,
         },
       });
       return;
@@ -252,6 +312,8 @@ export const TransactionFormDrawer = ({
       amount,
       categoryId: values.category?.id,
       startDate,
+      splitMode,
+      participants,
     };
 
     if (isEditing) {
@@ -346,6 +408,141 @@ export const TransactionFormDrawer = ({
               />
               <FieldError errors={[errors.date]} />
             </Field>
+
+            {showSplitSection && (
+              <>
+                <Field orientation="horizontal">
+                  <Checkbox
+                    id="transaction-split"
+                    checked={watch("participants").length > 0}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setValue(
+                          "participants",
+                          members.map((member) => ({
+                            memberId: member.userId,
+                            memberName: member.name,
+                            shareAmount: undefined,
+                          })),
+                        );
+                      } else {
+                        setValue("participants", []);
+                        setValue("splitMode", "EQUAL");
+                      }
+                    }}
+                    disabled={isPending}
+                  />
+                  <FieldLabel htmlFor="transaction-split">
+                    Split this expense with others?
+                  </FieldLabel>
+                </Field>
+
+                {watch("participants").length > 0 && (
+                  <>
+                    <Field>
+                      <FieldLabel>Split mode</FieldLabel>
+                      <div className="flex w-full gap-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          disabled={isPending}
+                          onClick={() => setValue("splitMode", "EQUAL")}
+                          className={cn(
+                            "flex-1 border",
+                            watch("splitMode") === "EQUAL"
+                              ? "border-primary/30 bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary"
+                              : "border-border text-muted-foreground hover:border-primary/30 hover:text-primary hover:bg-transparent",
+                          )}
+                        >
+                          Equal
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          disabled={isPending}
+                          onClick={() => setValue("splitMode", "EXACT")}
+                          className={cn(
+                            "flex-1 border",
+                            watch("splitMode") === "EXACT"
+                              ? "border-primary/30 bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary"
+                              : "border-border text-muted-foreground hover:border-primary/30 hover:text-primary hover:bg-transparent",
+                          )}
+                        >
+                          Exact
+                        </Button>
+                      </div>
+                    </Field>
+
+                    <Field>
+                      <FieldLabel>Participants</FieldLabel>
+                      <div className="flex flex-col gap-2">
+                        {members.map((member) => {
+                          const participants = watch("participants");
+                          const index = participants.findIndex(
+                            (p) => p.memberId === member.userId,
+                          );
+                          const checked = index !== -1;
+
+                          return (
+                            <div
+                              key={member.userId}
+                              className="flex items-center gap-2"
+                            >
+                              <Checkbox
+                                checked={checked}
+                                onCheckedChange={(isChecked) => {
+                                  if (isChecked) {
+                                    setValue("participants", [
+                                      ...participants,
+                                      {
+                                        memberId: member.userId,
+                                        memberName: member.name,
+                                        shareAmount: undefined,
+                                      },
+                                    ]);
+                                  } else {
+                                    setValue(
+                                      "participants",
+                                      participants.filter(
+                                        (p) => p.memberId !== member.userId,
+                                      ),
+                                    );
+                                  }
+                                }}
+                                disabled={isPending}
+                              />
+                              <span className="flex-1 text-sm">
+                                {member.name}
+                              </span>
+                              {watch("splitMode") === "EXACT" && checked && (
+                                <Input
+                                  type="text"
+                                  inputMode="numeric"
+                                  placeholder="R$ 0,00"
+                                  className="h-8 w-28 text-sm"
+                                  value={participants[index]?.shareAmount ?? ""}
+                                  onChange={(e) => {
+                                    const masked = maskCurrency(e.target.value);
+                                    const updated = [...participants];
+                                    updated[index] = {
+                                      ...updated[index],
+                                      shareAmount: masked,
+                                    };
+                                    setValue("participants", updated);
+                                  }}
+                                  disabled={isPending}
+                                />
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <FieldError errors={[errors.participants]} />
+                    </Field>
+                  </>
+                )}
+              </>
+            )}
 
             {mode === "create" && (
               <>
