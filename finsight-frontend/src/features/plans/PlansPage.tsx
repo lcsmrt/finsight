@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { usePlanContext } from "./PlanProvider";
+import { usePlanContext } from "@/app/providers/PlanProvider";
 import { CreatePlanDialog } from "./components/CreatePlanDialog";
 import { InvitePlanDialog } from "./components/InvitePlanDialog";
 import { PlanInvitationsList } from "./components/PlanInvitationsList";

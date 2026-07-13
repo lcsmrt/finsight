@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { finsightApi } from "../clients/finsightApi";
 import { DashboardFilter, DashboardSummaryResponse } from "../dtos";
 import { QueryOptions } from "../types/queryOptions";
-import { usePlanContext } from "@/features/plans/PlanProvider";
+import { usePlanContext } from "@/app/providers/PlanProvider";
 
 const getDashboardSummary = async (
   planId: number,

@@ -13,7 +13,7 @@ import { MutationOptions } from "../types/mutationOptions";
 import { QueryOptions } from "../types/queryOptions";
 import { buildMutationOptions } from "../utils/buildMutationOptions";
 import { buildPagedQuery } from "../utils/buildPagedQuery";
-import { usePlanContext } from "@/features/plans/PlanProvider";
+import { usePlanContext } from "@/app/providers/PlanProvider";
 
 const getFinancialTransactionCategories = async (
   planId: number,

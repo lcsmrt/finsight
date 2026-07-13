@@ -14,7 +14,7 @@ import {
 import { Spinner } from "@/components/spinner/Spinner";
 import { CheckIcon, XIcon } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
-import { usePlanContext } from "./PlanProvider";
+import { usePlanContext } from "@/app/providers/PlanProvider";
 import { ROLE_LABELS } from "./utils/planLabels";
 
 export const AcceptInvitationPage = () => {

@@ -14,7 +14,7 @@ import {
 import { ChevronsUpDownIcon, PlusIcon, SettingsIcon } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { usePlanContext } from "../PlanProvider";
+import { usePlanContext } from "@/app/providers/PlanProvider";
 import { CreatePlanDialog } from "./CreatePlanDialog";
 
 export const PlanSwitcher = () => {
