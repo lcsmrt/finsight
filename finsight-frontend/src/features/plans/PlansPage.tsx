@@ -43,10 +43,9 @@ export const PlansPage = () => {
   const [isRenameOpen, setIsRenameOpen] = useState(false);
   const [isTransferOpen, setIsTransferOpen] = useState(false);
   const confirm = useConfirm();
-  const { mutate: deletePlan } = useDeletePlan();
-  const { mutate: leavePlan } = useLeavePlan();
+  const { mutate: deletePlan, isPending: isDeletingPlan } = useDeletePlan();
+  const { mutate: leavePlan, isPending: isLeavingPlan } = useLeavePlan();
 
-  const canInvite = activePlan?.myRole === "OWNER";
   const isOwner = activePlan?.myRole === "OWNER";
 
   const handleArchivePlan = async () => {
@@ -156,19 +155,25 @@ export const PlansPage = () => {
                     variant="ghost"
                     size="icon-sm"
                     className="text-muted-foreground hover:bg-accent hover:text-destructive"
+                    isLoading={isDeletingPlan}
+                    disabled={isDeletingPlan}
                     onClick={handleArchivePlan}
                   >
                     <ArchiveIcon className="h-4 w-4" />
                   </Button>
-                  {canInvite && (
-                    <Button size="sm" onClick={() => setIsInviteOpen(true)}>
-                      <UserPlusIcon className="h-4 w-4" />
-                      Convidar
-                    </Button>
-                  )}
+                  <Button size="sm" onClick={() => setIsInviteOpen(true)}>
+                    <UserPlusIcon className="h-4 w-4" />
+                    Convidar
+                  </Button>
                 </>
               ) : (
-                <Button variant="outline" size="sm" onClick={handleLeavePlan}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  isLoading={isLeavingPlan}
+                  disabled={isLeavingPlan}
+                  onClick={handleLeavePlan}
+                >
                   <LogOutIcon className="h-4 w-4" />
                   Sair do plano
                 </Button>
