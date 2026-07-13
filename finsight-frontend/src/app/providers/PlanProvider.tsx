@@ -58,7 +58,7 @@ export const PlanProvider = ({ children }: { children: ReactNode }) => {
       const fallback = plans.find((plan) => plan.isDefault) ?? plans[0];
       setActivePlanId(fallback.id);
     }
-  }, [user, plans, activePlanId]);
+  }, [user, plans, activePlanId, setActivePlanId]);
 
   const activePlan = useMemo(
     () => plans.find((plan) => plan.id === activePlanId),
