@@ -69,7 +69,7 @@ export const useCreateFinancialTransaction = (
   return useMutation({
     mutationFn: (payload: CreateFinancialTransactionRequest) =>
       createFinancialTransaction(activePlanId!, payload),
-    ...buildMutationOptions({ successMessage: "Transaction created successfully." }, {
+    ...buildMutationOptions({ successMessage: "Transação criada com sucesso." }, {
       ...options,
       onSuccess: (data, variables) => {
         queryClient.invalidateQueries({ queryKey: ["financialTransactions"] });
@@ -102,7 +102,7 @@ export const useUpdateFinancialTransaction = (
   return useMutation({
     mutationFn: (payload: UpdateFinancialTransactionRequest) =>
       updateFinancialTransaction(activePlanId!, payload),
-    ...buildMutationOptions({ successMessage: "Transaction updated successfully." }, {
+    ...buildMutationOptions({ successMessage: "Transação atualizada com sucesso." }, {
       ...options,
       onSuccess: (data, variables) => {
         queryClient.invalidateQueries({ queryKey: ["financialTransactions"] });
@@ -135,7 +135,7 @@ export const useImportNubankCsv = (
   const { activePlanId } = usePlanContext();
   return useMutation({
     mutationFn: (file: File) => importNubankCsv(activePlanId!, file),
-    ...buildMutationOptions({ successMessage: "Transactions imported successfully." }, {
+    ...buildMutationOptions({ successMessage: "Transações importadas com sucesso." }, {
       ...options,
       onSuccess: (data, variables) => {
         queryClient.invalidateQueries({ queryKey: ["financialTransactions"] });
@@ -167,7 +167,7 @@ export const useCreateFinancialTransactionSeries = (
   return useMutation({
     mutationFn: (payload: CreateFinancialTransactionSeriesRequest) =>
       createFinancialTransactionSeries(activePlanId!, payload),
-    ...buildMutationOptions({ successMessage: "Series created successfully." }, {
+    ...buildMutationOptions({ successMessage: "Série criada com sucesso." }, {
       ...options,
       onSuccess: (data, variables) => {
         queryClient.invalidateQueries({ queryKey: ["financialTransactions"] });
@@ -194,7 +194,7 @@ export const useDeleteFinancialTransactionSeries = (
   return useMutation({
     mutationFn: (seriesId: string) =>
       deleteFinancialTransactionSeries(activePlanId!, seriesId),
-    ...buildMutationOptions({ successMessage: "Series deleted successfully." }, {
+    ...buildMutationOptions({ successMessage: "Série excluída com sucesso." }, {
       ...options,
       onSuccess: (data, variables) => {
         queryClient.invalidateQueries({ queryKey: ["financialTransactions"] });
@@ -218,7 +218,7 @@ export const useDeleteFinancialTransaction = (
   const { activePlanId } = usePlanContext();
   return useMutation({
     mutationFn: (id: number) => deleteFinancialTransaction(activePlanId!, id),
-    ...buildMutationOptions({ successMessage: "Transaction deleted successfully." }, {
+    ...buildMutationOptions({ successMessage: "Transação excluída com sucesso." }, {
       ...options,
       onSuccess: (data, variables) => {
         queryClient.invalidateQueries({ queryKey: ["financialTransactions"] });
