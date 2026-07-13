@@ -39,7 +39,7 @@ const transactionFormSchema = z
     amount: z.string().refine((v) => {
       const digits = v.replace(/\D/g, "");
       return digits.length > 0 && parseInt(digits, 10) > 0;
-    }, "O valor deve ser positivo"),
+    }, "Amount must be positive"),
     category: z
       .object({
         id: z.number(),
@@ -62,7 +62,7 @@ const transactionFormSchema = z
     if (!values.recurrenceMode) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Selecione parcelado ou recorrente",
+        message: "Select installment or recurring",
         path: ["recurrenceMode"],
       });
       return;
@@ -74,7 +74,7 @@ const transactionFormSchema = z
       if (digits.length === 0 || total < 2) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Informe ao menos 2 parcelas",
+          message: "Enter at least 2 installments",
           path: ["parcelsNumber"],
         });
       }
@@ -85,13 +85,13 @@ const transactionFormSchema = z
         if (current < 1) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: "A parcela atual deve ser ao menos 1",
+            message: "The current installment must be at least 1",
             path: ["currentParcel"],
           });
         } else if (total >= 2 && current > total) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: "A parcela atual não pode ser maior que o total",
+            message: "The current installment cannot be greater than the total",
             path: ["currentParcel"],
           });
         }
@@ -102,13 +102,13 @@ const transactionFormSchema = z
       if (!values.endDate) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Informe a data final",
+          message: "Enter the end date",
           path: ["endDate"],
         });
       } else if (values.endDate < values.date) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "A data final deve ser posterior à data inicial",
+          message: "The end date must be after the start date",
           path: ["endDate"],
         });
       }
@@ -365,14 +365,14 @@ export const TransactionFormDrawer = ({
                     disabled={isPending}
                   />
                   <FieldLabel htmlFor="transaction-recurring">
-                    Repetir ou parcelar?
+                    Repeat or split into installments?
                   </FieldLabel>
                 </Field>
 
                 {watch("recurring") && (
                   <>
                     <Field>
-                      <FieldLabel>Modo</FieldLabel>
+                      <FieldLabel>Mode</FieldLabel>
                       <div className="flex w-full gap-2">
                         <Button
                           type="button"
@@ -391,7 +391,7 @@ export const TransactionFormDrawer = ({
                               : "border-border text-muted-foreground hover:border-primary/30 hover:text-primary hover:bg-transparent",
                           )}
                         >
-                          Parcelado
+                          Installments
                         </Button>
                         <Button
                           type="button"
@@ -411,7 +411,7 @@ export const TransactionFormDrawer = ({
                               : "border-border text-muted-foreground hover:border-primary/30 hover:text-primary hover:bg-transparent",
                           )}
                         >
-                          Recorrente
+                          Recurring
                         </Button>
                       </div>
                       <FieldError errors={[errors.recurrenceMode]} />
@@ -421,7 +421,7 @@ export const TransactionFormDrawer = ({
                       <>
                         <Field>
                           <FieldLabel htmlFor="transaction-parcels">
-                            Número de parcelas
+                            Number of installments
                           </FieldLabel>
                           {(() => {
                             const { onChange, ...parcelsRest } =
@@ -450,7 +450,7 @@ export const TransactionFormDrawer = ({
 
                         <Field>
                           <FieldLabel htmlFor="transaction-current-parcel">
-                            Parcela atual
+                            Current installment
                           </FieldLabel>
                           {(() => {
                             const { onChange, ...currentRest } =
@@ -502,7 +502,7 @@ export const TransactionFormDrawer = ({
                           const lastMonth = addMonths(date, total - current);
                           return (
                             <p className="text-muted-foreground text-sm">
-                              Última parcela: {total}/{total} —{" "}
+                              Last installment: {total}/{total} —{" "}
                               {format(lastMonth, "MM/yyyy")}
                             </p>
                           );
@@ -513,7 +513,7 @@ export const TransactionFormDrawer = ({
                     {watch("recurrenceMode") === "RECURRING" && (
                       <Field>
                         <FieldLabel htmlFor="transaction-end-date">
-                          Data final
+                          End date
                         </FieldLabel>
                         <DatePicker
                           id="transaction-end-date"

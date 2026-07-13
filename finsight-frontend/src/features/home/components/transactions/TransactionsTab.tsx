@@ -111,10 +111,10 @@ export const TransactionsTab = () => {
     if (!transaction.seriesId) return;
 
     const confirmed = await confirm({
-      title: "Excluir série",
+      title: "Delete series",
       description:
-        "Isso vai remover TODAS as transações desta série. Deseja continuar?",
-      confirmLabel: "Excluir série",
+        "This will remove ALL transactions in this series. Do you want to continue?",
+      confirmLabel: "Delete series",
       variant: "destructive",
     });
 

@@ -214,7 +214,7 @@ const EditableDateCell = ({ transaction, onSave }: EditableCellProps) => {
     <Input
       autoFocus
       value={draft}
-      placeholder="dd/mm/aaaa"
+      placeholder="dd/mm/yyyy"
       onChange={(e) => setDraft(maskDate(e.target.value))}
       onBlur={commit}
       onKeyDown={(e) => {
@@ -245,7 +245,7 @@ export const buildTransactionColumns = ({
         {row.original.seriesId && (
           <Badge variant="secondary" className="gap-1">
             <RepeatIcon />
-            Série
+            Series
           </Badge>
         )}
       </div>
@@ -317,8 +317,8 @@ export const buildTransactionColumns = ({
             variant="ghost"
             className="text-muted-foreground hover:bg-accent hover:text-destructive rounded p-1"
             disabled={isDeleting}
-            aria-label="Excluir série"
-            title="Excluir série"
+            aria-label="Delete series"
+            title="Delete series"
             onClick={() => onDeleteSeries(row.original)}
           >
             <ListXIcon className="h-4 w-4" />
