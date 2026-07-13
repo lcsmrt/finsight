@@ -32,7 +32,7 @@ const TYPE_LABELS: Record<InvitationType, string> = {
 
 const inviteSchema = z
   .object({
-    role: z.enum(["OWNER", "EDITOR", "CONTRIBUTOR", "VIEWER"]),
+    role: z.enum(["EDITOR", "CONTRIBUTOR", "VIEWER"]),
     type: z.enum(["EMAIL", "LINK"]),
     email: z.string().optional(),
     expiresAt: z.string().optional(),
@@ -167,7 +167,9 @@ export const InvitePlanDialog = ({
               <Select
                 value={type}
                 onValueChange={(value) =>
-                  setValue("type", value as InvitationType)
+                  setValue("type", value as InvitationType, {
+                    shouldValidate: true,
+                  })
                 }
               >
                 <SelectTrigger className="w-full">
@@ -186,7 +188,11 @@ export const InvitePlanDialog = ({
               <FieldLabel>Papel</FieldLabel>
               <Select
                 value={role}
-                onValueChange={(value) => setValue("role", value as PlanRole)}
+                onValueChange={(value) =>
+                  setValue("role", value as InviteFormValues["role"], {
+                    shouldValidate: true,
+                  })
+                }
               >
                 <SelectTrigger className="w-full">
                   <SelectValue>
