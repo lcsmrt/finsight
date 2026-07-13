@@ -14,7 +14,7 @@ import { buildMutationOptions } from "../utils/buildMutationOptions";
 const createInvitation = async (
   payload: CreateInvitationRequest,
 ): Promise<Invitation> => {
-  const { data } = await finsightApi.post(
+  const { data } = await finsightApi.post<Invitation>(
     `/plans/${payload.params.planId}/invitations`,
     payload.body,
   );
@@ -36,7 +36,9 @@ export const useCreateInvitation = (
 const getInvitationPreview = async (
   token: string,
 ): Promise<InvitationPreview> => {
-  const { data } = await finsightApi.get(`/invitations/${token}`);
+  const { data } = await finsightApi.get<InvitationPreview>(
+    `/invitations/${token}`,
+  );
   return data;
 };
 
@@ -54,7 +56,9 @@ export const useGetInvitationPreview = (
 };
 
 const getPlanInvitations = async (planId: number): Promise<Invitation[]> => {
-  const { data } = await finsightApi.get(`/plans/${planId}/invitations`);
+  const { data } = await finsightApi.get<Invitation[]>(
+    `/plans/${planId}/invitations`,
+  );
   return data;
 };
 
@@ -102,7 +106,9 @@ export const useRevokeInvitation = (
 const acceptInvitation = async (
   token: string,
 ): Promise<AcceptInvitationResponse> => {
-  const { data } = await finsightApi.post(`/invitations/${token}/accept`);
+  const { data } = await finsightApi.post<AcceptInvitationResponse>(
+    `/invitations/${token}/accept`,
+  );
   return data;
 };
 
