@@ -5,6 +5,7 @@ import {
   useUpdateFinancialTransaction,
 } from "@/api/services/useFinancialTransactionService";
 import { useGetPlanMembers } from "@/api/services/usePlanService";
+import { useAuth } from "@/app/providers/AuthProvider";
 import { usePlanContext } from "@/app/providers/PlanProvider";
 import { Button } from "@/components/button/Button";
 import { Checkbox } from "@/components/input/base/Checkbox";
@@ -15,6 +16,7 @@ import {
   FieldLabel,
 } from "@/components/input/base/Field";
 import { Input } from "@/components/input/base/Input";
+import { StandardCombobox } from "@/components/input/StandardCombobox";
 import { DatePicker } from "@/components/input/DatePicker";
 import {
   Sheet,
@@ -57,6 +59,7 @@ const transactionFormSchema = z
     parcelsNumber: z.string().optional(),
     currentParcel: z.string().optional(),
     endDate: z.date().optional(),
+    attributionMode: z.enum(["ME", "SOMEONE", "SPLIT"]),
     splitMode: z.enum(["EQUAL", "EXACT"]),
     participants: z.array(
       z.object({
@@ -67,7 +70,11 @@ const transactionFormSchema = z
     ),
   })
   .superRefine((values, ctx) => {
-    if (values.splitMode === "EXACT" && values.participants.length > 0) {
+    if (
+      values.attributionMode === "SPLIT" &&
+      values.splitMode === "EXACT" &&
+      values.participants.length > 0
+    ) {
       const totalDigits = values.amount.replace(/\D/g, "");
       const totalCents = totalDigits.length > 0 ? parseInt(totalDigits, 10) : 0;
       const sumCents = values.participants.reduce((sum, participant) => {
@@ -151,10 +158,26 @@ interface TransactionFormDrawerProps {
   mode: "create" | "edit" | "duplicate";
 }
 
+function deriveAttributionMode(
+  participants: FinancialTransaction["participants"],
+  currentUserId?: number,
+): TransactionFormValues["attributionMode"] {
+  if (participants.length === 0) return "ME";
+  if (participants.length === 1) {
+    return participants[0].id === currentUserId ? "ME" : "SOMEONE";
+  }
+  return "SPLIT";
+}
+
 function buildDefaultValues(
   transaction?: FinancialTransaction,
+  currentUserId?: number,
 ): TransactionFormValues {
   if (transaction) {
+    const attributionMode = deriveAttributionMode(
+      transaction.participants,
+      currentUserId,
+    );
     return {
       type: transaction.type,
       description: transaction.description,
@@ -168,17 +191,18 @@ function buildDefaultValues(
         return new Date(year, month - 1, day);
       })(),
       recurring: false,
+      attributionMode,
       splitMode: transaction.splitMode === "EXACT" ? "EXACT" : "EQUAL",
       participants:
-        transaction.participants.length > 1
-          ? transaction.participants.map((participant) => ({
+        attributionMode === "ME"
+          ? []
+          : transaction.participants.map((participant) => ({
               memberId: participant.id,
               memberName: participant.name,
               shareAmount: maskCurrency(
                 String(Math.round(participant.shareAmount * 100)),
               ),
-            }))
-          : [],
+            })),
     };
   }
   return {
@@ -188,6 +212,7 @@ function buildDefaultValues(
     category: null,
     date: new Date(),
     recurring: false,
+    attributionMode: "ME",
     splitMode: "EQUAL",
     participants: [],
   };
@@ -202,10 +227,13 @@ export const TransactionFormDrawer = ({
   const isEditing = mode === "edit";
 
   const { activePlanId, activePlan } = usePlanContext();
+  const { user } = useAuth();
+  const currentUserId = user?.id;
   const { data: members = [] } = useGetPlanMembers(activePlanId ?? undefined);
   const canAttributeToOthers =
     activePlan?.myRole === "OWNER" || activePlan?.myRole === "EDITOR";
-  const showSplitSection = canAttributeToOthers && members.length > 1;
+  const showAttribution = canAttributeToOthers && members.length > 1;
+  const otherMembers = members.filter((member) => member.userId !== currentUserId);
 
   const title =
     mode === "edit"
@@ -225,12 +253,41 @@ export const TransactionFormDrawer = ({
     formState: { errors },
   } = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionFormSchema),
-    defaultValues: buildDefaultValues(transaction),
+    defaultValues: buildDefaultValues(transaction, currentUserId),
   });
 
   useEffect(() => {
-    reset(buildDefaultValues(transaction));
-  }, [transaction, open, reset]);
+    reset(buildDefaultValues(transaction, currentUserId));
+  }, [transaction, open, reset, currentUserId]);
+
+  const attributionMode = watch("attributionMode");
+
+  const handleAttributionModeChange = (
+    next: TransactionFormValues["attributionMode"],
+  ) => {
+    setValue("attributionMode", next);
+    setValue("splitMode", "EQUAL");
+    if (next === "ME") {
+      setValue("participants", []);
+    } else if (next === "SOMEONE") {
+      const kept = watch("participants").filter(
+        (p) => p.memberId !== currentUserId,
+      );
+      setValue("participants", kept.slice(0, 1));
+    } else {
+      const current = watch("participants");
+      if (current.length < 2) {
+        setValue(
+          "participants",
+          members.map((member) => ({
+            memberId: member.userId,
+            memberName: member.name,
+            shareAmount: undefined,
+          })),
+        );
+      }
+    }
+  };
 
   const {
     mutate: createFinancialTransaction,
@@ -262,17 +319,41 @@ export const TransactionFormDrawer = ({
     const startDate = format(values.date, "yyyy-MM-dd");
     const amount = parseInt(values.amount.replace(/\D/g, ""), 10) / 100;
 
-    const participants =
-      values.participants.length > 0
-        ? values.participants.map((participant) => ({
-            memberId: participant.memberId,
-            shareAmount:
-              values.splitMode === "EXACT"
-                ? parseInt((participant.shareAmount ?? "").replace(/\D/g, ""), 10) / 100
-                : undefined,
-          }))
-        : undefined;
-    const splitMode = values.participants.length > 0 ? values.splitMode : undefined;
+    const { participants, splitMode } = ((): {
+      participants:
+        | { memberId: number; shareAmount?: number }[]
+        | undefined;
+      splitMode: "EQUAL" | "EXACT" | undefined;
+    } => {
+      if (!showAttribution) {
+        return { participants: undefined, splitMode: undefined };
+      }
+
+      if (values.attributionMode === "ME") {
+        return currentUserId != null
+          ? { participants: [{ memberId: currentUserId }], splitMode: "EQUAL" }
+          : { participants: undefined, splitMode: undefined };
+      }
+
+      if (values.attributionMode === "SOMEONE") {
+        const person = values.participants[0];
+        return person
+          ? { participants: [{ memberId: person.memberId }], splitMode: "EQUAL" }
+          : { participants: undefined, splitMode: undefined };
+      }
+
+      return {
+        participants: values.participants.map((participant) => ({
+          memberId: participant.memberId,
+          shareAmount:
+            values.splitMode === "EXACT"
+              ? parseInt((participant.shareAmount ?? "").replace(/\D/g, ""), 10) /
+                100
+              : undefined,
+        })),
+        splitMode: values.splitMode,
+      };
+    })();
 
     if (mode === "create" && values.recurring && values.recurrenceMode) {
       createFinancialTransactionSeries({
@@ -409,35 +490,77 @@ export const TransactionFormDrawer = ({
               <FieldError errors={[errors.date]} />
             </Field>
 
-            {showSplitSection && (
+            {showAttribution && (
               <>
-                <Field orientation="horizontal">
-                  <Checkbox
-                    id="transaction-split"
-                    checked={watch("participants").length > 0}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setValue(
-                          "participants",
-                          members.map((member) => ({
-                            memberId: member.userId,
-                            memberName: member.name,
-                            shareAmount: undefined,
-                          })),
-                        );
-                      } else {
-                        setValue("participants", []);
-                        setValue("splitMode", "EQUAL");
-                      }
-                    }}
-                    disabled={isPending}
-                  />
-                  <FieldLabel htmlFor="transaction-split">
-                    Split this expense with others?
-                  </FieldLabel>
+                <Field>
+                  <FieldLabel>Attributed to</FieldLabel>
+                  <div className="flex w-full gap-2">
+                    {(
+                      [
+                        ["ME", "Me"],
+                        ["SOMEONE", "Someone else"],
+                        ["SPLIT", "Split"],
+                      ] as const
+                    ).map(([value, label]) => (
+                      <Button
+                        key={value}
+                        type="button"
+                        variant="ghost"
+                        disabled={isPending}
+                        onClick={() => handleAttributionModeChange(value)}
+                        className={cn(
+                          "flex-1 border",
+                          attributionMode === value
+                            ? "border-primary/30 bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary"
+                            : "border-border text-muted-foreground hover:border-primary/30 hover:text-primary hover:bg-transparent",
+                        )}
+                      >
+                        {label}
+                      </Button>
+                    ))}
+                  </div>
                 </Field>
 
-                {watch("participants").length > 0 && (
+                {attributionMode === "SOMEONE" && (
+                  <Field>
+                    <FieldLabel htmlFor="transaction-attributed-person">
+                      Person
+                    </FieldLabel>
+                    <StandardCombobox
+                      id="transaction-attributed-person"
+                      items={otherMembers.map((member) => ({
+                        id: member.userId,
+                        name: member.name,
+                      }))}
+                      value={(() => {
+                        const person = watch("participants")[0];
+                        return person
+                          ? { id: person.memberId, name: person.memberName }
+                          : null;
+                      })()}
+                      onValueChange={(value) =>
+                        setValue(
+                          "participants",
+                          value
+                            ? [
+                                {
+                                  memberId: value.id,
+                                  memberName: value.name,
+                                  shareAmount: undefined,
+                                },
+                              ]
+                            : [],
+                        )
+                      }
+                      itemLabel={(member) => member.name}
+                      placeholder="Select a person"
+                      disabled={isPending}
+                    />
+                    <FieldError errors={[errors.participants]} />
+                  </Field>
+                )}
+
+                {attributionMode === "SPLIT" && (
                   <>
                     <Field>
                       <FieldLabel>Split mode</FieldLabel>

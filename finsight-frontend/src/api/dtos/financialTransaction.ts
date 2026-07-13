@@ -62,7 +62,7 @@ export type CreateFinancialTransactionRequest = {
 
 export type UpdateFinancialTransactionRequest = {
   params: { id: number };
-  body: Partial<CreateFinancialTransactionRequest["body"]>;
+  body: CreateFinancialTransactionRequest["body"];
 };
 
 export type RecurrenceMode = "INSTALLMENT" | "RECURRING";

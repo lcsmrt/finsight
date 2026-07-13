@@ -1,9 +1,20 @@
 import { FinancialTransactionCategory } from "@/api/dtos";
-import { FinancialTransaction } from "@/api/dtos/financialTransaction";
+import {
+  FinancialTransaction,
+  ParticipantShare,
+  SplitMode,
+} from "@/api/dtos/financialTransaction";
+import { PlanMember } from "@/api/dtos/plan";
 import { Avatar, AvatarFallback } from "@/components/avatar/Avatar";
 import { Badge } from "@/components/badge/Badge";
 import { Button } from "@/components/button/Button";
+import { Checkbox } from "@/components/input/base/Checkbox";
 import { Input } from "@/components/input/base/Input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/popover/Popover";
 import { cn } from "@/lib/mergeClasses";
 import { formatCurrency, formatDate, getFirstAndLastInitials } from "@/utils/string/formatters";
 import { maskCurrency, maskDate } from "@/utils/string/masks";
@@ -25,6 +36,8 @@ export interface InlineSaveBody {
   amount?: number;
   categoryId?: number;
   startDate?: string;
+  participants?: { memberId: number }[];
+  splitMode?: SplitMode;
 }
 
 interface TransactionColumnHandlers {
@@ -32,14 +45,16 @@ interface TransactionColumnHandlers {
   onEdit: (transaction: FinancialTransaction) => void;
   onDelete: (transaction: FinancialTransaction) => void;
   onDeleteSeries?: (transaction: FinancialTransaction) => void;
-  onSave: (id: number, body: InlineSaveBody) => void;
+  onSave: (transaction: FinancialTransaction, body: InlineSaveBody) => void;
   isDeleting?: boolean;
   showParticipantsColumn?: boolean;
+  canEditParticipants?: boolean;
+  members?: PlanMember[];
 }
 
 interface EditableCellProps {
   transaction: FinancialTransaction;
-  onSave: (id: number, body: InlineSaveBody) => void;
+  onSave: (transaction: FinancialTransaction, body: InlineSaveBody) => void;
 }
 
 const EditableDescriptionCell = ({
@@ -52,7 +67,7 @@ const EditableDescriptionCell = ({
   const commit = () => {
     const trimmed = draft.trim();
     if (trimmed && trimmed !== transaction.description) {
-      onSave(transaction.id, { description: trimmed });
+      onSave(transaction, { description: trimmed });
     } else {
       setDraft(transaction.description);
     }
@@ -92,7 +107,7 @@ const EditableDescriptionCell = ({
 };
 
 const EditableAmountCell = ({ transaction, onSave }: EditableCellProps) => {
-  const { id, amount, type } = transaction;
+  const { amount, type } = transaction;
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
 
@@ -100,7 +115,7 @@ const EditableAmountCell = ({ transaction, onSave }: EditableCellProps) => {
     const digits = draft.replace(/\D/g, "");
     const newAmount = parseInt(digits, 10) / 100;
     if (digits.length > 0 && newAmount > 0 && newAmount !== amount) {
-      onSave(id, { amount: newAmount });
+      onSave(transaction, { amount: newAmount });
     }
     setEditing(false);
   };
@@ -142,14 +157,14 @@ const EditableAmountCell = ({ transaction, onSave }: EditableCellProps) => {
 };
 
 const EditableCategoryCell = ({ transaction, onSave }: EditableCellProps) => {
-  const { id, category, type } = transaction;
+  const { category, type } = transaction;
   const [editing, setEditing] = useState(false);
 
   const handleValueChange = (
     newCategory: FinancialTransactionCategory | null | undefined,
   ) => {
     if (newCategory != null) {
-      onSave(id, { categoryId: newCategory.id });
+      onSave(transaction, { categoryId: newCategory.id });
     }
     setEditing(false);
   };
@@ -193,7 +208,7 @@ const EditableDateCell = ({ transaction, onSave }: EditableCellProps) => {
     if (isValid(parsed)) {
       const newStartDate = format(parsed, "yyyy-MM-dd");
       if (newStartDate !== transaction.startDate.split("T")[0]) {
-        onSave(transaction.id, { startDate: newStartDate });
+        onSave(transaction, { startDate: newStartDate });
       }
     }
     setEditing(false);
@@ -229,9 +244,11 @@ const EditableDateCell = ({ transaction, onSave }: EditableCellProps) => {
   );
 };
 
-const ParticipantsCell = ({ transaction }: { transaction: FinancialTransaction }) => {
-  const { participants } = transaction;
-
+const ParticipantsSummary = ({
+  participants,
+}: {
+  participants: ParticipantShare[];
+}) => {
   if (participants.length === 0) {
     return <span className="text-muted-foreground/50 text-xs">—</span>;
   }
@@ -239,12 +256,12 @@ const ParticipantsCell = ({ transaction }: { transaction: FinancialTransaction }
   if (participants.length === 1) {
     const [participant] = participants;
     return (
-      <div className="flex items-center gap-1.5">
+      <span className="inline-flex items-center gap-1.5">
         <Avatar size="sm">
           <AvatarFallback>{getFirstAndLastInitials(participant.name)}</AvatarFallback>
         </Avatar>
         <span className="text-sm">{participant.name}</span>
-      </div>
+      </span>
     );
   }
 
@@ -260,6 +277,74 @@ const ParticipantsCell = ({ transaction }: { transaction: FinancialTransaction }
   );
 };
 
+const EditableParticipantsCell = ({
+  transaction,
+  members,
+  onSave,
+}: {
+  transaction: FinancialTransaction;
+  members: PlanMember[];
+  onSave: (transaction: FinancialTransaction, body: InlineSaveBody) => void;
+}) => {
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState<number[]>([]);
+
+  const handleOpenChange = (next: boolean) => {
+    if (next) {
+      setDraft(transaction.participants.map((p) => p.id));
+    } else {
+      const original = transaction.participants
+        .map((p) => p.id)
+        .sort()
+        .join(",");
+      const current = [...draft].sort().join(",");
+      if (original !== current) {
+        onSave(transaction, {
+          participants: draft.map((memberId) => ({ memberId })),
+          splitMode: "EQUAL",
+        });
+      }
+    }
+    setOpen(next);
+  };
+
+  const toggle = (userId: number) =>
+    setDraft((prev) =>
+      prev.includes(userId)
+        ? prev.filter((x) => x !== userId)
+        : [...prev, userId],
+    );
+
+  return (
+    <Popover open={open} onOpenChange={handleOpenChange}>
+      <PopoverTrigger
+        render={
+          <button
+            type="button"
+            className="cursor-pointer rounded text-left decoration-dotted underline-offset-2 hover:underline"
+          />
+        }
+      >
+        <ParticipantsSummary participants={transaction.participants} />
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-56 gap-1">
+        {members.map((member) => (
+          <label
+            key={member.userId}
+            className="hover:bg-muted flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-sm"
+          >
+            <Checkbox
+              checked={draft.includes(member.userId)}
+              onCheckedChange={() => toggle(member.userId)}
+            />
+            <span className="flex-1">{member.name}</span>
+          </label>
+        ))}
+      </PopoverContent>
+    </Popover>
+  );
+};
+
 export const buildTransactionColumns = ({
   onDuplicate,
   onEdit,
@@ -268,6 +353,8 @@ export const buildTransactionColumns = ({
   onSave,
   isDeleting,
   showParticipantsColumn,
+  canEditParticipants,
+  members = [],
 }: TransactionColumnHandlers): ColumnDef<FinancialTransaction>[] => [
   {
     id: "description",
@@ -317,9 +404,16 @@ export const buildTransactionColumns = ({
         {
           id: "participants",
           header: "Attributed to",
-          cell: ({ row }: { row: { original: FinancialTransaction } }) => (
-            <ParticipantsCell transaction={row.original} />
-          ),
+          cell: ({ row }: { row: { original: FinancialTransaction } }) =>
+            canEditParticipants ? (
+              <EditableParticipantsCell
+                transaction={row.original}
+                members={members}
+                onSave={onSave}
+              />
+            ) : (
+              <ParticipantsSummary participants={row.original.participants} />
+            ),
         } satisfies ColumnDef<FinancialTransaction>,
       ]
     : []),

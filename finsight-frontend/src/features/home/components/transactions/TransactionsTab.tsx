@@ -42,8 +42,10 @@ export const TransactionsTab = () => {
 
   const { data: financialTransactionsData, isLoading: isLoadingTransactions } =
     useGetFinancialTransactions(queryParams);
-  const { activePlanId } = usePlanContext();
+  const { activePlanId, activePlan } = usePlanContext();
   const { data: members = [] } = useGetPlanMembers(activePlanId ?? undefined);
+  const canAttributeToOthers =
+    activePlan?.myRole === "OWNER" || activePlan?.myRole === "EDITOR";
   const { mutate: deleteTransaction, isPending: isDeleting } =
     useDeleteFinancialTransaction();
   const { mutate: deleteFinancialTransactionSeries } =
@@ -127,8 +129,28 @@ export const TransactionsTab = () => {
     }
   };
 
-  const handleInlineSave = (id: number, body: InlineSaveBody) => {
-    updateTransaction({ params: { id }, body });
+  const handleInlineSave = (
+    transaction: FinancialTransaction,
+    change: InlineSaveBody,
+  ) => {
+    updateTransaction({
+      params: { id: transaction.id },
+      body: {
+        type: transaction.type,
+        description: change.description ?? transaction.description,
+        amount: change.amount ?? transaction.amount,
+        categoryId: change.categoryId ?? transaction.category?.id,
+        startDate: change.startDate ?? transaction.startDate.split("T")[0],
+        splitMode: change.splitMode ?? transaction.splitMode,
+        participants:
+          change.participants ??
+          transaction.participants.map((p) => ({
+            memberId: p.id,
+            shareAmount:
+              transaction.splitMode === "EXACT" ? p.shareAmount : undefined,
+          })),
+      },
+    });
   };
 
   const columns = buildTransactionColumns({
@@ -139,6 +161,8 @@ export const TransactionsTab = () => {
     onSave: handleInlineSave,
     isDeleting,
     showParticipantsColumn: members.length > 1,
+    canEditParticipants: canAttributeToOthers && members.length > 1,
+    members,
   });
 
   return (
