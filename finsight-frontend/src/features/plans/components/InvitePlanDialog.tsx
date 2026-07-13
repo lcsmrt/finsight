@@ -26,7 +26,7 @@ import { z } from "zod";
 import { ROLE_LABELS, ROLE_OPTIONS } from "../utils/planLabels";
 
 const TYPE_LABELS: Record<InvitationType, string> = {
-  EMAIL: "E-mail",
+  EMAIL: "Email",
   LINK: "Link",
 };
 
@@ -41,7 +41,7 @@ const inviteSchema = z
     if (values.type === "EMAIL" && !values.email?.trim()) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Informe um e-mail",
+        message: "Enter an email address",
         path: ["email"],
       });
     }
@@ -111,14 +111,14 @@ export const InvitePlanDialog = ({
   const copyLink = () => {
     if (!createdInvitation) return;
     navigator.clipboard.writeText(buildInvitationLink(createdInvitation));
-    toast.success("Link copiado para a área de transferência.");
+    toast.success("Link copied to clipboard.");
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Convidar para o plano</DialogTitle>
+          <DialogTitle>Invite to plan</DialogTitle>
         </DialogHeader>
 
         {createdInvitation ? (
@@ -126,7 +126,7 @@ export const InvitePlanDialog = ({
             {createdInvitation.type === "LINK" ? (
               <>
                 <p className="text-muted-foreground text-sm">
-                  Compartilhe este link para convidar alguém:
+                  Share this link to invite someone:
                 </p>
                 <div className="flex items-center gap-2">
                   <Input
@@ -146,7 +146,7 @@ export const InvitePlanDialog = ({
               </>
             ) : (
               <p className="text-muted-foreground text-sm">
-                Convite enviado para{" "}
+                Invitation sent to{" "}
                 <span className="text-foreground font-medium">
                   {createdInvitation.email}
                 </span>
@@ -156,14 +156,14 @@ export const InvitePlanDialog = ({
 
             <DialogFooter>
               <Button type="button" onClick={() => onOpenChange(false)}>
-                Concluir
+                Done
               </Button>
             </DialogFooter>
           </div>
         ) : (
           <>
             <Field>
-              <FieldLabel>Tipo de convite</FieldLabel>
+              <FieldLabel>Invitation type</FieldLabel>
               <Select
                 value={type}
                 onValueChange={(value) =>
@@ -178,14 +178,14 @@ export const InvitePlanDialog = ({
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="EMAIL">E-mail</SelectItem>
+                  <SelectItem value="EMAIL">Email</SelectItem>
                   <SelectItem value="LINK">Link</SelectItem>
                 </SelectContent>
               </Select>
             </Field>
 
             <Field>
-              <FieldLabel>Papel</FieldLabel>
+              <FieldLabel>Role</FieldLabel>
               <Select
                 value={role}
                 onValueChange={(value) =>
@@ -211,11 +211,11 @@ export const InvitePlanDialog = ({
 
             {type === "EMAIL" && (
               <Field>
-                <FieldLabel htmlFor="invite-email">E-mail</FieldLabel>
+                <FieldLabel htmlFor="invite-email">Email</FieldLabel>
                 <Input
                   id="invite-email"
                   type="email"
-                  placeholder="pessoa@email.com"
+                  placeholder="person@email.com"
                   disabled={isPending}
                   aria-invalid={!!errors.email}
                   {...register("email")}
@@ -227,7 +227,7 @@ export const InvitePlanDialog = ({
             {type === "LINK" && (
               <Field>
                 <FieldLabel htmlFor="invite-expires-at">
-                  Expira em (opcional)
+                  Expires at (optional)
                 </FieldLabel>
                 <Input
                   id="invite-expires-at"
@@ -248,7 +248,7 @@ export const InvitePlanDialog = ({
                 onClick={() => onOpenChange(false)}
               >
                 <XIcon className="h-4 w-4" />
-                Cancelar
+                Cancel
               </Button>
               <Button
                 type="button"
@@ -256,7 +256,7 @@ export const InvitePlanDialog = ({
                 onClick={handleSubmit(onSubmit)}
               >
                 <SendIcon className="h-4 w-4" />
-                {type === "LINK" ? "Gerar link" : "Enviar convite"}
+                {type === "LINK" ? "Generate link" : "Send invitation"}
               </Button>
             </DialogFooter>
           </>

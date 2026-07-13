@@ -45,28 +45,28 @@ export const AcceptInvitationPage = () => {
         ) : isError || !preview ? (
           <>
             <CardHeader>
-              <CardTitle>Convite inválido</CardTitle>
+              <CardTitle>Invalid invitation</CardTitle>
               <CardDescription>
-                Este convite não existe ou não está mais disponível.
+                This invitation doesn't exist or is no longer available.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Button variant="outline" onClick={() => navigate(PATHS.home)}>
                 <XIcon className="h-4 w-4" />
-                Voltar ao início
+                Back to home
               </Button>
             </CardContent>
           </>
         ) : (
           <>
             <CardHeader>
-              <CardTitle>Você foi convidado</CardTitle>
+              <CardTitle>You've been invited</CardTitle>
               <CardDescription>
-                {preview.invitedByName} convidou você para o plano{" "}
+                {preview.invitedByName} invited you to the plan{" "}
                 <span className="text-foreground font-medium">
                   {preview.planName}
                 </span>{" "}
-                como {ROLE_LABELS[preview.role]}.
+                as {ROLE_LABELS[preview.role]}.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex gap-2">
@@ -77,7 +77,7 @@ export const AcceptInvitationPage = () => {
                 onClick={() => navigate(PATHS.home)}
               >
                 <XIcon className="h-4 w-4" />
-                Recusar
+                Decline
               </Button>
               <Button
                 type="button"
@@ -85,7 +85,7 @@ export const AcceptInvitationPage = () => {
                 onClick={() => token && acceptInvitation(token)}
               >
                 <CheckIcon className="h-4 w-4" />
-                Aceitar convite
+                Accept invitation
               </Button>
             </CardContent>
           </>

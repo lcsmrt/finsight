@@ -54,10 +54,10 @@ export const PlanMembersList = ({ planId }: PlanMembersListProps) => {
 
   const handleRemove = async (member: PlanMember) => {
     const confirmed = await confirm({
-      title: "Remover membro",
-      description: `Tem certeza que deseja remover ${member.name} deste plano?`,
-      confirmLabel: "Remover",
-      cancelLabel: "Cancelar",
+      title: "Remove member",
+      description: `Are you sure you want to remove ${member.name} from this plan?`,
+      confirmLabel: "Remove",
+      cancelLabel: "Cancel",
       variant: "destructive",
     });
     if (confirmed) {
@@ -76,7 +76,7 @@ export const PlanMembersList = ({ planId }: PlanMembersListProps) => {
   if (members.length === 0) {
     return (
       <p className="text-muted-foreground py-6 text-center text-sm">
-        Nenhum membro neste plano.
+        No members in this plan.
       </p>
     );
   }

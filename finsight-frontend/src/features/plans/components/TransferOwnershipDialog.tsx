@@ -60,7 +60,7 @@ export const TransferOwnershipDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Transferir propriedade</DialogTitle>
+          <DialogTitle>Transfer ownership</DialogTitle>
         </DialogHeader>
 
         {isLoading ? (
@@ -69,17 +69,17 @@ export const TransferOwnershipDialog = ({
           </div>
         ) : candidates.length === 0 ? (
           <p className="text-muted-foreground py-6 text-center text-sm">
-            Não há outros membros para transferir a propriedade.
+            There are no other members to transfer ownership to.
           </p>
         ) : (
           <Field>
-            <FieldLabel>Novo proprietário</FieldLabel>
+            <FieldLabel>New owner</FieldLabel>
             <Select
               value={selectedUserId}
               onValueChange={(value) => setSelectedUserId(value ?? "")}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Selecione um membro" />
+                <SelectValue placeholder="Select a member" />
               </SelectTrigger>
               <SelectContent>
                 {candidates.map((member) => (
@@ -93,7 +93,7 @@ export const TransferOwnershipDialog = ({
               </SelectContent>
             </Select>
             <p className="text-muted-foreground text-xs">
-              Você passará a ser Editor deste plano.
+              You will become an Editor of this plan.
             </p>
           </Field>
         )}
@@ -106,7 +106,7 @@ export const TransferOwnershipDialog = ({
             onClick={() => onOpenChange(false)}
           >
             <XIcon className="h-4 w-4" />
-            Cancelar
+            Cancel
           </Button>
           <Button
             type="button"
@@ -115,7 +115,7 @@ export const TransferOwnershipDialog = ({
             onClick={onSubmit}
           >
             <ArrowRightLeftIcon className="h-4 w-4" />
-            Transferir
+            Transfer
           </Button>
         </DialogFooter>
       </DialogContent>

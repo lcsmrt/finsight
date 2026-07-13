@@ -33,7 +33,7 @@ export const PlanSwitcher = () => {
               className="max-w-52 justify-between gap-2"
             >
               <span className="truncate">
-                {activePlan?.name ?? "Selecionar plano"}
+                {activePlan?.name ?? "Select plan"}
               </span>
               <ChevronsUpDownIcon className="text-muted-foreground" />
             </Button>
@@ -42,7 +42,7 @@ export const PlanSwitcher = () => {
 
         <DropdownMenuContent className="min-w-52" align="start">
           <DropdownMenuGroup>
-            <DropdownMenuLabel>Planos</DropdownMenuLabel>
+            <DropdownMenuLabel>Plans</DropdownMenuLabel>
             <DropdownMenuRadioGroup
               value={activePlanId != null ? String(activePlanId) : ""}
               onValueChange={(value) => setActivePlanId(Number(value))}
@@ -59,11 +59,11 @@ export const PlanSwitcher = () => {
 
           <DropdownMenuItem onClick={() => setIsCreateOpen(true)}>
             <PlusIcon />
-            Novo plano
+            New plan
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => navigate(PATHS.plans)}>
             <SettingsIcon />
-            Gerenciar planos
+            Manage plans
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

@@ -27,8 +27,8 @@ const STATUS_VARIANTS: Record<
 
 const invitationLabel = (invitation: Invitation): string =>
   invitation.type === "EMAIL"
-    ? (invitation.email ?? "Convite por e-mail")
-    : "Convite por link";
+    ? (invitation.email ?? "Email invitation")
+    : "Link invitation";
 
 export const PlanInvitationsList = ({ planId }: PlanInvitationsListProps) => {
   const { data: invitations = [], isLoading } =
@@ -38,10 +38,10 @@ export const PlanInvitationsList = ({ planId }: PlanInvitationsListProps) => {
 
   const handleRevoke = async (invitation: Invitation) => {
     const confirmed = await confirm({
-      title: "Revogar convite",
-      description: `Tem certeza que deseja revogar o convite para ${invitationLabel(invitation)}?`,
-      confirmLabel: "Revogar",
-      cancelLabel: "Cancelar",
+      title: "Revoke invitation",
+      description: `Are you sure you want to revoke the invitation for ${invitationLabel(invitation)}?`,
+      confirmLabel: "Revoke",
+      cancelLabel: "Cancel",
       variant: "destructive",
     });
     if (confirmed) {
@@ -60,7 +60,7 @@ export const PlanInvitationsList = ({ planId }: PlanInvitationsListProps) => {
   if (invitations.length === 0) {
     return (
       <p className="text-muted-foreground py-6 text-center text-sm">
-        Nenhum convite criado para este plano.
+        No invitations created for this plan yet.
       </p>
     );
   }
@@ -83,7 +83,7 @@ export const PlanInvitationsList = ({ planId }: PlanInvitationsListProps) => {
               </Badge>
               {invitation.expiresAt && (
                 <span className="text-muted-foreground text-xs">
-                  Expira em{" "}
+                  Expires on{" "}
                   {format(new Date(invitation.expiresAt), "dd/MM/yyyy HH:mm")}
                 </span>
               )}

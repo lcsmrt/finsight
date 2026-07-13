@@ -51,10 +51,10 @@ export const PlansPage = () => {
   const handleArchivePlan = async () => {
     if (!activePlan) return;
     const confirmed = await confirm({
-      title: "Arquivar plano",
-      description: `Tem certeza que deseja arquivar o plano "${activePlan.name}"? Você poderá contatar o suporte para reverter isso posteriormente.`,
-      confirmLabel: "Arquivar",
-      cancelLabel: "Cancelar",
+      title: "Archive plan",
+      description: `Are you sure you want to archive the plan "${activePlan.name}"? You can contact support to revert this later.`,
+      confirmLabel: "Archive",
+      cancelLabel: "Cancel",
       variant: "destructive",
     });
     if (confirmed) {
@@ -65,10 +65,10 @@ export const PlansPage = () => {
   const handleLeavePlan = async () => {
     if (!activePlan) return;
     const confirmed = await confirm({
-      title: "Sair do plano",
-      description: `Tem certeza que deseja sair do plano "${activePlan.name}"?`,
-      confirmLabel: "Sair",
-      cancelLabel: "Cancelar",
+      title: "Leave plan",
+      description: `Are you sure you want to leave the plan "${activePlan.name}"?`,
+      confirmLabel: "Leave",
+      cancelLabel: "Cancel",
       variant: "destructive",
     });
     if (confirmed) {
@@ -85,16 +85,16 @@ export const PlansPage = () => {
         onClick={() => navigate(PATHS.home)}
       >
         <ArrowLeftIcon className="h-4 w-4" />
-        Voltar
+        Back
       </Button>
 
       <SectionHeader
-        title="Planos"
-        subtitle="Gerencie seus planos e alterne entre eles."
+        title="Plans"
+        subtitle="Manage your plans and switch between them."
       >
         <Button size="sm" onClick={() => setIsCreateOpen(true)}>
           <PlusIcon className="h-4 w-4" />
-          Novo plano
+          New plan
         </Button>
       </SectionHeader>
 
@@ -122,7 +122,7 @@ export const PlansPage = () => {
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5">
                   <Badge variant="secondary">{ROLE_LABELS[plan.myRole]}</Badge>
-                  {plan.isDefault && <Badge variant="outline">Padrão</Badge>}
+                  {plan.isDefault && <Badge variant="outline">Default</Badge>}
                 </div>
               </button>
             );
@@ -133,7 +133,7 @@ export const PlansPage = () => {
       {activePlan && (
         <Card>
           <CardHeader>
-            <CardTitle>Membros de {activePlan.name}</CardTitle>
+            <CardTitle>Members of {activePlan.name}</CardTitle>
             <CardAction className="flex items-center gap-2">
               {isOwner ? (
                 <>
@@ -163,7 +163,7 @@ export const PlansPage = () => {
                   </Button>
                   <Button size="sm" onClick={() => setIsInviteOpen(true)}>
                     <UserPlusIcon className="h-4 w-4" />
-                    Convidar
+                    Invite
                   </Button>
                 </>
               ) : (
@@ -175,7 +175,7 @@ export const PlansPage = () => {
                   onClick={handleLeavePlan}
                 >
                   <LogOutIcon className="h-4 w-4" />
-                  Sair do plano
+                  Leave plan
                 </Button>
               )}
             </CardAction>
@@ -189,7 +189,7 @@ export const PlansPage = () => {
       {activePlan && isOwner && (
         <Card>
           <CardHeader>
-            <CardTitle>Convites de {activePlan.name}</CardTitle>
+            <CardTitle>Invitations for {activePlan.name}</CardTitle>
           </CardHeader>
           <CardContent>
             <PlanInvitationsList planId={activePlan.id} />

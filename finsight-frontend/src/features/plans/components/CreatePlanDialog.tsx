@@ -17,7 +17,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 const createPlanSchema = z.object({
-  name: z.string().min(1, "Informe um nome para o plano"),
+  name: z.string().min(1, "Enter a name for the plan"),
 });
 
 type CreatePlanFormValues = z.infer<typeof createPlanSchema>;
@@ -62,14 +62,14 @@ export const CreatePlanDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Novo plano</DialogTitle>
+          <DialogTitle>New plan</DialogTitle>
         </DialogHeader>
 
         <Field>
-          <FieldLabel htmlFor="plan-name">Nome</FieldLabel>
+          <FieldLabel htmlFor="plan-name">Name</FieldLabel>
           <Input
             id="plan-name"
-            placeholder="Ex.: Finanças da casa"
+            placeholder="e.g., Household finances"
             disabled={isPending}
             aria-invalid={!!errors.name}
             {...register("name")}
@@ -85,7 +85,7 @@ export const CreatePlanDialog = ({
             onClick={() => onOpenChange(false)}
           >
             <XIcon className="h-4 w-4" />
-            Cancelar
+            Cancel
           </Button>
           <Button
             type="button"
@@ -93,7 +93,7 @@ export const CreatePlanDialog = ({
             onClick={handleSubmit(onSubmit)}
           >
             <SaveIcon className="h-4 w-4" />
-            Criar
+            Create
           </Button>
         </DialogFooter>
       </DialogContent>
