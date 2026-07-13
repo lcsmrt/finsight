@@ -6,6 +6,8 @@ import {
   useImportNubankCsv,
   useUpdateFinancialTransaction,
 } from "@/api/services/useFinancialTransactionService";
+import { useGetPlanMembers } from "@/api/services/usePlanService";
+import { usePlanContext } from "@/app/providers/PlanProvider";
 import { Badge } from "@/components/badge/Badge";
 import { Button } from "@/components/button/Button";
 import { useConfirm } from "@/components/dialog/useConfirmDialog";
@@ -40,6 +42,8 @@ export const TransactionsTab = () => {
 
   const { data: financialTransactionsData, isLoading: isLoadingTransactions } =
     useGetFinancialTransactions(queryParams);
+  const { activePlanId } = usePlanContext();
+  const { data: members = [] } = useGetPlanMembers(activePlanId ?? undefined);
   const { mutate: deleteTransaction, isPending: isDeleting } =
     useDeleteFinancialTransaction();
   const { mutate: deleteFinancialTransactionSeries } =
@@ -134,6 +138,7 @@ export const TransactionsTab = () => {
     onDeleteSeries: handleDeleteSeries,
     onSave: handleInlineSave,
     isDeleting,
+    showParticipantsColumn: members.length > 1,
   });
 
   return (

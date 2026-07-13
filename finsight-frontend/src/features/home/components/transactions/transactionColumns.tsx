@@ -1,10 +1,11 @@
 import { FinancialTransactionCategory } from "@/api/dtos";
 import { FinancialTransaction } from "@/api/dtos/financialTransaction";
+import { Avatar, AvatarFallback } from "@/components/avatar/Avatar";
 import { Badge } from "@/components/badge/Badge";
 import { Button } from "@/components/button/Button";
 import { Input } from "@/components/input/base/Input";
 import { cn } from "@/lib/mergeClasses";
-import { formatCurrency, formatDate } from "@/utils/string/formatters";
+import { formatCurrency, formatDate, getFirstAndLastInitials } from "@/utils/string/formatters";
 import { maskCurrency, maskDate } from "@/utils/string/masks";
 import { ColumnDef } from "@tanstack/react-table";
 import { format, isValid, parse } from "date-fns";
@@ -14,6 +15,7 @@ import {
   PencilIcon,
   RepeatIcon,
   Trash2Icon,
+  UsersIcon,
 } from "lucide-react";
 import { useState } from "react";
 import { CategoryCombobox } from "./CategoryCombobox";
@@ -32,6 +34,7 @@ interface TransactionColumnHandlers {
   onDeleteSeries?: (transaction: FinancialTransaction) => void;
   onSave: (id: number, body: InlineSaveBody) => void;
   isDeleting?: boolean;
+  showParticipantsColumn?: boolean;
 }
 
 interface EditableCellProps {
@@ -226,6 +229,37 @@ const EditableDateCell = ({ transaction, onSave }: EditableCellProps) => {
   );
 };
 
+const ParticipantsCell = ({ transaction }: { transaction: FinancialTransaction }) => {
+  const { participants } = transaction;
+
+  if (participants.length === 0) {
+    return <span className="text-muted-foreground/50 text-xs">—</span>;
+  }
+
+  if (participants.length === 1) {
+    const [participant] = participants;
+    return (
+      <div className="flex items-center gap-1.5">
+        <Avatar size="sm">
+          <AvatarFallback>{getFirstAndLastInitials(participant.name)}</AvatarFallback>
+        </Avatar>
+        <span className="text-sm">{participant.name}</span>
+      </div>
+    );
+  }
+
+  return (
+    <Badge
+      variant="secondary"
+      className="gap-1"
+      title={participants.map((p) => p.name).join(", ")}
+    >
+      <UsersIcon className="h-3 w-3" />
+      {participants.length} people
+    </Badge>
+  );
+};
+
 export const buildTransactionColumns = ({
   onDuplicate,
   onEdit,
@@ -233,6 +267,7 @@ export const buildTransactionColumns = ({
   onDeleteSeries,
   onSave,
   isDeleting,
+  showParticipantsColumn,
 }: TransactionColumnHandlers): ColumnDef<FinancialTransaction>[] => [
   {
     id: "description",
@@ -277,6 +312,17 @@ export const buildTransactionColumns = ({
       <EditableDateCell transaction={row.original} onSave={onSave} />
     ),
   },
+  ...(showParticipantsColumn
+    ? [
+        {
+          id: "participants",
+          header: "Attributed to",
+          cell: ({ row }: { row: { original: FinancialTransaction } }) => (
+            <ParticipantsCell transaction={row.original} />
+          ),
+        } satisfies ColumnDef<FinancialTransaction>,
+      ]
+    : []),
   {
     id: "actions",
     header: "",
