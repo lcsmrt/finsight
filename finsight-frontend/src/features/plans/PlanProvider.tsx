@@ -9,6 +9,7 @@ import {
 import {
   createContext,
   ReactNode,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -36,10 +37,10 @@ export const PlanProvider = ({ children }: { children: ReactNode }) => {
     enabled: !!user,
   });
 
-  const setActivePlanId = (planId: number) => {
+  const setActivePlanId = useCallback((planId: number) => {
     setActivePlanIdState(planId);
     storeItem("activePlanId", planId);
-  };
+  }, []);
 
   useEffect(() => {
     if (!user) {
@@ -64,12 +65,13 @@ export const PlanProvider = ({ children }: { children: ReactNode }) => {
     [plans, activePlanId],
   );
 
+  const value = useMemo(
+    () => ({ activePlanId, setActivePlanId, activePlan, plans, isLoading }),
+    [activePlanId, setActivePlanId, activePlan, plans, isLoading],
+  );
+
   return (
-    <PlanContext.Provider
-      value={{ activePlanId, setActivePlanId, activePlan, plans, isLoading }}
-    >
-      {children}
-    </PlanContext.Provider>
+    <PlanContext.Provider value={value}>{children}</PlanContext.Provider>
   );
 };
 
