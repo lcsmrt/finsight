@@ -13,7 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeClosed } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, type Location } from "react-router-dom";
 import { z } from "zod";
 
 const loginSchema = z.object({
@@ -22,6 +22,10 @@ const loginSchema = z.object({
 });
 
 type LoginSchema = z.infer<typeof loginSchema>;
+
+type LoginLocationState = {
+  from?: Location;
+};
 
 export const Login = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -42,11 +46,15 @@ export const Login = () => {
   const { mutateAsync: login, isPending: isLoggingIn } = useLogin();
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as LoginLocationState | null)?.from;
 
   const onSubmit = handleSubmit(async (credentials: LoginSchema) => {
     await login({ body: credentials }).then((res) => {
       setAccessToken(res.token);
-      navigate(PATHS.home);
+      navigate(from ? `${from.pathname}${from.search}` : PATHS.home, {
+        replace: true,
+      });
     });
   });
 
@@ -126,7 +134,7 @@ export const Login = () => {
             type="button"
             variant="link"
             className="h-fit p-0 font-bold"
-            onClick={() => navigate(PATHS.registerUser)}
+            onClick={() => navigate(PATHS.registerUser, { state: { from } })}
           >
             Create one now
           </Button>

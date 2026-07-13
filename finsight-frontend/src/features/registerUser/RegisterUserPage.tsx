@@ -12,7 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeClosed } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, type Location } from "react-router-dom";
 import { z } from "zod";
 
 const registerUserSchema = z.object({
@@ -22,6 +22,10 @@ const registerUserSchema = z.object({
 });
 
 type RegisterUserSchema = z.infer<typeof registerUserSchema>;
+
+type RegisterUserLocationState = {
+  from?: Location;
+};
 
 export const RegisterUser = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -43,11 +47,13 @@ export const RegisterUser = () => {
     useRegisterUser();
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as RegisterUserLocationState | null)?.from;
 
   const onSubmit = handleSubmit(async (credentials: RegisterUserSchema) => {
     try {
       await registerUser({ body: credentials });
-      navigate(PATHS.login);
+      navigate(PATHS.login, { state: { from } });
     } catch (error) {
       console.error(error);
     }
@@ -155,7 +161,7 @@ export const RegisterUser = () => {
             type="button"
             variant="link"
             className="h-fit p-0 font-bold"
-            onClick={() => navigate(PATHS.login)}
+            onClick={() => navigate(PATHS.login, { state: { from } })}
           >
             Sign in
           </Button>
