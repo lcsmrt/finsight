@@ -61,7 +61,7 @@ export const useCreateFinancialTransactionCategory = (
   return useMutation({
     mutationFn: (payload: CreateFinancialTransactionCategoryRequest) =>
       createFinancialTransactionCategory(activePlanId!, payload),
-    ...buildMutationOptions({ successMessage: "Categoria criada com sucesso." }, {
+    ...buildMutationOptions({ successMessage: "Category created successfully." }, {
       ...options,
       onSuccess: (data, variables) => {
         queryClient.invalidateQueries({ queryKey: ["financialTransactionCategories"] });
@@ -94,7 +94,7 @@ export const useUpdateFinancialTransactionCategory = (
   return useMutation({
     mutationFn: (payload: UpdateFinancialTransactionCategoryRequest) =>
       updateFinancialTransactionCategory(activePlanId!, payload),
-    ...buildMutationOptions({ successMessage: "Categoria atualizada com sucesso." }, {
+    ...buildMutationOptions({ successMessage: "Category updated successfully." }, {
       ...options,
       onSuccess: (data, variables) => {
         queryClient.invalidateQueries({ queryKey: ["financialTransactionCategories"] });
@@ -121,7 +121,7 @@ export const useDeleteFinancialTransactionCategory = (
   return useMutation({
     mutationFn: (id: number) =>
       deleteFinancialTransactionCategory(activePlanId!, id),
-    ...buildMutationOptions({ successMessage: "Categoria excluída com sucesso." }, {
+    ...buildMutationOptions({ successMessage: "Category deleted successfully." }, {
       ...options,
       onSuccess: (data, variables) => {
         queryClient.invalidateQueries({ queryKey: ["financialTransactionCategories"] });

@@ -74,13 +74,13 @@ export const ConfirmDialogProvider = ({
             </DialogHeader>
             <DialogFooter>
               <Button variant="ghost" onClick={handleCancel}>
-                {options.cancelLabel || "Cancelar"}
+                {options.cancelLabel || "Cancel"}
               </Button>
               <Button
                 variant={options.variant || "default"}
                 onClick={handleConfirm}
               >
-                {options.confirmLabel || "Confirmar"}
+                {options.confirmLabel || "Confirm"}
               </Button>
             </DialogFooter>
           </DialogContent>

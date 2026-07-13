@@ -27,7 +27,7 @@ export const useCreateInvitation = (
   return useMutation({
     mutationFn: createInvitation,
     ...buildMutationOptions(
-      { successMessage: "Convite criado com sucesso." },
+      { successMessage: "Invitation created successfully." },
       options,
     ),
   });
@@ -89,7 +89,7 @@ export const useRevokeInvitation = (
   return useMutation({
     mutationFn: revokeInvitation,
     ...buildMutationOptions(
-      { successMessage: "Convite revogado com sucesso." },
+      { successMessage: "Invitation revoked successfully." },
       {
         ...options,
         onSuccess: (data, variables) => {
@@ -119,7 +119,7 @@ export const useAcceptInvitation = (
   return useMutation({
     mutationFn: acceptInvitation,
     ...buildMutationOptions(
-      { successMessage: "Convite aceito com sucesso." },
+      { successMessage: "Invitation accepted successfully." },
       {
         ...options,
         onSuccess: (data, variables) => {

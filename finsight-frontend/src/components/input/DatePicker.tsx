@@ -34,7 +34,7 @@ export interface DatePickerProps {
 export const DatePicker = ({
   value,
   onChange,
-  placeholder = "dd/mm/aaaa",
+  placeholder = "dd/mm/yyyy",
   disabled,
   disabledDates,
   fromYear = 1900,
@@ -156,7 +156,7 @@ function formatRange(range?: DateRange): string {
 export const DateRangePicker = ({
   value,
   onChange,
-  placeholder = "dd/mm/aaaa – dd/mm/aaaa",
+  placeholder = "dd/mm/yyyy – dd/mm/yyyy",
   disabled,
   disabledDates,
   fromYear = 1900,

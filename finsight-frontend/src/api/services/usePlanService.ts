@@ -86,7 +86,7 @@ export const useCreatePlan = (
   return useMutation({
     mutationFn: createPlan,
     ...buildMutationOptions(
-      { successMessage: "Plano criado com sucesso." },
+      { successMessage: "Plan created successfully." },
       {
         ...options,
         onSuccess: (data, variables) => {
@@ -115,7 +115,7 @@ export const useUpdateMemberRole = (
   return useMutation({
     mutationFn: updateMemberRole,
     ...buildMutationOptions(
-      { successMessage: "Papel do membro atualizado com sucesso." },
+      { successMessage: "Member role updated successfully." },
       {
         ...options,
         onSuccess: (data, variables) => {
@@ -143,7 +143,7 @@ export const useRemoveMember = (
   return useMutation({
     mutationFn: removeMember,
     ...buildMutationOptions(
-      { successMessage: "Membro removido com sucesso." },
+      { successMessage: "Member removed successfully." },
       {
         ...options,
         onSuccess: (data, variables) => {
@@ -173,7 +173,7 @@ export const useRenamePlan = (
   return useMutation({
     mutationFn: renamePlan,
     ...buildMutationOptions(
-      { successMessage: "Plano renomeado com sucesso." },
+      { successMessage: "Plan renamed successfully." },
       {
         ...options,
         onSuccess: (data, variables) => {
@@ -194,7 +194,7 @@ export const useDeletePlan = (options?: MutationOptions<void, number>) => {
   return useMutation({
     mutationFn: deletePlan,
     ...buildMutationOptions(
-      { successMessage: "Plano arquivado com sucesso." },
+      { successMessage: "Plan archived successfully." },
       {
         ...options,
         onSuccess: (data, planId) => {
@@ -216,7 +216,7 @@ export const useLeavePlan = (options?: MutationOptions<void, number>) => {
   return useMutation({
     mutationFn: leavePlan,
     ...buildMutationOptions(
-      { successMessage: "Você saiu do plano com sucesso." },
+      { successMessage: "You left the plan successfully." },
       {
         ...options,
         onSuccess: (data, planId) => {
@@ -245,7 +245,7 @@ export const useTransferOwnership = (
   return useMutation({
     mutationFn: transferOwnership,
     ...buildMutationOptions(
-      { successMessage: "Propriedade do plano transferida com sucesso." },
+      { successMessage: "Plan ownership transferred successfully." },
       {
         ...options,
         onSuccess: (data, variables) => {

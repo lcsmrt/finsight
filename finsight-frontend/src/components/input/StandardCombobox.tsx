@@ -150,7 +150,7 @@ export function StandardCombobox<T extends WithId>({
               className="text-primary hover:bg-accent flex w-full cursor-pointer items-center gap-1.5 rounded-md px-2 py-1.5 text-sm"
             >
               <PlusIcon className="h-3.5 w-3.5 shrink-0" />
-              Criar &ldquo;{searchTerm}&rdquo;
+              Create &ldquo;{searchTerm}&rdquo;
             </button>
           </div>
         ) : (

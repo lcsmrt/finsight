@@ -88,6 +88,6 @@ export const TableRoot = <T,>({
 
 export const useTable = () => {
   const context = useContext(TableContext);
-  if (!context) throw new Error("useTable deve ser usado dentro de um Table");
+  if (!context) throw new Error("useTable must be used within a Table");
   return context;
 };

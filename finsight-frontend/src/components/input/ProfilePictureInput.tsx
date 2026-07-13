@@ -54,7 +54,7 @@ export function ProfilePictureInput({
           className="absolute right-1 bottom-1 rounded-full"
         >
           <Camera className="h-5 w-5" />
-          <span className="sr-only">Alterar foto</span>
+          <span className="sr-only">Change photo</span>
         </Button>
       </div>
 
