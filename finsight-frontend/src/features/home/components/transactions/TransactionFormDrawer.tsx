@@ -26,10 +26,11 @@ import {
   SheetTitle,
 } from "@/components/sheet/Sheet";
 import { cn } from "@/lib/mergeClasses";
+import { formatCurrency } from "@/utils/string/formatters";
 import { maskCurrency } from "@/utils/string/masks";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { addMonths, format } from "date-fns";
-import { SaveIcon, XIcon } from "lucide-react";
+import { PlusIcon, SaveIcon, Trash2Icon, XIcon } from "lucide-react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -68,8 +69,43 @@ const transactionFormSchema = z
         shareAmount: z.string().optional(),
       }),
     ),
+    items: z.array(
+      z.object({
+        description: z.string().min(1, "Description is required"),
+        amount: z.string().refine((v) => {
+          const digits = v.replace(/\D/g, "");
+          return digits.length > 0 && parseInt(digits, 10) > 0;
+        }, "Amount must be positive"),
+        category: z
+          .object({
+            id: z.number(),
+            type: z.enum(["DEBIT", "CREDIT"]),
+            description: z.string(),
+            spendingLimit: z.number().nullish(),
+          })
+          .nullable()
+          .optional(),
+      }),
+    ),
   })
   .superRefine((values, ctx) => {
+    if (values.items.length > 0) {
+      const totalDigits = values.amount.replace(/\D/g, "");
+      const totalCents = totalDigits.length > 0 ? parseInt(totalDigits, 10) : 0;
+      const itemsCents = values.items.reduce((sum, item) => {
+        const digits = item.amount.replace(/\D/g, "");
+        return sum + (digits.length > 0 ? parseInt(digits, 10) : 0);
+      }, 0);
+
+      if (itemsCents > totalCents) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Items cannot exceed the transaction total",
+          path: ["items"],
+        });
+      }
+    }
+
     if (
       values.attributionMode === "SPLIT" &&
       values.splitMode === "EXACT" &&
@@ -203,6 +239,11 @@ function buildDefaultValues(
                 String(Math.round(participant.shareAmount * 100)),
               ),
             })),
+      items: transaction.items.map((item) => ({
+        description: item.description,
+        amount: maskCurrency(String(Math.round(item.amount * 100))),
+        category: item.category ?? null,
+      })),
     };
   }
   return {
@@ -215,6 +256,7 @@ function buildDefaultValues(
     attributionMode: "ME",
     splitMode: "EQUAL",
     participants: [],
+    items: [],
   };
 }
 
@@ -387,6 +429,12 @@ export const TransactionFormDrawer = ({
       return;
     }
 
+    const items = values.items.map((item) => ({
+      description: item.description,
+      amount: parseInt(item.amount.replace(/\D/g, ""), 10) / 100,
+      categoryId: item.category?.id,
+    }));
+
     const body = {
       type: values.type,
       description: values.description,
@@ -395,6 +443,7 @@ export const TransactionFormDrawer = ({
       startDate,
       splitMode,
       participants,
+      items,
     };
 
     if (isEditing) {
@@ -488,6 +537,117 @@ export const TransactionFormDrawer = ({
                 className="w-full"
               />
               <FieldError errors={[errors.date]} />
+            </Field>
+
+            <Field>
+              <FieldLabel>Items</FieldLabel>
+              <div className="flex flex-col gap-2">
+                {watch("items").map((item, index) => {
+                  const items = watch("items");
+                  return (
+                    <div
+                      key={index}
+                      className="border-border flex flex-col gap-2 rounded-md border p-2"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Input
+                          placeholder="Item description"
+                          className="flex-1"
+                          disabled={isPending}
+                          value={item.description}
+                          onChange={(e) => {
+                            const updated = [...items];
+                            updated[index] = {
+                              ...updated[index],
+                              description: e.target.value,
+                            };
+                            setValue("items", updated);
+                          }}
+                        />
+                        <Input
+                          type="text"
+                          inputMode="numeric"
+                          placeholder="R$ 0,00"
+                          className="w-28"
+                          disabled={isPending}
+                          value={item.amount}
+                          onChange={(e) => {
+                            const updated = [...items];
+                            updated[index] = {
+                              ...updated[index],
+                              amount: maskCurrency(e.target.value),
+                            };
+                            setValue("items", updated);
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          disabled={isPending}
+                          onClick={() =>
+                            setValue(
+                              "items",
+                              items.filter((_, i) => i !== index),
+                            )
+                          }
+                        >
+                          <Trash2Icon className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                      <CategoryCombobox
+                        value={item.category ?? null}
+                        onValueChange={(v) => {
+                          const updated = [...items];
+                          updated[index] = { ...updated[index], category: v ?? null };
+                          setValue("items", updated);
+                        }}
+                        type={watch("type")}
+                        disabled={isPending}
+                      />
+                    </div>
+                  );
+                })}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={isPending}
+                  onClick={() =>
+                    setValue("items", [
+                      ...watch("items"),
+                      { description: "", amount: "", category: null },
+                    ])
+                  }
+                >
+                  <PlusIcon className="h-3.5 w-3.5" />
+                  Add item
+                </Button>
+              </div>
+              {watch("items").length > 0 &&
+                (() => {
+                  const totalDigits = watch("amount").replace(/\D/g, "");
+                  const totalCents =
+                    totalDigits.length > 0 ? parseInt(totalDigits, 10) : 0;
+                  const itemsCents = watch("items").reduce((sum, item) => {
+                    const digits = item.amount.replace(/\D/g, "");
+                    return sum + (digits.length > 0 ? parseInt(digits, 10) : 0);
+                  }, 0);
+                  const remainderCents = totalCents - itemsCents;
+                  return (
+                    <p
+                      className={cn(
+                        "text-sm",
+                        remainderCents < 0
+                          ? "text-destructive"
+                          : "text-muted-foreground",
+                      )}
+                    >
+                      Remainder: {formatCurrency(remainderCents / 100, "BRL")}
+                    </p>
+                  );
+                })()}
+              <FieldError errors={[errors.items]} />
             </Field>
 
             {showAttribution && (
