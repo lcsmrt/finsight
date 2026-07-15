@@ -10,6 +10,14 @@ export type ParticipantShare = {
   shareAmount: number;
 };
 
+export type TransactionItem = {
+  id: number;
+  description: string;
+  amount: number;
+  quantity: number;
+  category?: FinancialTransactionCategory;
+};
+
 export type FinancialTransaction = {
   id: number;
   category?: FinancialTransactionCategory;
@@ -27,12 +35,20 @@ export type FinancialTransaction = {
   };
   splitMode: SplitMode;
   participants: ParticipantShare[];
+  items: TransactionItem[];
 };
 
 export type ParticipantInput = {
   memberId: number;
   // Only used when splitMode is EXACT.
   shareAmount?: number;
+};
+
+export type ItemInput = {
+  description: string;
+  amount: number;
+  categoryId?: number;
+  quantity?: number;
 };
 
 export type FinancialTransactionSortBy = "startDate" | "endDate" | "amount" | "description";
@@ -57,6 +73,7 @@ export type CreateFinancialTransactionRequest = {
     endDate?: string;
     splitMode?: SplitMode;
     participants?: ParticipantInput[];
+    items?: ItemInput[];
   };
 };
 
