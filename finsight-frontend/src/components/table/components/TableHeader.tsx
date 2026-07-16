@@ -23,16 +23,17 @@ export const TableHeader = <TData,>({
   isSticky = true,
 }: TableHeaderProps<TData>) => {
   const toggleSort = (columnId: keyof TData) => {
-    const currentSorting = sorting ?? [];
-    const existing = currentSorting.find((s) => s.by === columnId);
+    const existing = (sorting ?? []).find((s) => s.by === columnId);
 
+    // Single active sort key: clicking a column replaces any prior sort rather than appending, so the
+    // shown arrow always matches the one column the server orders by (the backend reads sorting[0]).
     let newSorting: Sorting<TData>[];
     if (!existing) {
-      newSorting = [...currentSorting, { by: columnId, direction: "asc" }];
+      newSorting = [{ by: columnId, direction: "asc" }];
     } else if (existing.direction === "asc") {
-      newSorting = currentSorting.map((s) => (s.by === columnId ? { ...s, direction: "desc" } : s));
+      newSorting = [{ by: columnId, direction: "desc" }];
     } else {
-      newSorting = currentSorting.filter((s) => s.by !== columnId);
+      newSorting = [];
     }
 
     onSortChange?.(newSorting);
