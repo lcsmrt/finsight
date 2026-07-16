@@ -377,6 +377,7 @@ export const buildTransactionColumns = ({
     id: "category",
     accessorKey: "category",
     header: "Category",
+    enableSorting: true,
     cell: ({ row }) => (
       <EditableCategoryCell transaction={row.original} onSave={onSave} />
     ),
@@ -404,6 +405,7 @@ export const buildTransactionColumns = ({
         {
           id: "participants",
           header: "Attributed to",
+          enableSorting: true,
           cell: ({ row }: { row: { original: FinancialTransaction } }) =>
             canEditParticipants ? (
               <EditableParticipantsCell
