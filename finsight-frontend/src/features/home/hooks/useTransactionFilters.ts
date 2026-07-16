@@ -11,12 +11,15 @@ const SORTABLE_FIELDS: Record<string, FinancialTransactionSortBy> = {
   startDate: "startDate",
   amount: "amount",
   description: "description",
+  category: "category",
+  participants: "attributedTo",
 };
 
 export const useTransactionFilters = () => {
   const [appliedFilters, setAppliedFilters] = useState<AppliedFilters>({
     filter: {},
     categoryForDisplay: null,
+    memberForDisplay: null,
   });
   const [description, setDescription] = useState("");
   const [debouncedDescription, setDebouncedDescription] = useState("");
@@ -73,8 +76,23 @@ export const useTransactionFilters = () => {
         label: categoryForDisplay.description,
         onRemove: () => {
           setAppliedFilters((p) => ({
+            ...p,
             filter: { ...p.filter, categoryId: undefined },
             categoryForDisplay: null,
+          }));
+          setPage(0);
+        },
+      });
+    }
+    if (filter.memberId != null && appliedFilters.memberForDisplay) {
+      result.push({
+        key: "member",
+        label: appliedFilters.memberForDisplay.name,
+        onRemove: () => {
+          setAppliedFilters((p) => ({
+            ...p,
+            filter: { ...p.filter, memberId: undefined },
+            memberForDisplay: null,
           }));
           setPage(0);
         },
@@ -138,7 +156,11 @@ export const useTransactionFilters = () => {
   };
 
   const onClearFilters = () => {
-    setAppliedFilters({ filter: {}, categoryForDisplay: null });
+    setAppliedFilters({
+      filter: {},
+      categoryForDisplay: null,
+      memberForDisplay: null,
+    });
     setPage(0);
   };
 

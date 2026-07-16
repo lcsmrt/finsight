@@ -2,6 +2,7 @@ import type {
   FinancialTransactionType,
   PagedFinancialTransactionsFilter,
   FinancialTransactionCategory,
+  PlanMember,
 } from "@/api/dtos";
 import { useGetFinancialTransactionCategories } from "@/api/services/useFinancialTransactionCategoryService";
 import { Button } from "@/components/button/Button";
@@ -37,9 +38,18 @@ const TYPE_LABELS: Record<FinancialTransactionType | typeof TYPE_ALL, string> = 
   DEBIT: "Debit",
 };
 
+// StandardCombobox requires an `id`; PlanMember keys on `userId`, so members are adapted to this shape.
+type MemberOption = { id: number; name: string };
+
+const toMemberOption = (member: PlanMember): MemberOption => ({
+  id: member.userId,
+  name: member.name,
+});
+
 type FilterDraft = {
   type: FinancialTransactionType | typeof TYPE_ALL;
   category: FinancialTransactionCategory | null;
+  member: MemberOption | null;
   dateRange: DateRange | undefined;
   amountMin: string;
   amountMax: string;
@@ -48,13 +58,15 @@ type FilterDraft = {
 export type AppliedFilters = {
   filter: PagedFinancialTransactionsFilter;
   categoryForDisplay: FinancialTransactionCategory | null;
+  memberForDisplay: MemberOption | null;
 };
 
 function toDraft(applied: AppliedFilters): FilterDraft {
-  const { filter, categoryForDisplay } = applied;
+  const { filter, categoryForDisplay, memberForDisplay } = applied;
   return {
     type: filter.type ?? TYPE_ALL,
     category: categoryForDisplay,
+    member: memberForDisplay,
     dateRange:
       filter.startDateFrom || filter.startDateTo
         ? {
@@ -73,6 +85,7 @@ function fromDraft(draft: FilterDraft): AppliedFilters {
   const filter: PagedFinancialTransactionsFilter = {};
   if (draft.type !== TYPE_ALL) filter.type = draft.type;
   if (draft.category) filter.categoryId = draft.category.id;
+  if (draft.member) filter.memberId = draft.member.id;
   if (draft.dateRange?.from)
     filter.startDateFrom = format(draft.dateRange.from, ISO);
   if (draft.dateRange?.to) filter.startDateTo = format(draft.dateRange.to, ISO);
@@ -80,7 +93,11 @@ function fromDraft(draft: FilterDraft): AppliedFilters {
   const maxDigits = draft.amountMax.replace(/\D/g, "");
   if (minDigits) filter.amountMin = parseInt(minDigits, 10) / 100;
   if (maxDigits) filter.amountMax = parseInt(maxDigits, 10) / 100;
-  return { filter, categoryForDisplay: draft.category };
+  return {
+    filter,
+    categoryForDisplay: draft.category,
+    memberForDisplay: draft.member,
+  };
 }
 
 export function countActiveFilters(
@@ -89,6 +106,7 @@ export function countActiveFilters(
   let n = 0;
   if (filter.type) n++;
   if (filter.categoryId != null) n++;
+  if (filter.memberId != null) n++;
   if (filter.startDateFrom || filter.startDateTo) n++;
   if (filter.amountMin != null || filter.amountMax != null) n++;
   return n;
@@ -97,11 +115,13 @@ export function countActiveFilters(
 interface TransactionFilterPopoverProps {
   appliedFilters: AppliedFilters;
   onApply: (filters: AppliedFilters) => void;
+  members?: PlanMember[];
 }
 
 export const TransactionFilterPopover = ({
   appliedFilters,
   onApply,
+  members = [],
 }: TransactionFilterPopoverProps) => {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<FilterDraft>(() =>
@@ -127,9 +147,11 @@ export const TransactionFilterPopover = ({
   };
 
   const handleReset = () => {
-    onApply({ filter: {}, categoryForDisplay: null });
+    onApply({ filter: {}, categoryForDisplay: null, memberForDisplay: null });
     setOpen(false);
   };
+
+  const showMemberPicker = members.length > 1;
 
   const activeCount = countActiveFilters(appliedFilters.filter);
 
@@ -184,6 +206,20 @@ export const TransactionFilterPopover = ({
               loading={isFetchingCategories || categorySearch !== debouncedCategorySearch}
             />
           </Field>
+
+          {showMemberPicker && (
+            <Field>
+              <FieldLabel>Attributed to</FieldLabel>
+              <StandardCombobox
+                items={members.map(toMemberOption)}
+                value={draft.member}
+                onValueChange={(v) => setDraft((d) => ({ ...d, member: v }))}
+                itemLabel={(m) => m.name}
+                placeholder="All members"
+                clearable
+              />
+            </Field>
+          )}
 
           <Field>
             <FieldLabel>Date</FieldLabel>

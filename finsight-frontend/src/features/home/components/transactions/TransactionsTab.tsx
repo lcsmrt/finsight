@@ -185,6 +185,7 @@ export const TransactionsTab = () => {
             <TransactionFilterPopover
               appliedFilters={appliedFilters}
               onApply={onApplyFilters}
+              members={members}
             />
           </div>
 

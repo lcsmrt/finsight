@@ -51,11 +51,18 @@ export type ItemInput = {
   quantity?: number;
 };
 
-export type FinancialTransactionSortBy = "startDate" | "endDate" | "amount" | "description";
+export type FinancialTransactionSortBy =
+  | "startDate"
+  | "endDate"
+  | "amount"
+  | "description"
+  | "category"
+  | "attributedTo";
 
 export interface PagedFinancialTransactionsFilter {
   type?: FinancialTransactionType;
   categoryId?: number;
+  memberId?: number;
   description?: string;
   startDateFrom?: string;
   startDateTo?: string;
