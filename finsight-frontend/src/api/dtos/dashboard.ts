@@ -34,4 +34,5 @@ export type DashboardSummaryResponse = {
 export type DashboardFilter = {
   startDate: string;
   endDate: string;
+  memberId?: number;
 };

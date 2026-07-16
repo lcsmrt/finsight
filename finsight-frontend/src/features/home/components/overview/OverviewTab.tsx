@@ -1,6 +1,9 @@
 import { useGetDashboardSummary } from "@/api/services/useDashboardService";
+import { useGetPlanMembers } from "@/api/services/usePlanService";
+import { usePlanContext } from "@/app/providers/PlanProvider";
 import { Button } from "@/components/button/Button";
 import { DateRangePicker } from "@/components/input/DatePicker";
+import { StandardCombobox } from "@/components/input/StandardCombobox";
 import { Skeleton } from "@/components/skeleton/Skeleton";
 import { cn } from "@/lib/mergeClasses";
 import {
@@ -21,6 +24,9 @@ import { PersonBreakdownList } from "./PersonBreakdownList";
 import { SummaryCards } from "./SummaryCards";
 
 type Period = "this-month" | "last-3m" | "last-6m" | "this-year";
+
+// StandardCombobox requires an `id`; PlanMember keys on `userId`, so members are adapted to this shape.
+type MemberOption = { id: number; name: string };
 
 const PERIOD_LABELS: Record<Period, string> = {
   "this-month": "This month",
@@ -56,18 +62,31 @@ const getPeriodDates = (period: Period) => {
 export const OverviewTab = () => {
   const [period, setPeriod] = useState<Period>("this-month");
   const [customRange, setCustomRange] = useState<DateRange | undefined>();
+  const [selectedMember, setSelectedMember] = useState<MemberOption | null>(
+    null,
+  );
+
+  const { activePlanId } = usePlanContext();
+  const { data: members = [] } = useGetPlanMembers(activePlanId ?? undefined);
+  const memberOptions = useMemo<MemberOption[]>(
+    () => members.map((m) => ({ id: m.userId, name: m.name })),
+    [members],
+  );
+  const showMemberPicker = memberOptions.length > 1;
 
   const isCustomActive = !!(customRange?.from && customRange?.to);
 
   const filter = useMemo(() => {
-    if (isCustomActive) {
-      return {
-        startDate: format(customRange!.from!, "yyyy-MM-dd"),
-        endDate: format(customRange!.to!, "yyyy-MM-dd"),
-      };
-    }
-    return getPeriodDates(period);
-  }, [period, isCustomActive, customRange]);
+    const dates = isCustomActive
+      ? {
+          startDate: format(customRange!.from!, "yyyy-MM-dd"),
+          endDate: format(customRange!.to!, "yyyy-MM-dd"),
+        }
+      : getPeriodDates(period);
+    return selectedMember
+      ? { ...dates, memberId: selectedMember.id }
+      : dates;
+  }, [period, isCustomActive, customRange, selectedMember]);
 
   const { data, isLoading } = useGetDashboardSummary(filter);
 
@@ -126,6 +145,18 @@ export const OverviewTab = () => {
           placeholder="Custom period"
           className={cn(isCustomActive && "border-pink-400")}
         />
+        {showMemberPicker && (
+          <div className="min-w-48">
+            <StandardCombobox
+              items={memberOptions}
+              value={selectedMember}
+              onValueChange={setSelectedMember}
+              itemLabel={(m) => m.name}
+              placeholder="All members"
+              clearable
+            />
+          </div>
+        )}
       </div>
 
       {isLoading || !data ? (
