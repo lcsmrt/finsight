@@ -116,3 +116,47 @@ export type FinancialTransactionSeriesResponse = {
   count: number;
   occurrences: FinancialTransaction[];
 };
+
+export type SeriesEditScope = "THIS_ONE" | "THIS_AND_FOLLOWING" | "ALL";
+
+export type RecurrenceDefinitionParticipantTemplate = {
+  memberId: number;
+  shareAmount: number;
+};
+
+export type RecurrenceDefinitionResponse = {
+  id: number;
+  seriesId: string;
+  type: FinancialTransactionType;
+  amount: number;
+  description: string;
+  categoryId?: number;
+  mode: RecurrenceMode;
+  interval?: RecurrenceInterval;
+  parcelsNumber?: number;
+  firstParcel?: number;
+  startDate: string;
+  endDate?: string;
+  splitMode: SplitMode;
+  participants: RecurrenceDefinitionParticipantTemplate[];
+};
+
+export type SeriesEditRequest = {
+  params: { seriesId: string };
+  body: {
+    type: FinancialTransactionType;
+    amount: number;
+    description: string;
+    categoryId?: number;
+    mode: RecurrenceMode;
+    startDate: string;
+    parcelsNumber?: number;
+    currentParcel?: number;
+    interval?: RecurrenceInterval;
+    endDate?: string;
+    splitMode?: SplitMode;
+    participants?: ParticipantInput[];
+    scope: SeriesEditScope;
+    pivotOccurrenceId?: number;
+  };
+};

@@ -9,6 +9,8 @@ import {
   PagedFinancialTransactionsFilter,
   PagedRequest,
   PagedResponse,
+  RecurrenceDefinitionResponse,
+  SeriesEditRequest,
   UpdateFinancialTransactionRequest,
 } from "../dtos";
 import { MutationOptions } from "../types/mutationOptions";
@@ -198,6 +200,66 @@ export const useDeleteFinancialTransactionSeries = (
       ...options,
       onSuccess: (data, variables) => {
         queryClient.invalidateQueries({ queryKey: ["financialTransactions"] });
+        options?.onSuccess?.(data, variables);
+      },
+    }),
+  });
+};
+
+const getFinancialTransactionSeries = async (
+  planId: number,
+  seriesId: string,
+): Promise<RecurrenceDefinitionResponse> => {
+  const { data } = await finsightApi.get(
+    `/plans/${planId}/financial-transaction/series/${seriesId}`,
+  );
+  return data;
+};
+
+export const useFinancialTransactionSeries = (
+  seriesId: string | undefined,
+  options?: QueryOptions<RecurrenceDefinitionResponse>,
+) => {
+  const { activePlanId } = usePlanContext();
+  return useQuery({
+    queryFn: () => getFinancialTransactionSeries(activePlanId!, seriesId!),
+    queryKey: ["financialTransactionSeries", activePlanId, seriesId],
+    ...options,
+    enabled:
+      activePlanId != null && seriesId != null && (options?.enabled ?? true),
+  });
+};
+
+const updateFinancialTransactionSeries = async (
+  planId: number,
+  payload: SeriesEditRequest,
+): Promise<FinancialTransactionSeriesResponse> => {
+  const { params, body } = payload;
+  const { data } = await finsightApi.put(
+    `/plans/${planId}/financial-transaction/series/${params.seriesId}`,
+    body,
+  );
+  return data;
+};
+
+export const useUpdateFinancialTransactionSeries = (
+  options?: MutationOptions<
+    FinancialTransactionSeriesResponse,
+    SeriesEditRequest
+  >,
+) => {
+  const queryClient = useQueryClient();
+  const { activePlanId } = usePlanContext();
+  return useMutation({
+    mutationFn: (payload: SeriesEditRequest) =>
+      updateFinancialTransactionSeries(activePlanId!, payload),
+    ...buildMutationOptions({ successMessage: "Series updated successfully." }, {
+      ...options,
+      onSuccess: (data, variables) => {
+        queryClient.invalidateQueries({ queryKey: ["financialTransactions"] });
+        queryClient.invalidateQueries({
+          queryKey: ["financialTransactionSeries", activePlanId, variables.params.seriesId],
+        });
         options?.onSuccess?.(data, variables);
       },
     }),
