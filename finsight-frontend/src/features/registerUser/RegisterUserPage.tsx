@@ -1,5 +1,6 @@
 import { useRegisterUser } from "@/api/services/useAuthService";
 import { PATHS } from "@/app/routing/paths";
+import { AppVersion } from "@/components/appVersion/AppVersion";
 import { Button } from "@/components/button/Button";
 import { Field, FieldError, FieldLabel } from "@/components/input/base/Field";
 import { Input } from "@/components/input/base/Input";
@@ -170,9 +171,7 @@ export const RegisterUser = () => {
 
       <footer className="flex flex-1 flex-col items-center justify-end">
         <p className="text-muted-foreground text-xs">© 2026 Nameless Comp</p>
-        <p className="text-muted-foreground text-xs">
-          v1.0.0-beta.1 - 20260327
-        </p>
+        <AppVersion />
       </footer>
     </>
   );

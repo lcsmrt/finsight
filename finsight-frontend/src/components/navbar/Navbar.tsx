@@ -3,8 +3,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../dropdown/Dropdown";
+import { AppVersion } from "@/components/appVersion/AppVersion";
 import { LogOut } from "lucide-react";
 import { clearStorage } from "@/lib/storage";
 import { useNavigate } from "react-router-dom";
@@ -47,6 +49,10 @@ export const Navbar = () => {
             Logout
             <LogOut className="text-foreground" />
           </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <div className="flex justify-center px-2 py-1.5">
+            <AppVersion />
+          </div>
         </DropdownMenuContent>
       </DropdownMenu>
     </nav>
