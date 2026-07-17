@@ -11,6 +11,7 @@ import { usePlanContext } from "@/app/providers/PlanProvider";
 import { Badge } from "@/components/badge/Badge";
 import { Button } from "@/components/button/Button";
 import { useConfirm } from "@/components/dialog/useConfirmDialog";
+import { SeriesEditScope } from "@/api/dtos/financialTransaction";
 import {
   InputGroup,
   InputGroupAddon,
@@ -21,6 +22,8 @@ import { PlusIcon, SearchIcon, TagIcon, UploadIcon, XIcon } from "lucide-react";
 import { useRef, useState } from "react";
 import { useTransactionFilters } from "../../hooks/useTransactionFilters";
 import { CategoriesManageDialog } from "./CategoriesManageDialog";
+import { SeriesEditDrawer } from "./SeriesEditDrawer";
+import { useSeriesScope } from "./SeriesScopeDialog";
 import { TransactionFilterPopover } from "./TransactionFilterPopover";
 import { TransactionFormDrawer } from "./TransactionFormDrawer";
 import { buildTransactionColumns, InlineSaveBody } from "./transactionColumns";
@@ -53,6 +56,7 @@ export const TransactionsTab = () => {
   const { mutate: updateTransaction } = useUpdateFinancialTransaction();
 
   const confirm = useConfirm();
+  const chooseScope = useSeriesScope();
 
   const { mutate: importCsv, isPending: isImporting } = useImportNubankCsv();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -68,6 +72,18 @@ export const TransactionsTab = () => {
 
   const [drawerState, setDrawerState] = useState<DrawerState>({ open: false });
   const [isCategoriesDialogOpen, setIsCategoriesDialogOpen] = useState(false);
+
+  type SeriesEditDrawerState =
+    | { open: false }
+    | {
+        open: true;
+        seriesId: string;
+        initialScope: SeriesEditScope;
+        pivotOccurrenceId: number;
+      };
+
+  const [seriesEditDrawerState, setSeriesEditDrawerState] =
+    useState<SeriesEditDrawerState>({ open: false });
 
   const handleImportClick = () => fileInputRef.current?.click();
 
@@ -129,6 +145,20 @@ export const TransactionsTab = () => {
     }
   };
 
+  const handleEditSeries = async (transaction: FinancialTransaction) => {
+    if (!transaction.seriesId) return;
+
+    const scope = await chooseScope();
+    if (!scope) return;
+
+    setSeriesEditDrawerState({
+      open: true,
+      seriesId: transaction.seriesId,
+      initialScope: scope,
+      pivotOccurrenceId: transaction.id,
+    });
+  };
+
   const handleInlineSave = (
     transaction: FinancialTransaction,
     change: InlineSaveBody,
@@ -158,6 +188,7 @@ export const TransactionsTab = () => {
     onEdit: handleEdit,
     onDelete: handleDelete,
     onDeleteSeries: handleDeleteSeries,
+    onEditSeries: handleEditSeries,
     onSave: handleInlineSave,
     isDeleting,
     showParticipantsColumn: members.length > 1,
@@ -279,6 +310,28 @@ export const TransactionsTab = () => {
             : undefined
         }
         mode={drawerState.open ? drawerState.mode : "create"}
+      />
+
+      <SeriesEditDrawer
+        open={seriesEditDrawerState.open}
+        onOpenChange={(open) => {
+          if (!open) setSeriesEditDrawerState({ open: false });
+        }}
+        seriesId={
+          seriesEditDrawerState.open
+            ? seriesEditDrawerState.seriesId
+            : undefined
+        }
+        initialScope={
+          seriesEditDrawerState.open
+            ? seriesEditDrawerState.initialScope
+            : "THIS_ONE"
+        }
+        pivotOccurrenceId={
+          seriesEditDrawerState.open
+            ? seriesEditDrawerState.pivotOccurrenceId
+            : 0
+        }
       />
 
       <CategoriesManageDialog

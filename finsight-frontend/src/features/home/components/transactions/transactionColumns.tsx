@@ -25,6 +25,7 @@ import {
   ListXIcon,
   PencilIcon,
   RepeatIcon,
+  SquarePenIcon,
   Trash2Icon,
   UsersIcon,
 } from "lucide-react";
@@ -45,6 +46,7 @@ interface TransactionColumnHandlers {
   onEdit: (transaction: FinancialTransaction) => void;
   onDelete: (transaction: FinancialTransaction) => void;
   onDeleteSeries?: (transaction: FinancialTransaction) => void;
+  onEditSeries?: (transaction: FinancialTransaction) => void;
   onSave: (transaction: FinancialTransaction, body: InlineSaveBody) => void;
   isDeleting?: boolean;
   showParticipantsColumn?: boolean;
@@ -350,6 +352,7 @@ export const buildTransactionColumns = ({
   onEdit,
   onDelete,
   onDeleteSeries,
+  onEditSeries,
   onSave,
   isDeleting,
   showParticipantsColumn,
@@ -452,6 +455,19 @@ export const buildTransactionColumns = ({
         >
           <Trash2Icon className="h-4 w-4" />
         </Button>
+        {row.original.seriesId && onEditSeries && (
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            className="text-muted-foreground hover:bg-accent hover:text-foreground rounded p-1"
+            aria-label="Edit series"
+            title="Edit series"
+            onClick={() => onEditSeries(row.original)}
+          >
+            <SquarePenIcon className="h-4 w-4" />
+          </Button>
+        )}
         {row.original.seriesId && onDeleteSeries && (
           <Button
             type="button"
