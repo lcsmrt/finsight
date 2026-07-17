@@ -141,6 +141,12 @@ export type RecurrenceDefinitionResponse = {
   participants: RecurrenceDefinitionParticipantTemplate[];
 };
 
+export type SeriesDeleteRequest = {
+  seriesId: string;
+  scope: SeriesEditScope;
+  pivotOccurrenceId?: number;
+};
+
 export type SeriesEditRequest = {
   params: { seriesId: string };
   body: {

@@ -11,7 +11,6 @@ import { usePlanContext } from "@/app/providers/PlanProvider";
 import { Badge } from "@/components/badge/Badge";
 import { Button } from "@/components/button/Button";
 import { useConfirm } from "@/components/dialog/useConfirmDialog";
-import { SeriesEditScope } from "@/api/dtos/financialTransaction";
 import {
   InputGroup,
   InputGroupAddon,
@@ -22,7 +21,6 @@ import { PlusIcon, SearchIcon, TagIcon, UploadIcon, XIcon } from "lucide-react";
 import { useRef, useState } from "react";
 import { useTransactionFilters } from "../../hooks/useTransactionFilters";
 import { CategoriesManageDialog } from "./CategoriesManageDialog";
-import { SeriesEditDrawer } from "./SeriesEditDrawer";
 import { useSeriesScope } from "./SeriesScopeDialog";
 import { TransactionFilterPopover } from "./TransactionFilterPopover";
 import { TransactionFormDrawer } from "./TransactionFormDrawer";
@@ -73,18 +71,6 @@ export const TransactionsTab = () => {
   const [drawerState, setDrawerState] = useState<DrawerState>({ open: false });
   const [isCategoriesDialogOpen, setIsCategoriesDialogOpen] = useState(false);
 
-  type SeriesEditDrawerState =
-    | { open: false }
-    | {
-        open: true;
-        seriesId: string;
-        initialScope: SeriesEditScope;
-        pivotOccurrenceId: number;
-      };
-
-  const [seriesEditDrawerState, setSeriesEditDrawerState] =
-    useState<SeriesEditDrawerState>({ open: false });
-
   const handleImportClick = () => fileInputRef.current?.click();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,6 +101,23 @@ export const TransactionsTab = () => {
     setDrawerState({ open: true, mode: "duplicate", transaction });
 
   const handleDelete = async (transaction: FinancialTransaction) => {
+    if (transaction.seriesId) {
+      const scope = await chooseScope({
+        title: "Delete series",
+        description: "Choose which occurrences to delete.",
+        confirmLabel: "Delete",
+        confirmVariant: "destructive",
+      });
+      if (!scope) return;
+
+      deleteFinancialTransactionSeries({
+        seriesId: transaction.seriesId,
+        scope,
+        pivotOccurrenceId: transaction.id,
+      });
+      return;
+    }
+
     const confirmed = await confirm({
       title: "Confirm Deletion",
       description:
@@ -127,36 +130,6 @@ export const TransactionsTab = () => {
     if (confirmed) {
       deleteTransaction(transaction.id);
     }
-  };
-
-  const handleDeleteSeries = async (transaction: FinancialTransaction) => {
-    if (!transaction.seriesId) return;
-
-    const confirmed = await confirm({
-      title: "Delete series",
-      description:
-        "This will remove ALL transactions in this series. Do you want to continue?",
-      confirmLabel: "Delete series",
-      variant: "destructive",
-    });
-
-    if (confirmed) {
-      deleteFinancialTransactionSeries(transaction.seriesId);
-    }
-  };
-
-  const handleEditSeries = async (transaction: FinancialTransaction) => {
-    if (!transaction.seriesId) return;
-
-    const scope = await chooseScope();
-    if (!scope) return;
-
-    setSeriesEditDrawerState({
-      open: true,
-      seriesId: transaction.seriesId,
-      initialScope: scope,
-      pivotOccurrenceId: transaction.id,
-    });
   };
 
   const handleInlineSave = (
@@ -187,8 +160,6 @@ export const TransactionsTab = () => {
     onDuplicate: handleDuplicate,
     onEdit: handleEdit,
     onDelete: handleDelete,
-    onDeleteSeries: handleDeleteSeries,
-    onEditSeries: handleEditSeries,
     onSave: handleInlineSave,
     isDeleting,
     showParticipantsColumn: members.length > 1,
@@ -310,28 +281,6 @@ export const TransactionsTab = () => {
             : undefined
         }
         mode={drawerState.open ? drawerState.mode : "create"}
-      />
-
-      <SeriesEditDrawer
-        open={seriesEditDrawerState.open}
-        onOpenChange={(open) => {
-          if (!open) setSeriesEditDrawerState({ open: false });
-        }}
-        seriesId={
-          seriesEditDrawerState.open
-            ? seriesEditDrawerState.seriesId
-            : undefined
-        }
-        initialScope={
-          seriesEditDrawerState.open
-            ? seriesEditDrawerState.initialScope
-            : "THIS_ONE"
-        }
-        pivotOccurrenceId={
-          seriesEditDrawerState.open
-            ? seriesEditDrawerState.pivotOccurrenceId
-            : 0
-        }
       />
 
       <CategoriesManageDialog

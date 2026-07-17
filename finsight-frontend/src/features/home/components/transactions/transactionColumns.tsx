@@ -22,10 +22,8 @@ import { ColumnDef } from "@tanstack/react-table";
 import { format, isValid, parse } from "date-fns";
 import {
   CopyIcon,
-  ListXIcon,
   PencilIcon,
   RepeatIcon,
-  SquarePenIcon,
   Trash2Icon,
   UsersIcon,
 } from "lucide-react";
@@ -45,8 +43,6 @@ interface TransactionColumnHandlers {
   onDuplicate: (transaction: FinancialTransaction) => void;
   onEdit: (transaction: FinancialTransaction) => void;
   onDelete: (transaction: FinancialTransaction) => void;
-  onDeleteSeries?: (transaction: FinancialTransaction) => void;
-  onEditSeries?: (transaction: FinancialTransaction) => void;
   onSave: (transaction: FinancialTransaction, body: InlineSaveBody) => void;
   isDeleting?: boolean;
   showParticipantsColumn?: boolean;
@@ -351,8 +347,6 @@ export const buildTransactionColumns = ({
   onDuplicate,
   onEdit,
   onDelete,
-  onDeleteSeries,
-  onEditSeries,
   onSave,
   isDeleting,
   showParticipantsColumn,
@@ -455,33 +449,6 @@ export const buildTransactionColumns = ({
         >
           <Trash2Icon className="h-4 w-4" />
         </Button>
-        {row.original.seriesId && onEditSeries && (
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            className="text-muted-foreground hover:bg-accent hover:text-foreground rounded p-1"
-            aria-label="Edit series"
-            title="Edit series"
-            onClick={() => onEditSeries(row.original)}
-          >
-            <SquarePenIcon className="h-4 w-4" />
-          </Button>
-        )}
-        {row.original.seriesId && onDeleteSeries && (
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            className="text-muted-foreground hover:bg-accent hover:text-destructive rounded p-1"
-            disabled={isDeleting}
-            aria-label="Delete series"
-            title="Delete series"
-            onClick={() => onDeleteSeries(row.original)}
-          >
-            <ListXIcon className="h-4 w-4" />
-          </Button>
-        )}
       </div>
     ),
   },

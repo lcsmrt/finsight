@@ -10,6 +10,7 @@ import {
   PagedRequest,
   PagedResponse,
   RecurrenceDefinitionResponse,
+  SeriesDeleteRequest,
   SeriesEditRequest,
   UpdateFinancialTransactionRequest,
 } from "../dtos";
@@ -181,25 +182,36 @@ export const useCreateFinancialTransactionSeries = (
 
 const deleteFinancialTransactionSeries = async (
   planId: number,
-  seriesId: string,
+  { seriesId, scope, pivotOccurrenceId }: SeriesDeleteRequest,
 ): Promise<void> => {
+  const query = new URLSearchParams({ scope });
+  if (pivotOccurrenceId != null) {
+    query.set("pivotOccurrenceId", String(pivotOccurrenceId));
+  }
   await finsightApi.delete(
-    `/plans/${planId}/financial-transaction/series/${seriesId}`,
+    `/plans/${planId}/financial-transaction/series/${seriesId}?${query}`,
   );
 };
 
 export const useDeleteFinancialTransactionSeries = (
-  options?: MutationOptions<void, string>,
+  options?: MutationOptions<void, SeriesDeleteRequest>,
 ) => {
   const queryClient = useQueryClient();
   const { activePlanId } = usePlanContext();
   return useMutation({
-    mutationFn: (seriesId: string) =>
-      deleteFinancialTransactionSeries(activePlanId!, seriesId),
+    mutationFn: (payload: SeriesDeleteRequest) =>
+      deleteFinancialTransactionSeries(activePlanId!, payload),
     ...buildMutationOptions({ successMessage: "Series deleted successfully." }, {
       ...options,
       onSuccess: (data, variables) => {
         queryClient.invalidateQueries({ queryKey: ["financialTransactions"] });
+        queryClient.invalidateQueries({
+          queryKey: [
+            "financialTransactionSeries",
+            activePlanId,
+            variables.seriesId,
+          ],
+        });
         options?.onSuccess?.(data, variables);
       },
     }),

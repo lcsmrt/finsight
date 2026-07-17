@@ -1,8 +1,15 @@
-import { FinancialTransaction } from "@/api/dtos/financialTransaction";
+import {
+  FinancialTransaction,
+  ParticipantInput,
+  RecurrenceDefinitionResponse,
+  SplitMode,
+} from "@/api/dtos/financialTransaction";
 import {
   useCreateFinancialTransaction,
   useCreateFinancialTransactionSeries,
+  useFinancialTransactionSeries,
   useUpdateFinancialTransaction,
+  useUpdateFinancialTransactionSeries,
 } from "@/api/services/useFinancialTransactionService";
 import { useGetPlanMembers } from "@/api/services/usePlanService";
 import { useAuth } from "@/app/providers/AuthProvider";
@@ -16,7 +23,6 @@ import {
   FieldLabel,
 } from "@/components/input/base/Field";
 import { Input } from "@/components/input/base/Input";
-import { StandardCombobox } from "@/components/input/StandardCombobox";
 import { DatePicker } from "@/components/input/DatePicker";
 import {
   Sheet,
@@ -31,10 +37,12 @@ import { maskCurrency } from "@/utils/string/masks";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { addMonths, format } from "date-fns";
 import { PlusIcon, SaveIcon, Trash2Icon, XIcon } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { AttributionFields } from "./AttributionFields";
 import { CategoryCombobox } from "./CategoryCombobox";
+import { useSeriesScope } from "./SeriesScopeDialog";
 import { TransactionTypeToggle } from "./TransactionTypeToggle";
 
 const transactionFormSchema = z
@@ -56,6 +64,7 @@ const transactionFormSchema = z
       .optional(),
     date: z.date({ required_error: "Date is required" }),
     recurring: z.boolean(),
+    seriesEdit: z.boolean(),
     recurrenceMode: z.enum(["INSTALLMENT", "RECURRING"]).optional(),
     parcelsNumber: z.string().optional(),
     currentParcel: z.string().optional(),
@@ -127,6 +136,28 @@ const transactionFormSchema = z
       }
     }
 
+    if (values.seriesEdit) {
+      if (values.recurrenceMode === "INSTALLMENT") {
+        const digits = (values.parcelsNumber ?? "").replace(/\D/g, "");
+        const total = digits.length > 0 ? parseInt(digits, 10) : 0;
+        if (digits.length === 0 || total < 2) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Enter at least 2 installments",
+            path: ["parcelsNumber"],
+          });
+        }
+      }
+      if (values.recurrenceMode === "RECURRING" && !values.endDate) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Enter the end date",
+          path: ["endDate"],
+        });
+      }
+      return;
+    }
+
     if (!values.recurring) return;
 
     if (!values.recurrenceMode) {
@@ -185,7 +216,7 @@ const transactionFormSchema = z
     }
   });
 
-type TransactionFormValues = z.infer<typeof transactionFormSchema>;
+export type TransactionFormValues = z.infer<typeof transactionFormSchema>;
 
 interface TransactionFormDrawerProps {
   open: boolean;
@@ -205,28 +236,79 @@ function deriveAttributionMode(
   return "SPLIT";
 }
 
+function parseLocalDate(value: string): Date {
+  const [year, month, day] = value.split("T")[0].split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+const stripInstallmentSuffix = (description: string) =>
+  description.replace(/\s*\(\d+\/\d+\)$/, "");
+
+function attributionToPayload(
+  values: TransactionFormValues,
+  showAttribution: boolean,
+  currentUserId?: number,
+): { participants?: ParticipantInput[]; splitMode?: SplitMode } {
+  if (!showAttribution) {
+    return { participants: undefined, splitMode: undefined };
+  }
+
+  if (values.attributionMode === "ME") {
+    return currentUserId != null
+      ? { participants: [{ memberId: currentUserId }], splitMode: "EQUAL" }
+      : { participants: undefined, splitMode: undefined };
+  }
+
+  if (values.attributionMode === "SOMEONE") {
+    const person = values.participants[0];
+    return person
+      ? { participants: [{ memberId: person.memberId }], splitMode: "EQUAL" }
+      : { participants: undefined, splitMode: undefined };
+  }
+
+  return {
+    participants: values.participants.map((participant) => ({
+      memberId: participant.memberId,
+      shareAmount:
+        values.splitMode === "EXACT"
+          ? parseInt((participant.shareAmount ?? "").replace(/\D/g, ""), 10) /
+            100
+          : undefined,
+    })),
+    splitMode: values.splitMode,
+  };
+}
+
 function buildDefaultValues(
   transaction?: FinancialTransaction,
   currentUserId?: number,
+  definition?: RecurrenceDefinitionResponse,
 ): TransactionFormValues {
   if (transaction) {
     const attributionMode = deriveAttributionMode(
       transaction.participants,
       currentUserId,
     );
+    const isSeriesEdit = !!definition;
     return {
       type: transaction.type,
-      description: transaction.description,
+      description: isSeriesEdit
+        ? stripInstallmentSuffix(transaction.description)
+        : transaction.description,
       amount: maskCurrency(String(Math.round(transaction.amount * 100))),
       category: transaction.category ?? null,
-      date: (() => {
-        const [year, month, day] = transaction.startDate
-          .split("T")[0]
-          .split("-")
-          .map(Number);
-        return new Date(year, month - 1, day);
-      })(),
+      date: parseLocalDate(transaction.startDate),
       recurring: false,
+      seriesEdit: isSeriesEdit,
+      recurrenceMode: isSeriesEdit ? definition.mode : undefined,
+      parcelsNumber:
+        isSeriesEdit && definition.mode === "INSTALLMENT"
+          ? String(definition.parcelsNumber ?? "")
+          : undefined,
+      endDate:
+        isSeriesEdit && definition.mode === "RECURRING" && definition.endDate
+          ? parseLocalDate(definition.endDate)
+          : undefined,
       attributionMode,
       splitMode: transaction.splitMode === "EXACT" ? "EXACT" : "EQUAL",
       participants:
@@ -239,11 +321,13 @@ function buildDefaultValues(
                 String(Math.round(participant.shareAmount * 100)),
               ),
             })),
-      items: transaction.items.map((item) => ({
-        description: item.description,
-        amount: maskCurrency(String(Math.round(item.amount * 100))),
-        category: item.category ?? null,
-      })),
+      items: isSeriesEdit
+        ? []
+        : transaction.items.map((item) => ({
+            description: item.description,
+            amount: maskCurrency(String(Math.round(item.amount * 100))),
+            category: item.category ?? null,
+          })),
     };
   }
   return {
@@ -253,6 +337,7 @@ function buildDefaultValues(
     category: null,
     date: new Date(),
     recurring: false,
+    seriesEdit: false,
     attributionMode: "ME",
     splitMode: "EQUAL",
     participants: [],
@@ -267,6 +352,7 @@ export const TransactionFormDrawer = ({
   mode,
 }: TransactionFormDrawerProps) => {
   const isEditing = mode === "edit";
+  const isSeriesEdit = isEditing && !!transaction?.seriesId;
 
   const { activePlanId, activePlan } = usePlanContext();
   const { user } = useAuth();
@@ -275,13 +361,20 @@ export const TransactionFormDrawer = ({
   const canAttributeToOthers =
     activePlan?.myRole === "OWNER" || activePlan?.myRole === "EDITOR";
   const showAttribution = canAttributeToOthers && members.length > 1;
-  const otherMembers = members.filter((member) => member.userId !== currentUserId);
 
-  const title =
-    mode === "edit"
-      ? "Edit Transaction"
-      : mode === "duplicate"
-        ? "Duplicate Transaction"
+  const chooseScope = useSeriesScope();
+
+  const { data: definition } = useFinancialTransactionSeries(
+    transaction?.seriesId,
+    { enabled: open && isSeriesEdit },
+  );
+
+  const title = isSeriesEdit
+    ? "Edit series"
+    : mode === "duplicate"
+      ? "Duplicate Transaction"
+      : mode === "edit"
+        ? "Edit Transaction"
         : "New Transaction";
 
   const submitLabel = mode === "edit" ? "Save" : "Create";
@@ -295,41 +388,24 @@ export const TransactionFormDrawer = ({
     formState: { errors },
   } = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionFormSchema),
-    defaultValues: buildDefaultValues(transaction, currentUserId),
+    defaultValues: buildDefaultValues(transaction, currentUserId, definition),
   });
 
+  const originalParcelsNumberRef = useRef<string | undefined>(undefined);
+
   useEffect(() => {
-    reset(buildDefaultValues(transaction, currentUserId));
-  }, [transaction, open, reset, currentUserId]);
+    reset(buildDefaultValues(transaction, currentUserId, definition));
+    originalParcelsNumberRef.current =
+      definition?.mode === "INSTALLMENT"
+        ? String(definition.parcelsNumber ?? "")
+        : undefined;
+  }, [transaction, open, reset, currentUserId, definition]);
 
-  const attributionMode = watch("attributionMode");
-
-  const handleAttributionModeChange = (
-    next: TransactionFormValues["attributionMode"],
-  ) => {
-    setValue("attributionMode", next);
-    setValue("splitMode", "EQUAL");
-    if (next === "ME") {
-      setValue("participants", []);
-    } else if (next === "SOMEONE") {
-      const kept = watch("participants").filter(
-        (p) => p.memberId !== currentUserId,
-      );
-      setValue("participants", kept.slice(0, 1));
-    } else {
-      const current = watch("participants");
-      if (current.length < 2) {
-        setValue(
-          "participants",
-          members.map((member) => ({
-            memberId: member.userId,
-            memberName: member.name,
-            shareAmount: undefined,
-          })),
-        );
-      }
-    }
-  };
+  const parcelsNumberValue = watch("parcelsNumber");
+  const parcelsNumberChanged =
+    isSeriesEdit &&
+    definition?.mode === "INSTALLMENT" &&
+    parcelsNumberValue !== originalParcelsNumberRef.current;
 
   const {
     mutate: createFinancialTransaction,
@@ -352,50 +428,63 @@ export const TransactionFormDrawer = ({
     onSuccess: () => onOpenChange(false),
   });
 
+  const {
+    mutate: updateFinancialTransactionSeries,
+    isPending: isUpdatingFinancialTransactionSeries,
+  } = useUpdateFinancialTransactionSeries({
+    onSuccess: () => onOpenChange(false),
+  });
+
   const isPending =
     isCreatingFinancialTransaction ||
     isUpdatingFinancialTransaction ||
-    isCreatingFinancialTransactionSeries;
+    isCreatingFinancialTransactionSeries ||
+    isUpdatingFinancialTransactionSeries;
 
-  const onSubmit = (values: TransactionFormValues) => {
-    const startDate = format(values.date, "yyyy-MM-dd");
+  const onSubmit = async (values: TransactionFormValues) => {
     const amount = parseInt(values.amount.replace(/\D/g, ""), 10) / 100;
+    const { participants, splitMode } = attributionToPayload(
+      values,
+      showAttribution,
+      currentUserId,
+    );
 
-    const { participants, splitMode } = ((): {
-      participants:
-        | { memberId: number; shareAmount?: number }[]
-        | undefined;
-      splitMode: "EQUAL" | "EXACT" | undefined;
-    } => {
-      if (!showAttribution) {
-        return { participants: undefined, splitMode: undefined };
-      }
+    if (isSeriesEdit) {
+      if (!transaction?.seriesId || !definition) return;
 
-      if (values.attributionMode === "ME") {
-        return currentUserId != null
-          ? { participants: [{ memberId: currentUserId }], splitMode: "EQUAL" }
-          : { participants: undefined, splitMode: undefined };
-      }
+      const scope = parcelsNumberChanged
+        ? "ALL"
+        : await chooseScope({ title: "Edit series" });
+      if (!scope) return;
 
-      if (values.attributionMode === "SOMEONE") {
-        const person = values.participants[0];
-        return person
-          ? { participants: [{ memberId: person.memberId }], splitMode: "EQUAL" }
-          : { participants: undefined, splitMode: undefined };
-      }
-
-      return {
-        participants: values.participants.map((participant) => ({
-          memberId: participant.memberId,
-          shareAmount:
-            values.splitMode === "EXACT"
-              ? parseInt((participant.shareAmount ?? "").replace(/\D/g, ""), 10) /
-                100
+      updateFinancialTransactionSeries({
+        params: { seriesId: transaction.seriesId },
+        body: {
+          type: definition.type,
+          amount,
+          description: values.description,
+          categoryId: values.category?.id,
+          mode: definition.mode,
+          startDate: definition.startDate,
+          parcelsNumber:
+            definition.mode === "INSTALLMENT"
+              ? parseInt((values.parcelsNumber ?? "").replace(/\D/g, ""), 10)
               : undefined,
-        })),
-        splitMode: values.splitMode,
-      };
-    })();
+          interval: definition.interval,
+          endDate:
+            definition.mode === "RECURRING" && values.endDate
+              ? format(values.endDate, "yyyy-MM-dd")
+              : undefined,
+          splitMode,
+          participants,
+          scope,
+          pivotOccurrenceId: transaction.id,
+        },
+      });
+      return;
+    }
+
+    const startDate = format(values.date, "yyyy-MM-dd");
 
     if (mode === "create" && values.recurring && values.recurrenceMode) {
       createFinancialTransactionSeries({
@@ -460,22 +549,28 @@ export const TransactionFormDrawer = ({
           <SheetTitle>{title}</SheetTitle>
         </SheetHeader>
 
+        {isSeriesEdit && !definition && (
+          <p className="text-muted-foreground px-4 text-sm">Loading…</p>
+        )}
+
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-4 pb-2"
         >
           <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="transaction-type">Type</FieldLabel>
-              <TransactionTypeToggle
-                value={watch("type")}
-                onChange={(v) => {
-                  setValue("type", v);
-                  setValue("category", null);
-                }}
-                disabled={isPending}
-              />
-            </Field>
+            {!isSeriesEdit && (
+              <Field>
+                <FieldLabel htmlFor="transaction-type">Type</FieldLabel>
+                <TransactionTypeToggle
+                  value={watch("type")}
+                  onChange={(v) => {
+                    setValue("type", v);
+                    setValue("category", null);
+                  }}
+                  disabled={isPending}
+                />
+              </Field>
+            )}
 
             <Field>
               <FieldLabel htmlFor="transaction-description">
@@ -525,306 +620,199 @@ export const TransactionFormDrawer = ({
               />
             </Field>
 
-            <Field>
-              <FieldLabel htmlFor="transaction-date">Date</FieldLabel>
-              <DatePicker
-                id="transaction-date"
-                value={watch("date")}
-                onChange={(v) =>
-                  v && setValue("date", v, { shouldValidate: true })
-                }
-                disabled={isPending}
-                className="w-full"
-              />
-              <FieldError errors={[errors.date]} />
-            </Field>
-
-            <Field>
-              <FieldLabel>Items</FieldLabel>
-              <div className="flex flex-col gap-2">
-                {watch("items").map((item, index) => {
-                  const items = watch("items");
-                  return (
-                    <div
-                      key={index}
-                      className="border-border flex flex-col gap-2 rounded-md border p-2"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Input
-                          placeholder="Item description"
-                          className="flex-1"
-                          disabled={isPending}
-                          value={item.description}
-                          onChange={(e) => {
-                            const updated = [...items];
-                            updated[index] = {
-                              ...updated[index],
-                              description: e.target.value,
-                            };
-                            setValue("items", updated);
-                          }}
-                        />
-                        <Input
-                          type="text"
-                          inputMode="numeric"
-                          placeholder="R$ 0,00"
-                          className="w-28"
-                          disabled={isPending}
-                          value={item.amount}
-                          onChange={(e) => {
-                            const updated = [...items];
-                            updated[index] = {
-                              ...updated[index],
-                              amount: maskCurrency(e.target.value),
-                            };
-                            setValue("items", updated);
-                          }}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          disabled={isPending}
-                          onClick={() =>
-                            setValue(
-                              "items",
-                              items.filter((_, i) => i !== index),
-                            )
-                          }
-                        >
-                          <Trash2Icon className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                      <CategoryCombobox
-                        value={item.category ?? null}
-                        onValueChange={(v) => {
-                          const updated = [...items];
-                          updated[index] = { ...updated[index], category: v ?? null };
-                          setValue("items", updated);
-                        }}
-                        type={watch("type")}
-                        disabled={isPending}
-                      />
-                    </div>
-                  );
-                })}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={isPending}
-                  onClick={() =>
-                    setValue("items", [
-                      ...watch("items"),
-                      { description: "", amount: "", category: null },
-                    ])
+            {!isSeriesEdit && (
+              <Field>
+                <FieldLabel htmlFor="transaction-date">Date</FieldLabel>
+                <DatePicker
+                  id="transaction-date"
+                  value={watch("date")}
+                  onChange={(v) =>
+                    v && setValue("date", v, { shouldValidate: true })
                   }
-                >
-                  <PlusIcon className="h-3.5 w-3.5" />
-                  Add item
-                </Button>
-              </div>
-              {watch("items").length > 0 &&
-                (() => {
-                  const totalDigits = watch("amount").replace(/\D/g, "");
-                  const totalCents =
-                    totalDigits.length > 0 ? parseInt(totalDigits, 10) : 0;
-                  const itemsCents = watch("items").reduce((sum, item) => {
-                    const digits = item.amount.replace(/\D/g, "");
-                    return sum + (digits.length > 0 ? parseInt(digits, 10) : 0);
-                  }, 0);
-                  const remainderCents = totalCents - itemsCents;
-                  return (
-                    <p
-                      className={cn(
-                        "text-sm",
-                        remainderCents < 0
-                          ? "text-destructive"
-                          : "text-muted-foreground",
-                      )}
-                    >
-                      Remainder: {formatCurrency(remainderCents / 100, "BRL")}
-                    </p>
-                  );
-                })()}
-              <FieldError errors={[errors.items]} />
-            </Field>
+                  disabled={isPending}
+                  className="w-full"
+                />
+                <FieldError errors={[errors.date]} />
+              </Field>
+            )}
 
-            {showAttribution && (
-              <>
-                <Field>
-                  <FieldLabel>Attributed to</FieldLabel>
-                  <div className="flex w-full gap-2">
-                    {(
-                      [
-                        ["ME", "Me"],
-                        ["SOMEONE", "Someone else"],
-                        ["SPLIT", "Split"],
-                      ] as const
-                    ).map(([value, label]) => (
-                      <Button
-                        key={value}
-                        type="button"
-                        variant="ghost"
-                        disabled={isPending}
-                        onClick={() => handleAttributionModeChange(value)}
+            {!isSeriesEdit && (
+              <Field>
+                <FieldLabel>Items</FieldLabel>
+                <div className="flex flex-col gap-2">
+                  {watch("items").map((item, index) => {
+                    const items = watch("items");
+                    return (
+                      <div
+                        key={index}
+                        className="border-border flex flex-col gap-2 rounded-md border p-2"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Input
+                            placeholder="Item description"
+                            className="flex-1"
+                            disabled={isPending}
+                            value={item.description}
+                            onChange={(e) => {
+                              const updated = [...items];
+                              updated[index] = {
+                                ...updated[index],
+                                description: e.target.value,
+                              };
+                              setValue("items", updated);
+                            }}
+                          />
+                          <Input
+                            type="text"
+                            inputMode="numeric"
+                            placeholder="R$ 0,00"
+                            className="w-28"
+                            disabled={isPending}
+                            value={item.amount}
+                            onChange={(e) => {
+                              const updated = [...items];
+                              updated[index] = {
+                                ...updated[index],
+                                amount: maskCurrency(e.target.value),
+                              };
+                              setValue("items", updated);
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            disabled={isPending}
+                            onClick={() =>
+                              setValue(
+                                "items",
+                                items.filter((_, i) => i !== index),
+                              )
+                            }
+                          >
+                            <Trash2Icon className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                        <CategoryCombobox
+                          value={item.category ?? null}
+                          onValueChange={(v) => {
+                            const updated = [...items];
+                            updated[index] = {
+                              ...updated[index],
+                              category: v ?? null,
+                            };
+                            setValue("items", updated);
+                          }}
+                          type={watch("type")}
+                          disabled={isPending}
+                        />
+                      </div>
+                    );
+                  })}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isPending}
+                    onClick={() =>
+                      setValue("items", [
+                        ...watch("items"),
+                        { description: "", amount: "", category: null },
+                      ])
+                    }
+                  >
+                    <PlusIcon className="h-3.5 w-3.5" />
+                    Add item
+                  </Button>
+                </div>
+                {watch("items").length > 0 &&
+                  (() => {
+                    const totalDigits = watch("amount").replace(/\D/g, "");
+                    const totalCents =
+                      totalDigits.length > 0 ? parseInt(totalDigits, 10) : 0;
+                    const itemsCents = watch("items").reduce((sum, item) => {
+                      const digits = item.amount.replace(/\D/g, "");
+                      return sum + (digits.length > 0 ? parseInt(digits, 10) : 0);
+                    }, 0);
+                    const remainderCents = totalCents - itemsCents;
+                    return (
+                      <p
                         className={cn(
-                          "flex-1 border",
-                          attributionMode === value
-                            ? "border-primary/30 bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary"
-                            : "border-border text-muted-foreground hover:border-primary/30 hover:text-primary hover:bg-transparent",
+                          "text-sm",
+                          remainderCents < 0
+                            ? "text-destructive"
+                            : "text-muted-foreground",
                         )}
                       >
-                        {label}
-                      </Button>
-                    ))}
-                  </div>
-                </Field>
+                        Remainder: {formatCurrency(remainderCents / 100, "BRL")}
+                      </p>
+                    );
+                  })()}
+                <FieldError errors={[errors.items]} />
+              </Field>
+            )}
 
-                {attributionMode === "SOMEONE" && (
-                  <Field>
-                    <FieldLabel htmlFor="transaction-attributed-person">
-                      Person
-                    </FieldLabel>
-                    <StandardCombobox
-                      id="transaction-attributed-person"
-                      items={otherMembers.map((member) => ({
-                        id: member.userId,
-                        name: member.name,
-                      }))}
-                      value={(() => {
-                        const person = watch("participants")[0];
-                        return person
-                          ? { id: person.memberId, name: person.memberName }
-                          : null;
-                      })()}
-                      onValueChange={(value) =>
-                        setValue(
-                          "participants",
-                          value
-                            ? [
-                                {
-                                  memberId: value.id,
-                                  memberName: value.name,
-                                  shareAmount: undefined,
-                                },
-                              ]
-                            : [],
-                        )
-                      }
-                      itemLabel={(member) => member.name}
-                      placeholder="Select a person"
+            {showAttribution && (
+              <AttributionFields
+                watch={watch}
+                setValue={setValue}
+                errors={errors}
+                members={members}
+                currentUserId={currentUserId}
+                disabled={isPending}
+              />
+            )}
+
+            {isSeriesEdit && definition?.mode === "INSTALLMENT" && (
+              <Field>
+                <FieldLabel htmlFor="transaction-parcels">
+                  Number of installments
+                </FieldLabel>
+                {(() => {
+                  const { onChange, ...parcelsRest } = register("parcelsNumber");
+                  return (
+                    <Input
+                      id="transaction-parcels"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="e.g., 12"
                       disabled={isPending}
+                      aria-invalid={!!errors.parcelsNumber}
+                      {...parcelsRest}
+                      onChange={(e) => {
+                        e.target.value = e.target.value.replace(/\D/g, "");
+                        onChange(e);
+                      }}
                     />
-                    <FieldError errors={[errors.participants]} />
-                  </Field>
+                  );
+                })()}
+                <FieldError errors={[errors.parcelsNumber]} />
+                <p className="text-muted-foreground text-sm">
+                  Currently: parcel {definition.firstParcel ?? 1} of{" "}
+                  {definition.parcelsNumber}
+                </p>
+                {parcelsNumberChanged && (
+                  <p className="text-sm text-amber-600 dark:text-amber-400">
+                    Changing the number of parcels updates the whole series.
+                  </p>
                 )}
+              </Field>
+            )}
 
-                {attributionMode === "SPLIT" && (
-                  <>
-                    <Field>
-                      <FieldLabel>Split mode</FieldLabel>
-                      <div className="flex w-full gap-2">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          disabled={isPending}
-                          onClick={() => setValue("splitMode", "EQUAL")}
-                          className={cn(
-                            "flex-1 border",
-                            watch("splitMode") === "EQUAL"
-                              ? "border-primary/30 bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary"
-                              : "border-border text-muted-foreground hover:border-primary/30 hover:text-primary hover:bg-transparent",
-                          )}
-                        >
-                          Equal
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          disabled={isPending}
-                          onClick={() => setValue("splitMode", "EXACT")}
-                          className={cn(
-                            "flex-1 border",
-                            watch("splitMode") === "EXACT"
-                              ? "border-primary/30 bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary"
-                              : "border-border text-muted-foreground hover:border-primary/30 hover:text-primary hover:bg-transparent",
-                          )}
-                        >
-                          Exact
-                        </Button>
-                      </div>
-                    </Field>
-
-                    <Field>
-                      <FieldLabel>Participants</FieldLabel>
-                      <div className="flex flex-col gap-2">
-                        {members.map((member) => {
-                          const participants = watch("participants");
-                          const index = participants.findIndex(
-                            (p) => p.memberId === member.userId,
-                          );
-                          const checked = index !== -1;
-
-                          return (
-                            <div
-                              key={member.userId}
-                              className="flex items-center gap-2"
-                            >
-                              <Checkbox
-                                checked={checked}
-                                onCheckedChange={(isChecked) => {
-                                  if (isChecked) {
-                                    setValue("participants", [
-                                      ...participants,
-                                      {
-                                        memberId: member.userId,
-                                        memberName: member.name,
-                                        shareAmount: undefined,
-                                      },
-                                    ]);
-                                  } else {
-                                    setValue(
-                                      "participants",
-                                      participants.filter(
-                                        (p) => p.memberId !== member.userId,
-                                      ),
-                                    );
-                                  }
-                                }}
-                                disabled={isPending}
-                              />
-                              <span className="flex-1 text-sm">
-                                {member.name}
-                              </span>
-                              {watch("splitMode") === "EXACT" && checked && (
-                                <Input
-                                  type="text"
-                                  inputMode="numeric"
-                                  placeholder="R$ 0,00"
-                                  className="h-8 w-28 text-sm"
-                                  value={participants[index]?.shareAmount ?? ""}
-                                  onChange={(e) => {
-                                    const masked = maskCurrency(e.target.value);
-                                    const updated = [...participants];
-                                    updated[index] = {
-                                      ...updated[index],
-                                      shareAmount: masked,
-                                    };
-                                    setValue("participants", updated);
-                                  }}
-                                  disabled={isPending}
-                                />
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                      <FieldError errors={[errors.participants]} />
-                    </Field>
-                  </>
-                )}
-              </>
+            {isSeriesEdit && definition?.mode === "RECURRING" && (
+              <Field>
+                <FieldLabel htmlFor="transaction-end-date">End date</FieldLabel>
+                <DatePicker
+                  id="transaction-end-date"
+                  value={watch("endDate")}
+                  onChange={(v) =>
+                    v && setValue("endDate", v, { shouldValidate: true })
+                  }
+                  disabled={isPending}
+                  className="w-full"
+                />
+                <FieldError errors={[errors.endDate]} />
+              </Field>
             )}
 
             {mode === "create" && (
@@ -900,7 +888,7 @@ export const TransactionFormDrawer = ({
                     {watch("recurrenceMode") === "INSTALLMENT" && (
                       <>
                         <Field>
-                          <FieldLabel htmlFor="transaction-parcels">
+                          <FieldLabel htmlFor="transaction-parcels-create">
                             Number of installments
                           </FieldLabel>
                           {(() => {
@@ -908,7 +896,7 @@ export const TransactionFormDrawer = ({
                               register("parcelsNumber");
                             return (
                               <Input
-                                id="transaction-parcels"
+                                id="transaction-parcels-create"
                                 type="text"
                                 inputMode="numeric"
                                 placeholder="e.g., 12"
@@ -992,15 +980,14 @@ export const TransactionFormDrawer = ({
 
                     {watch("recurrenceMode") === "RECURRING" && (
                       <Field>
-                        <FieldLabel htmlFor="transaction-end-date">
+                        <FieldLabel htmlFor="transaction-create-end-date">
                           End date
                         </FieldLabel>
                         <DatePicker
-                          id="transaction-end-date"
+                          id="transaction-create-end-date"
                           value={watch("endDate")}
                           onChange={(v) =>
-                            v &&
-                            setValue("endDate", v, { shouldValidate: true })
+                            v && setValue("endDate", v, { shouldValidate: true })
                           }
                           disabled={isPending}
                           className="w-full"
@@ -1028,6 +1015,7 @@ export const TransactionFormDrawer = ({
           <Button
             type="button"
             isLoading={isPending}
+            disabled={isSeriesEdit && !definition}
             onClick={handleSubmit(onSubmit)}
           >
             <SaveIcon className="h-4 w-4" />
