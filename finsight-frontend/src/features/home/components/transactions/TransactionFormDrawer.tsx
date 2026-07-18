@@ -1,7 +1,11 @@
 import {
+  CreateFinancialTransactionRequest,
+  CreateFinancialTransactionSeriesRequest,
   FinancialTransaction,
   ParticipantInput,
   RecurrenceDefinitionResponse,
+  SeriesEditRequest,
+  SeriesEditScope,
   SplitMode,
 } from "@/api/dtos/financialTransaction";
 import {
@@ -45,7 +49,7 @@ import { CategoryCombobox } from "./CategoryCombobox";
 import { useSeriesScope } from "./SeriesScopeDialog";
 import { TransactionTypeToggle } from "./TransactionTypeToggle";
 
-const transactionFormSchema = z
+export const transactionFormSchema = z
   .object({
     type: z.enum(["DEBIT", "CREDIT"]),
     description: z.string().min(1, "Description is required"),
@@ -218,6 +222,10 @@ const transactionFormSchema = z
 
 export type TransactionFormValues = z.infer<typeof transactionFormSchema>;
 
+function parseAmount(value: string): number {
+  return parseInt(value.replace(/\D/g, ""), 10) / 100;
+}
+
 interface TransactionFormDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -279,7 +287,109 @@ function attributionToPayload(
   };
 }
 
-function buildDefaultValues(
+export function toPayload(
+  values: TransactionFormValues,
+  showAttribution: boolean,
+  currentUserId?: number,
+): CreateFinancialTransactionRequest["body"] {
+  const { participants, splitMode } = attributionToPayload(
+    values,
+    showAttribution,
+    currentUserId,
+  );
+
+  return {
+    type: values.type,
+    description: values.description,
+    amount: parseAmount(values.amount),
+    categoryId: values.category?.id,
+    startDate: format(values.date, "yyyy-MM-dd"),
+    splitMode,
+    participants,
+    items: values.items.map((item) => ({
+      description: item.description,
+      amount: parseAmount(item.amount),
+      categoryId: item.category?.id,
+    })),
+  };
+}
+
+export function toSeriesCreatePayload(
+  values: TransactionFormValues,
+  showAttribution: boolean,
+  currentUserId?: number,
+): CreateFinancialTransactionSeriesRequest["body"] {
+  const { participants, splitMode } = attributionToPayload(
+    values,
+    showAttribution,
+    currentUserId,
+  );
+
+  return {
+    type: values.type,
+    description: values.description,
+    amount: parseAmount(values.amount),
+    categoryId: values.category?.id,
+    mode: values.recurrenceMode!,
+    startDate: format(values.date, "yyyy-MM-dd"),
+    parcelsNumber:
+      values.recurrenceMode === "INSTALLMENT"
+        ? parseInt(values.parcelsNumber!.replace(/\D/g, ""), 10)
+        : undefined,
+    currentParcel: (() => {
+      if (values.recurrenceMode !== "INSTALLMENT") return undefined;
+      const digits = (values.currentParcel ?? "").replace(/\D/g, "");
+      const current = digits.length > 0 ? parseInt(digits, 10) : 1;
+      return current > 1 ? current : undefined;
+    })(),
+    interval: values.recurrenceMode === "RECURRING" ? "MONTHLY" : undefined,
+    endDate:
+      values.recurrenceMode === "RECURRING"
+        ? format(values.endDate!, "yyyy-MM-dd")
+        : undefined,
+    splitMode,
+    participants,
+  };
+}
+
+export function toSeriesEditPayload(
+  values: TransactionFormValues,
+  transaction: FinancialTransaction,
+  definition: RecurrenceDefinitionResponse,
+  scope: SeriesEditScope,
+  showAttribution: boolean,
+  currentUserId?: number,
+): SeriesEditRequest["body"] {
+  const { participants, splitMode } = attributionToPayload(
+    values,
+    showAttribution,
+    currentUserId,
+  );
+
+  return {
+    type: definition.type,
+    amount: parseAmount(values.amount),
+    description: values.description,
+    categoryId: values.category?.id,
+    mode: definition.mode,
+    startDate: definition.startDate,
+    parcelsNumber:
+      definition.mode === "INSTALLMENT"
+        ? parseInt((values.parcelsNumber ?? "").replace(/\D/g, ""), 10)
+        : undefined,
+    interval: definition.interval,
+    endDate:
+      definition.mode === "RECURRING" && values.endDate
+        ? format(values.endDate, "yyyy-MM-dd")
+        : undefined,
+    splitMode,
+    participants,
+    scope,
+    pivotOccurrenceId: transaction.id,
+  };
+}
+
+export function buildDefaultValues(
   transaction?: FinancialTransaction,
   currentUserId?: number,
   definition?: RecurrenceDefinitionResponse,
@@ -442,13 +552,6 @@ export const TransactionFormDrawer = ({
     isUpdatingFinancialTransactionSeries;
 
   const onSubmit = async (values: TransactionFormValues) => {
-    const amount = parseInt(values.amount.replace(/\D/g, ""), 10) / 100;
-    const { participants, splitMode } = attributionToPayload(
-      values,
-      showAttribution,
-      currentUserId,
-    );
-
     if (isSeriesEdit) {
       if (!transaction?.seriesId || !definition) return;
 
@@ -459,81 +562,26 @@ export const TransactionFormDrawer = ({
 
       updateFinancialTransactionSeries({
         params: { seriesId: transaction.seriesId },
-        body: {
-          type: definition.type,
-          amount,
-          description: values.description,
-          categoryId: values.category?.id,
-          mode: definition.mode,
-          startDate: definition.startDate,
-          parcelsNumber:
-            definition.mode === "INSTALLMENT"
-              ? parseInt((values.parcelsNumber ?? "").replace(/\D/g, ""), 10)
-              : undefined,
-          interval: definition.interval,
-          endDate:
-            definition.mode === "RECURRING" && values.endDate
-              ? format(values.endDate, "yyyy-MM-dd")
-              : undefined,
-          splitMode,
-          participants,
+        body: toSeriesEditPayload(
+          values,
+          transaction,
+          definition,
           scope,
-          pivotOccurrenceId: transaction.id,
-        },
+          showAttribution,
+          currentUserId,
+        ),
       });
       return;
     }
-
-    const startDate = format(values.date, "yyyy-MM-dd");
 
     if (mode === "create" && values.recurring && values.recurrenceMode) {
       createFinancialTransactionSeries({
-        body: {
-          type: values.type,
-          description: values.description,
-          amount,
-          categoryId: values.category?.id,
-          mode: values.recurrenceMode,
-          startDate,
-          parcelsNumber:
-            values.recurrenceMode === "INSTALLMENT"
-              ? parseInt(values.parcelsNumber!.replace(/\D/g, ""), 10)
-              : undefined,
-          currentParcel: (() => {
-            if (values.recurrenceMode !== "INSTALLMENT") return undefined;
-            const digits = (values.currentParcel ?? "").replace(/\D/g, "");
-            const current = digits.length > 0 ? parseInt(digits, 10) : 1;
-            return current > 1 ? current : undefined;
-          })(),
-          interval:
-            values.recurrenceMode === "RECURRING" ? "MONTHLY" : undefined,
-          endDate:
-            values.recurrenceMode === "RECURRING"
-              ? format(values.endDate!, "yyyy-MM-dd")
-              : undefined,
-          splitMode,
-          participants,
-        },
+        body: toSeriesCreatePayload(values, showAttribution, currentUserId),
       });
       return;
     }
 
-    const items = values.items.map((item) => ({
-      description: item.description,
-      amount: parseInt(item.amount.replace(/\D/g, ""), 10) / 100,
-      categoryId: item.category?.id,
-    }));
-
-    const body = {
-      type: values.type,
-      description: values.description,
-      amount,
-      categoryId: values.category?.id,
-      startDate,
-      splitMode,
-      participants,
-      items,
-    };
+    const body = toPayload(values, showAttribution, currentUserId);
 
     if (isEditing) {
       updateFinancialTransaction({ params: { id: transaction!.id }, body });
