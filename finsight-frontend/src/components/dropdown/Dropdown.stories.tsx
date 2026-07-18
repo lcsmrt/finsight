@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { expect, userEvent, within } from "storybook/test";
 import { useState } from "react";
 import {
   DropdownMenu,
@@ -66,6 +67,26 @@ export const WithCheckboxAndRadio: Story = {
         </DropdownMenuContent>
       </DropdownMenu>
     );
+  },
+  play: async ({ canvasElement }) => {
+    // Regression guard for L-002: Base UI's `Menu.GroupLabel` (DropdownMenuLabel)
+    // throws `MenuGroupRootContext is missing` at RUNTIME if it isn't rendered
+    // inside a `Menu.Group` (DropdownMenuGroup) ancestor — a compile-time-invisible
+    // failure. This opens the menu (mounting the grouped label + radio items) and
+    // interacts with an item inside the group, so a broken nesting surfaces as a
+    // real thrown error instead of silently passing a static render.
+    const canvas = within(canvasElement);
+    const trigger = canvas.getByRole("button", { name: "Preferences" });
+    await userEvent.click(trigger);
+
+    const body = within(canvasElement.ownerDocument.body);
+    const themeLabel = await body.findByText("Theme");
+    await expect(themeLabel).toBeVisible();
+
+    const darkOption = await body.findByRole("menuitemradio", { name: "Dark" });
+    await expect(darkOption).toBeVisible();
+    await userEvent.click(darkOption);
+    await expect(darkOption).toHaveAttribute("aria-checked", "true");
   },
 };
 
