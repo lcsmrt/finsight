@@ -16,11 +16,11 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-const createPlanSchema = z.object({
+export const createPlanSchema = z.object({
   name: z.string().min(1, "Enter a name for the plan"),
 });
 
-type CreatePlanFormValues = z.infer<typeof createPlanSchema>;
+export type CreatePlanFormValues = z.infer<typeof createPlanSchema>;
 
 type CreatePlanDialogProps = {
   open: boolean;
