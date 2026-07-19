@@ -9,7 +9,7 @@ const getDashboardSummary = async (
   params: DashboardFilter,
 ): Promise<DashboardSummaryResponse> => {
   const { data } = await finsightApi.get<DashboardSummaryResponse>(
-    `/plans/${planId}/dashboard`,
+    `/plan/${planId}/dashboard`,
     { params },
   );
   return data;

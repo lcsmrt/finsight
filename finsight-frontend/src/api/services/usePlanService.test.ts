@@ -57,7 +57,7 @@ describe("useRenamePlan", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(mockedApi.put).toHaveBeenCalledWith("/plans/5", {
+    expect(mockedApi.put).toHaveBeenCalledWith("/plan/5", {
       name: "New name",
     });
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["plans"] });
@@ -87,7 +87,7 @@ describe("useUpdateMemberRole", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(mockedApi.put).toHaveBeenCalledWith("/plans/5/members/9", {
+    expect(mockedApi.put).toHaveBeenCalledWith("/plan/5/members/9", {
       role: "EDITOR",
     });
     expect(invalidateSpy).toHaveBeenCalledWith({

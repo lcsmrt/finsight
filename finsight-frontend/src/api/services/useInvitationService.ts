@@ -15,7 +15,7 @@ const createInvitation = async (
   payload: CreateInvitationRequest,
 ): Promise<Invitation> => {
   const { data } = await finsightApi.post<Invitation>(
-    `/plans/${payload.params.planId}/invitations`,
+    `/plan/${payload.params.planId}/invitation`,
     payload.body,
   );
   return data;
@@ -37,7 +37,7 @@ const getInvitationPreview = async (
   token: string,
 ): Promise<InvitationPreview> => {
   const { data } = await finsightApi.get<InvitationPreview>(
-    `/invitations/${token}`,
+    `/invitation/${token}`,
   );
   return data;
 };
@@ -57,7 +57,7 @@ export const useGetInvitationPreview = (
 
 const getPlanInvitations = async (planId: number): Promise<Invitation[]> => {
   const { data } = await finsightApi.get<Invitation[]>(
-    `/plans/${planId}/invitations`,
+    `/plan/${planId}/invitation`,
   );
   return data;
 };
@@ -78,7 +78,7 @@ const revokeInvitation = async (
   payload: RevokeInvitationRequest,
 ): Promise<void> => {
   await finsightApi.delete(
-    `/plans/${payload.params.planId}/invitations/${payload.params.invitationId}`,
+    `/plan/${payload.params.planId}/invitation/${payload.params.invitationId}`,
   );
 };
 
@@ -107,7 +107,7 @@ const acceptInvitation = async (
   token: string,
 ): Promise<AcceptInvitationResponse> => {
   const { data } = await finsightApi.post<AcceptInvitationResponse>(
-    `/invitations/${token}/accept`,
+    `/invitation/${token}/accept`,
   );
   return data;
 };

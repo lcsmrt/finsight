@@ -3,5 +3,5 @@ export const PATHS = {
   registerUser: "/register-user",
   home: "/",
   plans: "/plans",
-  acceptInvitation: "/invitations/:token",
+  acceptInvitation: "/invitation/:token",
 };

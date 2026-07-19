@@ -29,7 +29,7 @@ const getFinancialTransactions = async (
 ): Promise<PagedResponse<FinancialTransaction>> => {
   const query = buildPagedQuery(params);
   const { data } = await finsightApi.get(
-    `/plans/${planId}/financial-transaction?${query}`,
+    `/plan/${planId}/financial-transaction?${query}`,
   );
   return data;
 };
@@ -55,7 +55,7 @@ const createFinancialTransaction = async (
   payload: CreateFinancialTransactionRequest,
 ): Promise<FinancialTransaction> => {
   const { data } = await finsightApi.post(
-    `/plans/${planId}/financial-transaction`,
+    `/plan/${planId}/financial-transaction`,
     payload.body,
   );
   return data;
@@ -88,7 +88,7 @@ const updateFinancialTransaction = async (
 ): Promise<FinancialTransaction> => {
   const { params, body } = payload;
   const { data } = await finsightApi.put(
-    `/plans/${planId}/financial-transaction/${params.id}`,
+    `/plan/${planId}/financial-transaction/${params.id}`,
     body,
   );
   return data;
@@ -122,7 +122,7 @@ const importNubankCsv = async (
   const formData = new FormData();
   formData.append("file", file);
   const { data } = await finsightApi.post(
-    `/plans/${planId}/financial-transaction/import`,
+    `/plan/${planId}/financial-transaction/import`,
     formData,
     {
       headers: { "Content-Type": "multipart/form-data" },
@@ -153,7 +153,7 @@ const createFinancialTransactionSeries = async (
   payload: CreateFinancialTransactionSeriesRequest,
 ): Promise<FinancialTransactionSeriesResponse> => {
   const { data } = await finsightApi.post(
-    `/plans/${planId}/financial-transaction/series`,
+    `/plan/${planId}/financial-transaction/series`,
     payload.body,
   );
   return data;
@@ -189,7 +189,7 @@ const deleteFinancialTransactionSeries = async (
     query.set("pivotOccurrenceId", String(pivotOccurrenceId));
   }
   await finsightApi.delete(
-    `/plans/${planId}/financial-transaction/series/${seriesId}?${query}`,
+    `/plan/${planId}/financial-transaction/series/${seriesId}?${query}`,
   );
 };
 
@@ -223,7 +223,7 @@ const getFinancialTransactionSeries = async (
   seriesId: string,
 ): Promise<RecurrenceDefinitionResponse> => {
   const { data } = await finsightApi.get(
-    `/plans/${planId}/financial-transaction/series/${seriesId}`,
+    `/plan/${planId}/financial-transaction/series/${seriesId}`,
   );
   return data;
 };
@@ -248,7 +248,7 @@ const updateFinancialTransactionSeries = async (
 ): Promise<FinancialTransactionSeriesResponse> => {
   const { params, body } = payload;
   const { data } = await finsightApi.put(
-    `/plans/${planId}/financial-transaction/series/${params.seriesId}`,
+    `/plan/${planId}/financial-transaction/series/${params.seriesId}`,
     body,
   );
   return data;
@@ -282,7 +282,7 @@ const deleteFinancialTransaction = async (
   planId: number,
   id: number,
 ): Promise<void> => {
-  await finsightApi.delete(`/plans/${planId}/financial-transaction/${id}`);
+  await finsightApi.delete(`/plan/${planId}/financial-transaction/${id}`);
 };
 
 export const useDeleteFinancialTransaction = (

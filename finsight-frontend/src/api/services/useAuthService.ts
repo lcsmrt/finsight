@@ -33,7 +33,7 @@ export const useLogin = (
  * @returns User data.
  */
 const getUserProfile = async (): Promise<User> => {
-  const { data } = await finsightApi.get("/auth/profile");
+  const { data } = await finsightApi.get("/user/me");
   return data;
 };
 
@@ -57,7 +57,7 @@ export const useGetUserProfile = (
  */
 const registerUser = async (params: RegisterUserRequest): Promise<User> => {
   const { body } = params;
-  const { data } = await finsightApi.post("/users", body);
+  const { data } = await finsightApi.post("/user", body);
   return data;
 };
 

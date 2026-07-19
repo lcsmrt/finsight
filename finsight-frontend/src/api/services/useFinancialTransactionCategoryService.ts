@@ -21,7 +21,7 @@ const getFinancialTransactionCategories = async (
 ): Promise<PagedResponse<FinancialTransactionCategory>> => {
   const query = buildPagedQuery(params);
   const { data } = await finsightApi.get(
-    `/plans/${planId}/financial-transaction-category?${query}`,
+    `/plan/${planId}/financial-transaction-category?${query}`,
   );
   return data;
 };
@@ -44,7 +44,7 @@ const createFinancialTransactionCategory = async (
   payload: CreateFinancialTransactionCategoryRequest,
 ): Promise<FinancialTransactionCategory> => {
   const { data } = await finsightApi.post(
-    `/plans/${planId}/financial-transaction-category`,
+    `/plan/${planId}/financial-transaction-category`,
     payload.body,
   );
   return data;
@@ -77,7 +77,7 @@ const updateFinancialTransactionCategory = async (
 ): Promise<FinancialTransactionCategory> => {
   const { params, body } = payload;
   const { data } = await finsightApi.put(
-    `/plans/${planId}/financial-transaction-category/${params.id}`,
+    `/plan/${planId}/financial-transaction-category/${params.id}`,
     body,
   );
   return data;
@@ -109,7 +109,7 @@ const deleteFinancialTransactionCategory = async (
   id: number,
 ): Promise<void> => {
   await finsightApi.delete(
-    `/plans/${planId}/financial-transaction-category/${id}`,
+    `/plan/${planId}/financial-transaction-category/${id}`,
   );
 };
 

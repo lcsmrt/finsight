@@ -56,7 +56,7 @@ type InvitePlanDialogProps = {
 };
 
 const buildInvitationLink = (invitation: Invitation): string => {
-  const relative = invitation.link ?? `/invitations/${invitation.token}`;
+  const relative = invitation.link ?? `/invitation/${invitation.token}`;
   return `${window.location.origin}${relative}`;
 };
 
