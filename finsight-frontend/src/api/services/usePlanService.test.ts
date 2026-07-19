@@ -72,7 +72,7 @@ describe("useUpdateMemberRole", () => {
     });
 
     const { queryClient, Wrapper } = createWrapper();
-    queryClient.setQueryData(["planMembers", 5], []);
+    queryClient.setQueryData(["members", 5], []);
     queryClient.setQueryData(["plans"], []);
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
@@ -91,10 +91,10 @@ describe("useUpdateMemberRole", () => {
       role: "EDITOR",
     });
     expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: ["planMembers", 5],
+      queryKey: ["members", 5],
     });
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["plans"] });
-    expect(queryClient.getQueryState(["planMembers", 5])?.isInvalidated).toBe(
+    expect(queryClient.getQueryState(["members", 5])?.isInvalidated).toBe(
       true,
     );
     expect(queryClient.getQueryState(["plans"])?.isInvalidated).toBe(true);
@@ -104,7 +104,7 @@ describe("useUpdateMemberRole", () => {
     mockedApi.put.mockRejectedValue(new Error("network error"));
 
     const { queryClient, Wrapper } = createWrapper();
-    queryClient.setQueryData(["planMembers", 5], []);
+    queryClient.setQueryData(["members", 5], []);
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
     const { result } = renderHook(() => useUpdateMemberRole(), {
@@ -119,7 +119,7 @@ describe("useUpdateMemberRole", () => {
     await waitFor(() => expect(result.current.isError).toBe(true));
 
     expect(invalidateSpy).not.toHaveBeenCalled();
-    expect(queryClient.getQueryState(["planMembers", 5])?.isInvalidated).toBe(
+    expect(queryClient.getQueryState(["members", 5])?.isInvalidated).toBe(
       false,
     );
   });

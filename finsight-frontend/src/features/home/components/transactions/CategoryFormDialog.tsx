@@ -249,8 +249,6 @@ export const CategoryFormDialog = ({
   );
 };
 
-// ─── Provider & hook ─────────────────────────────────────────────────────────
-
 interface CategoryFormDialogContextValue {
   openCreate: (
     defaultDescription?: string,

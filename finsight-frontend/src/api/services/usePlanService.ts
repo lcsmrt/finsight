@@ -68,7 +68,7 @@ export const useGetPlanMembers = (
 ) => {
   return useQuery({
     queryFn: () => getPlanMembers(planId!),
-    queryKey: ["planMembers", planId],
+    queryKey: ["members", planId],
     enabled: planId != null,
     ...options,
   });
@@ -120,7 +120,7 @@ export const useUpdateMemberRole = (
         ...options,
         onSuccess: (data, variables) => {
           queryClient.invalidateQueries({
-            queryKey: ["planMembers", variables.params.planId],
+            queryKey: ["members", variables.params.planId],
           });
           queryClient.invalidateQueries({ queryKey: ["plans"] });
           options?.onSuccess?.(data, variables);
@@ -148,7 +148,7 @@ export const useRemoveMember = (
         ...options,
         onSuccess: (data, variables) => {
           queryClient.invalidateQueries({
-            queryKey: ["planMembers", variables.params.planId],
+            queryKey: ["members", variables.params.planId],
           });
           queryClient.invalidateQueries({ queryKey: ["plans"] });
           options?.onSuccess?.(data, variables);
@@ -199,7 +199,7 @@ export const useDeletePlan = (options?: MutationOptions<void, number>) => {
         ...options,
         onSuccess: (data, planId) => {
           queryClient.invalidateQueries({ queryKey: ["plans"] });
-          queryClient.invalidateQueries({ queryKey: ["planMembers", planId] });
+          queryClient.invalidateQueries({ queryKey: ["members", planId] });
           options?.onSuccess?.(data, planId);
         },
       },
@@ -221,7 +221,7 @@ export const useLeavePlan = (options?: MutationOptions<void, number>) => {
         ...options,
         onSuccess: (data, planId) => {
           queryClient.invalidateQueries({ queryKey: ["plans"] });
-          queryClient.invalidateQueries({ queryKey: ["planMembers", planId] });
+          queryClient.invalidateQueries({ queryKey: ["members", planId] });
           options?.onSuccess?.(data, planId);
         },
       },
@@ -251,7 +251,7 @@ export const useTransferOwnership = (
         onSuccess: (data, variables) => {
           queryClient.invalidateQueries({ queryKey: ["plans"] });
           queryClient.invalidateQueries({
-            queryKey: ["planMembers", variables.params.planId],
+            queryKey: ["members", variables.params.planId],
           });
           options?.onSuccess?.(data, variables);
         },

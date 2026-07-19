@@ -141,13 +141,13 @@ export type RecurrenceDefinitionResponse = {
   participants: RecurrenceDefinitionParticipantTemplate[];
 };
 
-export type SeriesDeleteRequest = {
+export type DeleteFinancialTransactionSeriesRequest = {
   seriesId: string;
   scope: SeriesEditScope;
   pivotOccurrenceId?: number;
 };
 
-export type SeriesEditRequest = {
+export type UpdateFinancialTransactionSeriesRequest = {
   params: { seriesId: string };
   body: {
     type: FinancialTransactionType;

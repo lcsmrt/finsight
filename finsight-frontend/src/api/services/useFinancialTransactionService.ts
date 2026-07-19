@@ -10,8 +10,8 @@ import {
   PagedRequest,
   PagedResponse,
   RecurrenceDefinitionResponse,
-  SeriesDeleteRequest,
-  SeriesEditRequest,
+  DeleteFinancialTransactionSeriesRequest,
+  UpdateFinancialTransactionSeriesRequest,
   UpdateFinancialTransactionRequest,
 } from "../dtos";
 import { MutationOptions } from "../types/mutationOptions";
@@ -182,7 +182,7 @@ export const useCreateFinancialTransactionSeries = (
 
 const deleteFinancialTransactionSeries = async (
   planId: number,
-  { seriesId, scope, pivotOccurrenceId }: SeriesDeleteRequest,
+  { seriesId, scope, pivotOccurrenceId }: DeleteFinancialTransactionSeriesRequest,
 ): Promise<void> => {
   const query = new URLSearchParams({ scope });
   if (pivotOccurrenceId != null) {
@@ -194,12 +194,12 @@ const deleteFinancialTransactionSeries = async (
 };
 
 export const useDeleteFinancialTransactionSeries = (
-  options?: MutationOptions<void, SeriesDeleteRequest>,
+  options?: MutationOptions<void, DeleteFinancialTransactionSeriesRequest>,
 ) => {
   const queryClient = useQueryClient();
   const { activePlanId } = usePlanContext();
   return useMutation({
-    mutationFn: (payload: SeriesDeleteRequest) =>
+    mutationFn: (payload: DeleteFinancialTransactionSeriesRequest) =>
       deleteFinancialTransactionSeries(activePlanId!, payload),
     ...buildMutationOptions({ successMessage: "Series deleted successfully." }, {
       ...options,
@@ -228,7 +228,7 @@ const getFinancialTransactionSeries = async (
   return data;
 };
 
-export const useFinancialTransactionSeries = (
+export const useGetFinancialTransactionSeries = (
   seriesId: string | undefined,
   options?: QueryOptions<RecurrenceDefinitionResponse>,
 ) => {
@@ -244,7 +244,7 @@ export const useFinancialTransactionSeries = (
 
 const updateFinancialTransactionSeries = async (
   planId: number,
-  payload: SeriesEditRequest,
+  payload: UpdateFinancialTransactionSeriesRequest,
 ): Promise<FinancialTransactionSeriesResponse> => {
   const { params, body } = payload;
   const { data } = await finsightApi.put(
@@ -257,13 +257,13 @@ const updateFinancialTransactionSeries = async (
 export const useUpdateFinancialTransactionSeries = (
   options?: MutationOptions<
     FinancialTransactionSeriesResponse,
-    SeriesEditRequest
+    UpdateFinancialTransactionSeriesRequest
   >,
 ) => {
   const queryClient = useQueryClient();
   const { activePlanId } = usePlanContext();
   return useMutation({
-    mutationFn: (payload: SeriesEditRequest) =>
+    mutationFn: (payload: UpdateFinancialTransactionSeriesRequest) =>
       updateFinancialTransactionSeries(activePlanId!, payload),
     ...buildMutationOptions({ successMessage: "Series updated successfully." }, {
       ...options,

@@ -8,9 +8,10 @@ const getDashboardSummary = async (
   planId: number,
   params: DashboardFilter,
 ): Promise<DashboardSummaryResponse> => {
-  const { data } = await finsightApi.get(`/plans/${planId}/dashboard`, {
-    params,
-  });
+  const { data } = await finsightApi.get<DashboardSummaryResponse>(
+    `/plans/${planId}/dashboard`,
+    { params },
+  );
   return data;
 };
 

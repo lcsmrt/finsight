@@ -68,7 +68,7 @@ export const useGetPlanInvitations = (
 ) => {
   return useQuery({
     queryFn: () => getPlanInvitations(planId!),
-    queryKey: ["planInvitations", planId],
+    queryKey: ["invitations", planId],
     enabled: planId != null,
     ...options,
   });
@@ -94,7 +94,7 @@ export const useRevokeInvitation = (
         ...options,
         onSuccess: (data, variables) => {
           queryClient.invalidateQueries({
-            queryKey: ["planInvitations", variables.params.planId],
+            queryKey: ["invitations", variables.params.planId],
           });
           options?.onSuccess?.(data, variables);
         },

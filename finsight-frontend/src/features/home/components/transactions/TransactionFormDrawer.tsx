@@ -4,14 +4,14 @@ import {
   FinancialTransaction,
   ParticipantInput,
   RecurrenceDefinitionResponse,
-  SeriesEditRequest,
+  UpdateFinancialTransactionSeriesRequest,
   SeriesEditScope,
   SplitMode,
 } from "@/api/dtos/financialTransaction";
 import {
   useCreateFinancialTransaction,
   useCreateFinancialTransactionSeries,
-  useFinancialTransactionSeries,
+  useGetFinancialTransactionSeries,
   useUpdateFinancialTransaction,
   useUpdateFinancialTransactionSeries,
 } from "@/api/services/useFinancialTransactionService";
@@ -359,7 +359,7 @@ export function toSeriesEditPayload(
   scope: SeriesEditScope,
   showAttribution: boolean,
   currentUserId?: number,
-): SeriesEditRequest["body"] {
+): UpdateFinancialTransactionSeriesRequest["body"] {
   const { participants, splitMode } = attributionToPayload(
     values,
     showAttribution,
@@ -474,7 +474,7 @@ export const TransactionFormDrawer = ({
 
   const chooseScope = useSeriesScope();
 
-  const { data: definition } = useFinancialTransactionSeries(
+  const { data: definition } = useGetFinancialTransactionSeries(
     transaction?.seriesId,
     { enabled: open && isSeriesEdit },
   );
