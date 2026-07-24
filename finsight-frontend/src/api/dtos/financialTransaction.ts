@@ -24,7 +24,6 @@ export type FinancialTransaction = {
   type: FinancialTransactionType;
   amount: number;
   description: string;
-  frequency?: string;
   parcelsNumber?: number;
   startDate: string;
   endDate: string;
