@@ -18,6 +18,7 @@ import {
 import { useGetPlanMembers } from "@/api/services/usePlanService";
 import { useAuth } from "@/app/providers/AuthProvider";
 import { usePlanContext } from "@/app/providers/PlanProvider";
+import { Badge } from "@/components/badge/Badge";
 import { Button } from "@/components/button/Button";
 import { Checkbox } from "@/components/input/base/Checkbox";
 import {
@@ -152,10 +153,14 @@ export const transactionFormSchema = z
           });
         }
       }
-      if (values.recurrenceMode === "RECURRING" && !values.endDate) {
+      if (
+        values.recurrenceMode === "RECURRING" &&
+        values.endDate &&
+        values.endDate < values.date
+      ) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Enter the end date",
+          message: "The end date must be after the start date",
           path: ["endDate"],
         });
       }
@@ -204,13 +209,7 @@ export const transactionFormSchema = z
     }
 
     if (values.recurrenceMode === "RECURRING") {
-      if (!values.endDate) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Enter the end date",
-          path: ["endDate"],
-        });
-      } else if (values.endDate < values.date) {
+      if (values.endDate && values.endDate < values.date) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: "The end date must be after the start date",
@@ -344,8 +343,8 @@ export function toSeriesCreatePayload(
     })(),
     interval: values.recurrenceMode === "RECURRING" ? "MONTHLY" : undefined,
     endDate:
-      values.recurrenceMode === "RECURRING"
-        ? format(values.endDate!, "yyyy-MM-dd")
+      values.recurrenceMode === "RECURRING" && values.endDate
+        ? format(values.endDate, "yyyy-MM-dd")
         : undefined,
     splitMode,
     participants,
@@ -849,17 +848,27 @@ export const TransactionFormDrawer = ({
 
             {isSeriesEdit && definition?.mode === "RECURRING" && (
               <Field>
-                <FieldLabel htmlFor="transaction-end-date">End date</FieldLabel>
+                <div className="flex items-center justify-between">
+                  <FieldLabel htmlFor="transaction-end-date">
+                    End date
+                  </FieldLabel>
+                  {!watch("endDate") && (
+                    <Badge variant="secondary">Ongoing</Badge>
+                  )}
+                </div>
                 <DatePicker
                   id="transaction-end-date"
                   value={watch("endDate")}
                   onChange={(v) =>
-                    v && setValue("endDate", v, { shouldValidate: true })
+                    setValue("endDate", v, { shouldValidate: true })
                   }
                   disabled={isPending}
                   className="w-full"
                 />
                 <FieldError errors={[errors.endDate]} />
+                <p className="text-muted-foreground text-sm">
+                  Leave empty to keep this series ongoing, with no end date.
+                </p>
               </Field>
             )}
 
@@ -1028,19 +1037,28 @@ export const TransactionFormDrawer = ({
 
                     {watch("recurrenceMode") === "RECURRING" && (
                       <Field>
-                        <FieldLabel htmlFor="transaction-create-end-date">
-                          End date
-                        </FieldLabel>
+                        <div className="flex items-center justify-between">
+                          <FieldLabel htmlFor="transaction-create-end-date">
+                            End date
+                          </FieldLabel>
+                          {!watch("endDate") && (
+                            <Badge variant="secondary">Ongoing</Badge>
+                          )}
+                        </div>
                         <DatePicker
                           id="transaction-create-end-date"
                           value={watch("endDate")}
                           onChange={(v) =>
-                            v && setValue("endDate", v, { shouldValidate: true })
+                            setValue("endDate", v, { shouldValidate: true })
                           }
                           disabled={isPending}
                           className="w-full"
                         />
                         <FieldError errors={[errors.endDate]} />
+                        <p className="text-muted-foreground text-sm">
+                          Leave empty to keep this series ongoing, with no end
+                          date.
+                        </p>
                       </Field>
                     )}
                   </>

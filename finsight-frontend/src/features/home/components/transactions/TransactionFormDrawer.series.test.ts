@@ -94,17 +94,28 @@ describe("transactionFormSchema — recurring (create) validation", () => {
     expect(result.success).toBe(true);
   });
 
-  it("rejects a recurring transaction missing an end date", () => {
+  it("accepts a recurring transaction with an empty end date (open-ended)", () => {
     const result = transactionFormSchema.safeParse({
       ...baseValues,
       recurrenceMode: "RECURRING",
     });
 
+    expect(result.success).toBe(true);
+  });
+
+  it("still rejects an installment missing its parcel count", () => {
+    const result = transactionFormSchema.safeParse({
+      ...baseValues,
+      recurrenceMode: "INSTALLMENT",
+      parcelsNumber: undefined,
+    });
+
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(
-        result.error.issues.find((i) => i.path[0] === "endDate")?.message,
-      ).toBe("Enter the end date");
+        result.error.issues.find((i) => i.path[0] === "parcelsNumber")
+          ?.message,
+      ).toBe("Enter at least 2 installments");
     }
   });
 
@@ -158,7 +169,7 @@ describe("transactionFormSchema — series edit validation", () => {
     }
   });
 
-  it("rejects a missing end date for a recurring series edit", () => {
+  it("accepts an empty end date for a recurring series edit (open-ended)", () => {
     const result = transactionFormSchema.safeParse({
       ...baseValues,
       recurring: false,
@@ -166,11 +177,41 @@ describe("transactionFormSchema — series edit validation", () => {
       recurrenceMode: "RECURRING",
     });
 
+    expect(result.success).toBe(true);
+  });
+
+  it("still rejects an installment series edit missing its parcel count", () => {
+    const result = transactionFormSchema.safeParse({
+      ...baseValues,
+      recurring: false,
+      seriesEdit: true,
+      recurrenceMode: "INSTALLMENT",
+      parcelsNumber: undefined,
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(
+        result.error.issues.find((i) => i.path[0] === "parcelsNumber")
+          ?.message,
+      ).toBe("Enter at least 2 installments");
+    }
+  });
+
+  it("rejects an end date before the start date on a recurring series edit", () => {
+    const result = transactionFormSchema.safeParse({
+      ...baseValues,
+      recurring: false,
+      seriesEdit: true,
+      recurrenceMode: "RECURRING",
+      endDate: new Date(2026, 5, 1),
+    });
+
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(
         result.error.issues.find((i) => i.path[0] === "endDate")?.message,
-      ).toBe("Enter the end date");
+      ).toBe("The end date must be after the start date");
     }
   });
 
@@ -292,6 +333,21 @@ describe("toSeriesCreatePayload", () => {
       participants: undefined,
     });
   });
+
+  it("omits endDate for an open-ended recurring series (no end date)", () => {
+    const body = toSeriesCreatePayload(
+      {
+        ...baseValues,
+        recurrenceMode: "RECURRING",
+        endDate: undefined,
+      },
+      false,
+      undefined,
+    );
+
+    expect(body.endDate).toBeUndefined();
+    expect(body.interval).toBe("MONTHLY");
+  });
 });
 
 describe("toSeriesEditPayload", () => {
@@ -347,6 +403,32 @@ describe("toSeriesEditPayload", () => {
 
     expect(body.startDate).toBe("2026-05-01");
     expect(body.scope).toBe("THIS_ONE");
+  });
+
+  it("omits endDate when a recurring series edit is left open-ended", () => {
+    const recurringTransaction: FinancialTransaction = {
+      ...installmentTransaction,
+      seriesId: "series-xyz",
+      description: "Salary",
+    };
+
+    const body = toSeriesEditPayload(
+      {
+        ...baseValues,
+        seriesEdit: true,
+        recurring: false,
+        recurrenceMode: "RECURRING",
+        endDate: undefined,
+      },
+      recurringTransaction,
+      recurringDefinition,
+      "ALL",
+      false,
+      undefined,
+    );
+
+    expect(body.endDate).toBeUndefined();
+    expect(body.mode).toBe("RECURRING");
   });
 });
 
