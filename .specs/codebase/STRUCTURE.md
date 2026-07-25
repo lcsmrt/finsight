@@ -6,7 +6,10 @@
 
 ```
 finsight/
+  docker-compose.yml               Production stack (finsight-api + finsight-web)
+  DEPLOY.md                        Portainer deploy procedure
   finsight-backend/
+    Dockerfile                     Maven build → JRE runtime image
     src/main/java/com/lcs/finsight/
       FinSightApplication.java     Spring Boot entrypoint
       config/                      OpenApiConfig, SecurityConfig
@@ -22,6 +25,8 @@ finsight/
       exceptions/                  GlobalExceptionHandler + typed exceptions
       utils/                       ApiRoutes constants, DateUtils
   finsight-frontend/
+    Dockerfile                     Vite build → nginx runtime image
+    nginx.conf                     Serves the SPA, proxies /api/ to the API on the host
     src/
       api/
         clients/                   axios instance (finsightApi.ts)

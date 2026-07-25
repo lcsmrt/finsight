@@ -2,7 +2,7 @@
 
 **Analyzed:** 2026-07-05
 
-Monorepo at `/home/lcs/dev/finsight` with two independent apps: `finsight-backend` (Spring Boot REST API) and `finsight-frontend` (React SPA). Git is not initialized at the root.
+Monorepo at `/home/lcs/dev/finsight` with two independent apps: `finsight-backend` (Spring Boot REST API) and `finsight-frontend` (React SPA). Single git repo at the root since 2026-07-25, carrying both apps' histories; they deploy as one Docker stack (see `DEPLOY.md`).
 
 ## Core
 

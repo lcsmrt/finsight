@@ -1,0 +1,8 @@
+target
+bin
+.git
+.idea
+.mvn
+.env
+.env.*
+*.log

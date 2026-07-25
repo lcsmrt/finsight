@@ -16,7 +16,7 @@ The app needs a reachable **PostgreSQL** — it is not bundled here. Connect to 
 ```bash
 # 1. Make your PostgreSQL reachable (your own instance / tunnel).
 
-# 2. Backend — configure and run (creates schema via ddl-auto=update on boot)
+# 2. Backend — configure and run (Flyway applies the schema on boot)
 cd finsight-backend
 cp .env.example .env        # fill SPRING_DATASOURCE_* + JWT_SECRET_KEY
 ./mvnw spring-boot:run      # http://localhost:3000  (Swagger: /swagger-ui.html)
@@ -30,6 +30,22 @@ npm run dev                 # reads .env.development → talks to localhost:3000
 See each app's README for details:
 - [Backend README](./finsight-backend/README.md) — env vars, endpoints, tests
 - [Frontend README](./finsight-frontend/README.md) — commands, trying the recurring feature
+
+## Deploy
+
+One Docker stack for both apps, run on the VPS through Portainer. See
+[DEPLOY.md](./DEPLOY.md) for the full procedure.
+
+| Service | Image | Networking |
+| ------- | ----- | ---------- |
+| `finsight-api` | [`finsight-backend/Dockerfile`](./finsight-backend/Dockerfile) — Maven build → JRE | host network, port 3000 (not published) |
+| `finsight-web` | [`finsight-frontend/Dockerfile`](./finsight-frontend/Dockerfile) — Vite build → nginx | publishes `${WEB_PORT}` → 80 |
+
+`finsight-web` is the only public entry point: nginx serves the built SPA and
+proxies `/api/` to the API on the host, so the browser stays same-origin (no CORS,
+no IP baked into the bundle). Variables are documented in
+[`.env.production.example`](./.env.production.example); real values live in the
+Portainer stack, never in the repo.
 
 ## Spec-Driven Development
 

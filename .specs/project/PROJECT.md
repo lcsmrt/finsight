@@ -47,4 +47,4 @@
 
 - Technical: no DB migration tool yet (schema drift risk); no automated test coverage (backend/frontend) — both flagged in CONCERNS.md.
 - Resources: solo project, worked on intermittently (being resumed after a gap).
-- Process: adopting spec-driven development (this `.specs/` tree) from this point forward; monorepo root is not yet under git.
+- Process: adopting spec-driven development (this `.specs/` tree) from this point forward; the monorepo root is under git since 2026-07-25.

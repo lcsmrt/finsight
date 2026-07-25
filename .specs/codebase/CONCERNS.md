@@ -64,12 +64,10 @@
 
 ## Missing Critical Features
 
-**No root version control:**
+**~~No root version control~~ — RESOLVED 2026-07-25:**
 
-- Problem: `git` is not initialized at the monorepo root (`/home/lcs/dev/finsight` — `git rev-parse` reports "not a git repository"). The two sub-projects are versioned independently at best; the monorepo root and cross-cutting files (`.specs/`, `.claude/`) are unversioned.
-- Current workaround: none — changes are not tracked at the root level.
-- Blocks: **MEDIUM.** Spec-Driven Development assumes atomic, per-task git commits and requirement traceability; without a root repo there is no commit history to anchor tasks, no rollback, and no review surface. Also increases the chance of accidentally committing the frontend `.env.*` files noted above.
-- Implementation complexity: Low. `git init` at the root, add a consolidated `.gitignore` (ensuring `**/.env`, `**/.env.*` except `.example`, `**/target/`, `**/dist/`, `**/node_modules/` are excluded), then baseline-commit before starting SDD work.
+- The monorepo root is now a git repo. Both sub-repo histories were merged in under `finsight-backend/` and `finsight-frontend/` (233 commits total), and the previously unversioned root files (`.specs/`, `.claude/`, `CLAUDE.md`, the migration runbook) are tracked. The sub-repos no longer have their own `.git`; `lcsmrt/finSight-backend` and `lcsmrt/finSight-frontend` on GitHub are stale as of that date.
+- Root `.gitignore` covers `.env` / `.env.production` (secrets stay in the Portainer stack); each app's own `.gitignore` still covers `target/`, `dist/`, `node_modules/`.
 
 ## Documentation Drift
 

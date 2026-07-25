@@ -4,7 +4,7 @@ Personal-finance app: Spring Boot API (`finsight-backend`) + React/TS SPA (`fins
 
 > Prescriptive write-time standards. Detailed procedures live in the skills; descriptive maps in
 > `.specs/codebase/`. This file overrides inference — if a rule is missing, ask rather than infer.
-> Kept at the workspace root ahead of a planned monorepo migration.
+> Lives at the monorepo root and governs both apps.
 
 ---
 
