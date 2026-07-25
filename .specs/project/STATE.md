@@ -201,7 +201,7 @@ See AD-004 (model), AD-005 (path transport), AD-006 (soft delete).
 
 - [x] Reconcile README drift (Java 17, port 3000, no Flyway, correct env var names, docker-compose runs the API not a DB) — done 2026-07-05; added a root README with run instructions + SDD pointer
 - [x] Decide whether to `git init` the monorepo root — done 2026-07-25: root repo created, both sub-repo histories merged in under their directories (233 commits), root files (`.specs/`, `.claude/`, `CLAUDE.md`) versioned for the first time. Sub-repo `.git` directories are gone; `lcsmrt/finSight-backend` and `-frontend` on GitHub are now stale
-- [ ] Automate Portainer redeploy on push (GitHub Action → `PUT /stacks/{id}/git/redeploy`), mirroring mindmap's `deploy.yml` — see `DEPLOY.md`
+- [x] Automate Portainer redeploy on push — done 2026-07-25: `.github/workflows/deploy.yml` calls `PUT /stacks/{id}/git/redeploy`, mirroring mindmap. Needs `STACK_ID` filled in and the `PORTAINER_API_KEY` repo secret before it works
 - [ ] Low priority: backend dotenv filename is `.env.${spring.profiles.active:.local}` → resolves oddly (`.env..local`) with no active profile; confirm how `.env` is actually loaded locally
 
 ---

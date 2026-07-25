@@ -1,0 +1,65 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+    # Documentation-only pushes do not change the images. Drop this filter if you
+    # would rather have every push redeploy.
+    paths-ignore:
+      - ".specs/**"
+      - ".claude/**"
+      - "*.md"
+      - "**/*.md"
+  workflow_dispatch:
+
+# Portainer instance IDs/URL — not sensitive. Only the API token is a secret.
+env:
+  PORTAINER_URL: http://72.60.1.97:9000
+  STACK_ID: "REPLACE_WITH_STACK_ID"
+  ENDPOINT_ID: "3"
+
+jobs:
+  redeploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull and redeploy the stack
+        env:
+          API_KEY: ${{ secrets.PORTAINER_API_KEY }}
+        run: |
+          set -euo pipefail
+
+          [[ "$STACK_ID" =~ ^[0-9]+$ ]] || {
+            echo "STACK_ID is still a placeholder. Open the stack in Portainer and"
+            echo "copy the id from the URL (…/docker/stacks/finsight?id=<STACK_ID>…)."
+            exit 1
+          }
+
+          # A plain stack webhook only recreates the containers from the image that
+          # was already built, so the new code never ships. git/redeploy is what the
+          # "Pull and redeploy" button calls: it re-pulls the repo and rebuilds.
+          #
+          # The stack's current Env is read back and sent unchanged, so the database
+          # password and JWT secret stay in Portainer and are never copied into
+          # GitHub — and the PUT does not wipe them.
+          #
+          # Retries: the VPS may be busy with a build and not answer right away.
+          env_json=$(curl -fsS \
+            --connect-timeout 20 --max-time 60 --retry 4 --retry-delay 10 --retry-all-errors \
+            -H "X-API-Key: $API_KEY" \
+            "$PORTAINER_URL/api/stacks/$STACK_ID" | jq '.Env // []')
+
+          body=$(jq -cn --argjson env "$env_json" '{
+            env: $env,
+            prune: false,
+            PullImage: false,
+            RepositoryReferenceName: "refs/heads/main",
+            RepositoryAuthentication: false
+          }')
+
+          # Generous timeout: this rebuilds both images (Maven + npm) on the VPS.
+          curl -fsS -X PUT \
+            --connect-timeout 20 --max-time 900 --retry 4 --retry-delay 15 --retry-all-errors \
+            -H "X-API-Key: $API_KEY" \
+            -H 'Content-Type: application/json' \
+            "$PORTAINER_URL/api/stacks/$STACK_ID/git/redeploy?endpointId=$ENDPOINT_ID" \
+            --data "$body"

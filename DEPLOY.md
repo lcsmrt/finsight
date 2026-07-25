@@ -47,14 +47,27 @@ the Portainer stack editor; never commit real values.
 
 ## Redeploying after a push
 
-Use **Pull and redeploy** with *re-pull image* enabled in Portainer. The images
-are built from source here (`build:` in the compose, no registry), so a plain
-stack webhook is not enough: it recreates the containers from the image that was
-already built and the new code never lands. This is the same trap mindmap hit.
+Automatic: `.github/workflows/deploy.yml` runs on every push to `main` and calls
+`PUT /stacks/{id}/git/redeploy` on the Portainer API, which is what the **Pull and
+redeploy** button does — re-pull the repo and rebuild. The workflow reads the
+stack's current `Env` back from the API and sends it unchanged, so the database
+password and JWT secret never leave Portainer.
 
-Automating it means calling `PUT /stacks/{id}/git/redeploy` on the Portainer API
-from a GitHub Action with a Portainer access token — mindmap's
-`.github/workflows/deploy.yml` is a working reference. Not set up here yet.
+A plain stack webhook would not be enough: the images are built from source here
+(`build:` in the compose, no registry), so a webhook recreates the containers from
+the image that was already built and the new code never lands. Same trap mindmap
+hit.
+
+Setup, once:
+
+- `STACK_ID` in the workflow — from the Portainer URL when the stack is open
+  (`…/docker/stacks/finsight?id=<STACK_ID>…`). `ENDPOINT_ID` is the environment id
+  (`/#!/<ENDPOINT_ID>/docker/…`), `3` on this VPS.
+- Repository secret `PORTAINER_API_KEY` — a Portainer access token (My account →
+  Access tokens). No other secret is needed.
+
+Doc-only pushes (`.specs/`, `.claude/`, any `.md`) are filtered out, since they
+cannot change the images. Manual runs are available via *workflow_dispatch*.
 
 ## Rollback
 
