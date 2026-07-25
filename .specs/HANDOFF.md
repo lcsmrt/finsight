@@ -29,7 +29,7 @@
 - None blocking. B-001/B-002/B-003 are known, logged, low-severity bugs — not blockers to other work.
 
 ## Context
-- Both repos (`finsight-backend`, `finsight-frontend`) clean on `main`, no uncommitted changes.
+- Both repos (`backend`, `frontend`) clean on `main`, no uncommitted changes.
 - **This machine's Docker Desktop needs env vars for `./mvnw verify` to work**: `export DOCKER_HOST=unix:///home/lcs/.docker/desktop/docker.raw.sock` and `export TESTCONTAINERS_RYUK_DISABLED=true` — see STATE.md Lesson L-008. A real (portable) fix is already committed (`docker-java.properties`, api.version=1.44); the two env vars are this-machine-specific and not committed.
 
 ## To resume

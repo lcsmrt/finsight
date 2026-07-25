@@ -41,7 +41,7 @@ src/
 ### Prerequisites
 
 - **Node.js** (project uses Vite 6 / React 19)
-- The [finSight Backend](../finsight-backend) running locally on port **3000**
+- The [finSight Backend](../backend) running locally on port **3000**
 
 ### Run locally
 
@@ -80,4 +80,4 @@ Component/form/API conventions are documented in [`CLAUDE.md`](./CLAUDE.md) and 
 
 ## Backend
 
-See [finSight Backend](../finsight-backend) for the Spring Boot API that powers this application.
+See [finSight Backend](../backend) for the Spring Boot API that powers this application.

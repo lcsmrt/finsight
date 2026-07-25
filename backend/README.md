@@ -96,4 +96,4 @@ Planning artifacts (specs, design, tasks, codebase map) live in [`../.specs/`](.
 
 ## Frontend
 
-See [finSight Frontend](../finsight-frontend) for the React SPA that consumes this API.
+See [finSight Frontend](../frontend) for the React SPA that consumes this API.

@@ -1,6 +1,6 @@
 # Code Conventions
 
-Two codebases with distinct but internally-consistent conventions. Frontend conventions are codified in `finsight-frontend/CLAUDE.md` and the `.claude/skills/` frontend skills (`api-integration`, `component-creation`, `feature-structure`, `form-creation`) as source of truth; backend conventions are inferred from the source.
+Two codebases with distinct but internally-consistent conventions. Frontend conventions are codified in `frontend/CLAUDE.md` and the `.claude/skills/` frontend skills (`api-integration`, `component-creation`, `feature-structure`, `form-creation`) as source of truth; backend conventions are inferred from the source.
 
 ## Naming Conventions
 

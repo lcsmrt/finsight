@@ -2,7 +2,7 @@
 
 **Analyzed:** 2026-07-05
 
-Monorepo at `/home/lcs/dev/finsight` with two independent apps: `finsight-backend` (Spring Boot REST API) and `finsight-frontend` (React SPA). Single git repo at the root since 2026-07-25, carrying both apps' histories; they deploy as one Docker stack (see `DEPLOY.md`).
+Monorepo at `/home/lcs/dev/finsight` with two independent apps: `backend` (Spring Boot REST API) and `frontend` (React SPA). Single git repo at the root since 2026-07-25, carrying both apps' histories; they deploy as one Docker stack (see `DEPLOY.md`).
 
 ## Core
 
@@ -11,7 +11,7 @@ Monorepo at `/home/lcs/dev/finsight` with two independent apps: `finsight-backen
 - Runtime: JVM 17 (backend), Node/Vite 6 (frontend)
 - Package manager: Maven (backend), npm (frontend)
 
-> **Discrepancy:** `finsight-backend/README.md` states Java 21, but `pom.xml` declares `<java.version>17</java.version>`. Java 17 is authoritative.
+> **Discrepancy:** `backend/README.md` states Java 21, but `pom.xml` declares `<java.version>17</java.version>`. Java 17 is authoritative.
 
 ## Frontend
 
@@ -46,7 +46,7 @@ Monorepo at `/home/lcs/dev/finsight` with two independent apps: `finsight-backen
 
 ## External Services
 
-- Database: PostgreSQL (local instance via `finsight-backend/docker-compose.yml`)
+- Database: PostgreSQL (local instance via `backend/docker-compose.yml`)
 - No third-party API integrations, message queues, or payment providers
 
 ## Development Tools

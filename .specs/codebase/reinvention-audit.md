@@ -3,7 +3,7 @@
 **Data**: 2026-07-12
 **Lente única**: onde o código resolve à mão um problema que uma biblioteca / recurso de framework / padrão consagrado já resolve — e, tão importante quanto, onde a "roda caseira" é **justificada**.
 **Método**: 5 varreduras paralelas (backend web/segurança; backend service/dados/utils; frontend dados/estado; frontend UI/forms; deps/build/arquitetura), read-only, com evidência `file:line`.
-**Escopo**: `/home/lcs/dev/finsight` — `finsight-backend/` (Spring Boot 3.5.3, Java 17, sem Lombok) e `finsight-frontend/` (React 19, Vite 6, TanStack Query/Table, RHF+zod, Base UI, cva).
+**Escopo**: `/home/lcs/dev/finsight` — `backend/` (Spring Boot 3.5.3, Java 17, sem Lombok) e `frontend/` (React 19, Vite 6, TanStack Query/Table, RHF+zod, Base UI, cva).
 
 ---
 

@@ -64,8 +64,9 @@ stack restores the old setup — but note the bundle now calls `/api/finsight`
 relative to its own origin, so a rollback also needs the frontend rebuilt with an
 absolute `VITE_FINSIGHT_API_URL`, or an equivalent `/api/` proxy on that server.
 
-The scp-based `Deploy Frontend` workflow was removed when the container took over;
-`git log -- finsight-frontend/.github/workflows/deploy.yml` recovers it.
+The scp-based `Deploy Frontend` workflow was removed when the container took over.
+It is recoverable from history under its pre-rename path:
+`git log --diff-filter=D -- finsight-frontend/.github/workflows/deploy.yml`.
 
 ## Local smoke test
 

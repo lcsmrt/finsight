@@ -1,15 +1,15 @@
 # Architecture
 
-**Pattern:** Two-app monorepo — a layered Spring Boot monolith (`finsight-backend`) serving a REST API consumed by a feature-oriented React SPA (`finsight-frontend`). The apps are decoupled and communicate only over HTTP/JSON.
+**Pattern:** Two-app monorepo — a layered Spring Boot monolith (`backend`) serving a REST API consumed by a feature-oriented React SPA (`frontend`). The apps are decoupled and communicate only over HTTP/JSON.
 
 ## High-Level Structure
 
 ```
-finsight-frontend (React SPA)
+frontend (React SPA)
   axios client (Bearer token) ──► HTTP/JSON
                                      │
                                      ▼
-finsight-backend  (Spring Boot, port 3000, base path /api/finsight)
+backend  (Spring Boot, port 3000, base path /api/finsight)
   Controllers ──► Services ──► Repositories/Specifications ──► JPA Entities
        ▲                                                          │
        └────────────── Response DTOs ◄────── PostgreSQL ◄─────────┘
@@ -22,7 +22,7 @@ Every backend request is scoped to the authenticated user; ownership is re-check
 
 ### Layered Monolith
 
-**Location:** `finsight-backend/src/main/java/com/lcs/finsight/`
+**Location:** `backend/src/main/java/com/lcs/finsight/`
 **Purpose:** Separate HTTP concerns, business logic, and persistence.
 **Implementation:** Package-per-layer:
 
@@ -66,7 +66,7 @@ Every backend request is scoped to the authenticated user; ownership is re-check
 
 ### Feature-Oriented SPA
 
-**Location:** `finsight-frontend/src/`
+**Location:** `frontend/src/`
 **Purpose:** Group code by feature rather than technical type.
 **Implementation:**
 

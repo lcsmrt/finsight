@@ -27,7 +27,7 @@ to the VPS (RDP shared folder, `scp`, or just paste it into an editor there).
 - Both databases must be on the same Flyway version — the script checks this and
   aborts on a mismatch, since a data-only dump assumes identical columns.
 - Nobody should be writing to `dev_finsight` during the copy. Stop the API
-  container first if it is running (`docker compose down` in `finsight-backend/`).
+  container first if it is running (`docker compose down` at the repo root).
 
 ## Run
 
@@ -62,7 +62,7 @@ All three files land in `/var/tmp/finsight-migration/`.
 
 ## After running
 
-1. Point the API at the new database: in `finsight-backend/.env.production`, change
+1. Point the API at the new database: in the API's environment (the Portainer stack, or `.env` at the repo root), change
    the datasource URL from `.../dev_finsight` to `.../finsight`. Since the API runs
    on the same VPS, `localhost:5432/finsight` (no `sslmode=require`) is simpler than
    going back out through the public IP.

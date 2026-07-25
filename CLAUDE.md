@@ -1,6 +1,6 @@
 # finSight
 
-Personal-finance app: Spring Boot API (`finsight-backend`) + React/TS SPA (`finsight-frontend`).
+Personal-finance app: Spring Boot API (`backend`) + React/TS SPA (`frontend`).
 
 > Prescriptive write-time standards. Detailed procedures live in the skills; descriptive maps in
 > `.specs/codebase/`. This file overrides inference — if a rule is missing, ask rather than infer.
@@ -17,7 +17,7 @@ Personal-finance app: Spring Boot API (`finsight-backend`) + React/TS SPA (`fins
 
 ---
 
-## Backend (`finsight-backend`)
+## Backend (`backend`)
 
 - Layered: **controller → service → repository**. Controller resolves identity, delegates one call,
   wraps in a response DTO — no business logic.
@@ -38,7 +38,7 @@ Personal-finance app: Spring Boot API (`finsight-backend`) + React/TS SPA (`fins
 
 ---
 
-## Frontend (`finsight-frontend`)
+## Frontend (`frontend`)
 
 React + TS, feature-oriented. Detailed procedures live in the frontend skills. Essentials:
 

@@ -1,6 +1,6 @@
 # Project Structure
 
-**Root:** `/home/lcs/dev/finsight` (monorepo: `finsight-backend/` + `finsight-frontend/`)
+**Root:** `/home/lcs/dev/finsight` (monorepo: `backend/` + `frontend/`)
 
 ## Directory Tree
 
@@ -8,7 +8,7 @@
 finsight/
   docker-compose.yml               Production stack (finsight-api + finsight-web)
   DEPLOY.md                        Portainer deploy procedure
-  finsight-backend/
+  backend/
     Dockerfile                     Maven build → JRE runtime image
     src/main/java/com/lcs/finsight/
       FinSightApplication.java     Spring Boot entrypoint
@@ -24,7 +24,7 @@ finsight/
       security/                    JWT filter/service, UserDetails
       exceptions/                  GlobalExceptionHandler + typed exceptions
       utils/                       ApiRoutes constants, DateUtils
-  finsight-frontend/
+  frontend/
     Dockerfile                     Vite build → nginx runtime image
     nginx.conf                     Serves the SPA, proxies /api/ to the API on the host
     src/
@@ -54,13 +54,13 @@ finsight/
 ### Backend — Layered (controller → service → repository)
 
 **Purpose:** REST API for auth, transactions, categories, dashboard.
-**Location:** `finsight-backend/src/main/java/com/lcs/finsight/`
+**Location:** `backend/src/main/java/com/lcs/finsight/`
 **Key files:** `controllers/FinancialTransactionController.java`, `services/FinancialTransactionService.java`, `models/FinancialTransaction.java`, `utils/ApiRoutes.java`. Each domain has a matching Controller/Service/Repository triplet; DTOs split into `dtos/request` and `dtos/response`; dynamic filtering lives in `specifications/`.
 
 ### Frontend — Feature-oriented SPA
 
 **Purpose:** React + TypeScript client.
-**Location:** `finsight-frontend/src/`
+**Location:** `frontend/src/`
 **Key files:** `app/routing/AppRouter.tsx`, `features/home/HomePage.tsx`, `api/services/*`, `components/input/base/Field.tsx`. Cross-cutting API/UI live at `src/` top level; feature-specific code stays inside `features/<name>/`.
 
 ### Frontend API layer (global)

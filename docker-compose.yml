@@ -1,7 +1,7 @@
 services:
   finsight-api:
     build:
-      context: ./finsight-backend
+      context: ./backend
       dockerfile: Dockerfile
     image: finsight-api
     container_name: finsight-api
@@ -18,12 +18,12 @@ services:
 
   finsight-web:
     build:
-      context: ./finsight-frontend
+      context: ./frontend
       dockerfile: Dockerfile
     image: finsight-web
     container_name: finsight-web
     # The only publicly exposed port: nginx serves the SPA and proxies /api to
-    # the API on the host (see finsight-frontend/nginx.conf).
+    # the API on the host (see frontend/nginx.conf).
     ports:
       - "${WEB_PORT:-5000}:80"
     extra_hosts:

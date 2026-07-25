@@ -1,7 +1,7 @@
 # Secrets — real values live in the Portainer stack, never in the repo
 .env
 .env.production
-!finsight-frontend/.env.production
+!frontend/.env.production
 
 # Editor / OS
 .idea/

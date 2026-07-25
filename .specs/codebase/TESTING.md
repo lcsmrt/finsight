@@ -5,14 +5,14 @@
 
 ## Test Frameworks
 
-**Backend (finsight-backend):**
+**Backend (backend):**
 
 - Unit (`*Test`, surefire, `mvn test`): JUnit 5 via `spring-boot-starter-test`. Plain Mockito/AssertJ unit tests for pure logic — no Spring context.
 - Integration (`*IT`, failsafe, `mvn verify`): JUnit 5 + `spring-boot-testcontainers` + `org.testcontainers:junit-jupiter`/`postgresql`. Real ephemeral Postgres container, full Flyway migration chain, real MockMvc HTTP requests, real JWTs via the production `JwtService` (not `@WithMockUser` for security-sensitive tests).
 - Coverage: JaCoCo (`jacoco-maven-plugin` 0.8.15) — global report always generated; a `check` rule gates branch coverage ≥0.80 on exactly three invariant-bearing classes (see Coverage Targets below). No global minimum.
 - E2E: none (out of scope — MockMvc-driven integration tests substitute for HTTP-level E2E).
 
-**Frontend (finsight-frontend):**
+**Frontend (frontend):**
 
 - Unit/logic (`unit` vitest project, jsdom, `npm run test`): pure-logic tests — zod schema validation, `buildDefaultValues`, `toPayload`/request mappers, TanStack Query hook behavior (`renderHook` + a real `QueryClient`, HTTP client mocked at module level).
 - Component/story (`storybook` vitest project, browser/Chromium, existing since before this pass): Storybook stories double as render/smoke tests; some now carry `play` functions for interaction-level regression guards (see "Base UI interaction guard" below).
@@ -22,7 +22,7 @@
 
 **Backend:**
 
-- Location: `finsight-backend/src/test/java/com/lcs/finsight/`.
+- Location: `backend/src/test/java/com/lcs/finsight/`.
 - Harness/support (test-infrastructure, not app code): `support/TestContainersConfig.java` (singleton Testcontainers Postgres via `@ServiceConnection`), `support/AbstractIntegrationTest.java` (base class every `*IT` extends — `@SpringBootTest(MOCK)` + MockMvc + `truncateAll()` `@BeforeEach`), `support/TestAuthHelper.java` (real-JWT bearer tokens), `support/Fixtures.java` (plan/member/transaction builders via real repositories).
 - `*Test` files (existing, unchanged by this pass): `services/SplitResolverTest.java`, `services/CategoryBreakdownAssemblerTest.java`, `services/SeriesRegeneratorTest.java`, `services/RecurringTransactionGeneratorTest.java`, `security/PlanAuthorizationTest.java`.
 - `*IT` files (new): `support/HarnessSmokeIT.java`, `services/SplitInvariantIT.java`, `services/DashboardPartitionIT.java`, `security/PlanAuthorizationMatrixIT.java`, `security/AuthenticationIT.java`, `services/TransactionCrudIT.java`, `services/SeriesEditIT.java`, `services/MigrationsIT.java`, `services/CsvImportIT.java`, `services/InvitationLifecycleIT.java`.
@@ -31,7 +31,7 @@
 
 **Frontend:**
 
-- Stories: co-located with components, `finsight-frontend/src/components/**/*.stories.tsx` (unchanged pattern; `Dropdown.stories.tsx` gained a `play` function).
+- Stories: co-located with components, `frontend/src/components/**/*.stories.tsx` (unchanged pattern; `Dropdown.stories.tsx` gained a `play` function).
 - Unit/logic tests: co-located with the code under test, `*.test.ts`/`*.test.tsx` — e.g. `src/features/plans/components/CreatePlanDialog.test.ts`, `src/features/home/components/transactions/TransactionFormDrawer.test.ts` + `.series.test.ts`, `src/api/services/usePlanService.test.ts`.
 
 ## Testing Patterns
@@ -61,7 +61,7 @@ export DOCKER_HOST=unix:///home/lcs/.docker/desktop/docker.raw.sock
 export TESTCONTAINERS_RYUK_DISABLED=true
 ```
 
-Full diagnosis and rationale: `.specs/project/STATE.md`, Lesson L-008. One fix is **not** machine-specific and is already committed: `finsight-backend/src/test/resources/docker-java.properties` pins `api.version=1.44`, working around a real testcontainers 1.21.x bug against Docker Engine 29+ (upstream: testcontainers/testcontainers-java#11210, fixed in 2.x).
+Full diagnosis and rationale: `.specs/project/STATE.md`, Lesson L-008. One fix is **not** machine-specific and is already committed: `backend/src/test/resources/docker-java.properties` pins `api.version=1.44`, working around a real testcontainers 1.21.x bug against Docker Engine 29+ (upstream: testcontainers/testcontainers-java#11210, fixed in 2.x).
 
 If `TESTCONTAINERS_RYUK_DISABLED=true` is needed on your machine, containers are not auto-reaped by Ryuk — a plain JVM shutdown hook still removes the container on normal process exit (confirmed via `docker ps -a` after a run), but an abnormal kill (e.g. `kill -9` mid-test) can leave a stray `postgres:16-alpine` container running. Check `docker ps -a` occasionally if disk/memory pressure shows up.
 
@@ -70,7 +70,7 @@ If `TESTCONTAINERS_RYUK_DISABLED=true` is needed on your machine, containers are
 **Backend:**
 
 ```bash
-cd finsight-backend
+cd backend
 ./mvnw test          # unit only (*Test, surefire) — fast, no Docker needed
 ./mvnw verify         # unit + integration (*Test + *IT) + jacoco:check — needs Docker (see above)
 ```
@@ -78,7 +78,7 @@ cd finsight-backend
 **Frontend:**
 
 ```bash
-cd finsight-frontend
+cd frontend
 npm run test           # unit/logic tests only (jsdom, fast, no browser) — vitest run --project=unit
 npm run test:coverage  # same, with coverage
 npm run test:watch     # watch mode
@@ -99,15 +99,15 @@ npx vitest run                        # both projects
 
 | Code Layer                           | Test Type              | Location Pattern                                              | Run Command                              |
 | ------------------------------------- | ----------------------- | --------------------------------------------------------------- | ----------------------------------------- |
-| Backend pure logic (resolvers/assemblers/authz) | unit (present)  | `finsight-backend/src/test/**/*Test.java`                       | `./mvnw test`                             |
-| Backend HTTP/security/DB slice        | integration (present)   | `finsight-backend/src/test/**/*IT.java`                          | `./mvnw verify`                           |
+| Backend pure logic (resolvers/assemblers/authz) | unit (present)  | `backend/src/test/**/*Test.java`                       | `./mvnw test`                             |
+| Backend HTTP/security/DB slice        | integration (present)   | `backend/src/test/**/*IT.java`                          | `./mvnw verify`                           |
 | Backend controllers (beyond the *IT already covering create/edit/auth/dashboard/csv/invitations) | integration (partial) | same as above | `./mvnw verify` |
-| Backend migrations                    | integration (present)   | `finsight-backend/src/test/**/MigrationsIT.java`                 | `./mvnw verify`                           |
-| Frontend UI primitives                | story render (present)  | `finsight-frontend/src/components/**/*.stories.tsx`              | `npx vitest run --project=storybook`      |
-| Frontend Base UI compound components  | story interaction (present, 1 guard) | `finsight-frontend/src/components/dropdown/Dropdown.stories.tsx` | `npx vitest run --project=storybook`      |
-| Frontend forms (schema/defaults/payload/edit-reset) | unit (present, 2 forms) | `finsight-frontend/src/features/**/*.test.{ts,tsx}`             | `npm run test`                            |
-| Frontend service hooks (URL scoping + invalidation) | unit (present, 1 service) | `finsight-frontend/src/api/**/*.test.ts`                       | `npm run test`                            |
-| Frontend remaining feature components/hooks | none (gap)         | `finsight-frontend/src/features/**`                              | `npm run test`                            |
+| Backend migrations                    | integration (present)   | `backend/src/test/**/MigrationsIT.java`                 | `./mvnw verify`                           |
+| Frontend UI primitives                | story render (present)  | `frontend/src/components/**/*.stories.tsx`              | `npx vitest run --project=storybook`      |
+| Frontend Base UI compound components  | story interaction (present, 1 guard) | `frontend/src/components/dropdown/Dropdown.stories.tsx` | `npx vitest run --project=storybook`      |
+| Frontend forms (schema/defaults/payload/edit-reset) | unit (present, 2 forms) | `frontend/src/features/**/*.test.{ts,tsx}`             | `npm run test`                            |
+| Frontend service hooks (URL scoping + invalidation) | unit (present, 1 service) | `frontend/src/api/**/*.test.ts`                       | `npm run test`                            |
+| Frontend remaining feature components/hooks | none (gap)         | `frontend/src/features/**`                              | `npm run test`                            |
 
 Remaining gaps (not "no coverage exists" anymore, but "coverage is not yet exhaustive") — see `CONCERNS.md`.
 
@@ -125,10 +125,10 @@ Remaining gaps (not "no coverage exists" anymore, but "coverage is not yet exhau
 
 | Gate Level | When to Use                               | Command                                                                                       |
 | ---------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| Quick      | Backend change, unit tests only            | `cd finsight-backend && ./mvnw test`                                                            |
-| Quick (FE) | Frontend logic change                      | `cd finsight-frontend && npm run test`                                                          |
-| Full       | Backend change touching HTTP/DB/security   | `cd finsight-backend && export DOCKER_HOST=... && export TESTCONTAINERS_RYUK_DISABLED=true && ./mvnw verify` (see Local Environment Setup) |
-| Full (FE)  | Frontend change touching a compound/Base UI component | `cd finsight-frontend && npx vitest run` (both projects)                             |
-| Build      | Phase completion                           | `cd finsight-backend && ./mvnw package` ; `cd finsight-frontend && npm run lint && npm run build` |
+| Quick      | Backend change, unit tests only            | `cd backend && ./mvnw test`                                                            |
+| Quick (FE) | Frontend logic change                      | `cd frontend && npm run test`                                                          |
+| Full       | Backend change touching HTTP/DB/security   | `cd backend && export DOCKER_HOST=... && export TESTCONTAINERS_RYUK_DISABLED=true && ./mvnw verify` (see Local Environment Setup) |
+| Full (FE)  | Frontend change touching a compound/Base UI component | `cd frontend && npx vitest run` (both projects)                             |
+| Build      | Phase completion                           | `cd backend && ./mvnw package` ; `cd frontend && npm run lint && npm run build` |
 
-Commands are extracted from `finsight-backend/pom.xml` (Maven wrapper, failsafe+jacoco bindings) and `finsight-frontend/package.json` scripts (added by T11).
+Commands are extracted from `backend/pom.xml` (Maven wrapper, failsafe+jacoco bindings) and `frontend/package.json` scripts (added by T11).

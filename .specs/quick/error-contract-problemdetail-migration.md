@@ -51,7 +51,7 @@ to one.
    inline it — decide during execution.
 6. Keep the catch-all `Exception.class` handler as a `500` ProblemDetail backstop.
 
-## Frontend steps (finsight-frontend)
+## Frontend steps (frontend/)
 
 The error body shape changes: `message` → `detail`, `fieldErrors` (or whatever the old shape was) → `errors`.
 - Central: `src/api/utils/resolveErrorMessage.ts` — update to read `detail` (and `title` as fallback).
