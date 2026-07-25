@@ -1,0 +1,189 @@
+package com.lcs.finsight.services;
+
+import com.lcs.finsight.exceptions.PlanExceptions;
+import com.lcs.finsight.models.Plan;
+import com.lcs.finsight.models.PlanMembership;
+import com.lcs.finsight.models.PlanRole;
+import com.lcs.finsight.models.User;
+import com.lcs.finsight.repositories.PlanMembershipRepository;
+import com.lcs.finsight.repositories.PlanRepository;
+import com.lcs.finsight.security.PlanAuthorization;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+public class PlanService {
+
+    private final PlanRepository planRepository;
+    private final PlanMembershipRepository membershipRepository;
+    private final PlanAuthorization planAuthorization;
+
+    public PlanService(
+            PlanRepository planRepository,
+            PlanMembershipRepository membershipRepository,
+            PlanAuthorization planAuthorization
+    ) {
+        this.planRepository = planRepository;
+        this.membershipRepository = membershipRepository;
+        this.planAuthorization = planAuthorization;
+    }
+
+    @Transactional
+    public PlanMembership createPlan(String name, User owner) {
+        return createPlanInternal(name, owner, false);
+    }
+
+    @Transactional
+    public PlanMembership provisionDefaultPlan(User owner) {
+        return createPlanInternal("My plan", owner, true);
+    }
+
+    private PlanMembership createPlanInternal(String name, User owner, boolean isDefault) {
+        Plan plan = new Plan();
+        plan.setName(name);
+        plan.setCreatedBy(owner);
+        plan.setDefault(isDefault);
+        Plan savedPlan = planRepository.save(plan);
+
+        PlanMembership membership = new PlanMembership();
+        membership.setPlan(savedPlan);
+        membership.setUser(owner);
+        membership.setRole(PlanRole.OWNER);
+        return membershipRepository.save(membership);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PlanMembership> findMembershipsForUser(User user) {
+        return membershipRepository.findAllByUser(user);
+    }
+
+    @Transactional(readOnly = true)
+    public PlanMembership getMembership(Long planId, User user) {
+        Plan plan = planRepository.findById(planId)
+                .orElseThrow(() -> new PlanExceptions.PlanNotFoundException(planId));
+
+        if (plan.getDeletedAt() != null) {
+            throw new PlanExceptions.PlanNotFoundException(planId);
+        }
+
+        return membershipRepository.findByPlanAndUser(plan, user)
+                .orElseThrow(() -> new PlanExceptions.NotAMemberException(planId));
+    }
+
+    @Transactional(readOnly = true)
+    public List<PlanMembership> getMembers(Long planId, User requester) {
+        PlanMembership requesterMembership = getMembership(planId, requester);
+        return membershipRepository.findAllByPlan(requesterMembership.getPlan());
+    }
+
+    @Transactional(readOnly = true)
+    public void requireNotLastPlan(User user) {
+        if (membershipRepository.findAllByUser(user).size() <= 1) {
+            throw new PlanExceptions.LastPlanException();
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public void requireNotLastOwner(Plan plan) {
+        if (membershipRepository.countByPlanAndRole(plan, PlanRole.OWNER) <= 1) {
+            throw new PlanExceptions.LastOwnerException();
+        }
+    }
+
+    @Transactional
+    public PlanMembership changeMemberRole(Long planId, Long targetUserId, PlanRole newRole, User requester) {
+        if (newRole == PlanRole.OWNER) {
+            throw new IllegalArgumentException("Use transferOwnership to make another member the owner.");
+        }
+
+        PlanMembership requesterMembership = getMembership(planId, requester);
+        planAuthorization.requireOwner(requesterMembership.getRole());
+
+        Plan plan = requesterMembership.getPlan();
+        PlanMembership targetMembership = membershipRepository.findByPlanAndUser_Id(plan, targetUserId)
+                .orElseThrow(() -> new PlanExceptions.MemberNotFoundException(planId, targetUserId));
+
+        if (targetMembership.getRole() == PlanRole.OWNER) {
+            requireNotLastOwner(plan);
+        }
+
+        targetMembership.setRole(newRole);
+        return membershipRepository.save(targetMembership);
+    }
+
+    @Transactional
+    public PlanMembership renamePlan(Long planId, String newName, User requester) {
+        PlanMembership requesterMembership = getMembership(planId, requester);
+        planAuthorization.requireOwner(requesterMembership.getRole());
+
+        Plan plan = requesterMembership.getPlan();
+        plan.setName(newName);
+        planRepository.save(plan);
+
+        return requesterMembership;
+    }
+
+    @Transactional
+    public void deletePlan(Long planId, User requester) {
+        PlanMembership requesterMembership = getMembership(planId, requester);
+        planAuthorization.requireOwner(requesterMembership.getRole());
+        requireNotLastPlan(requester);
+
+        Plan plan = requesterMembership.getPlan();
+        plan.setDeletedAt(LocalDateTime.now());
+        planRepository.save(plan);
+    }
+
+    @Transactional
+    public void removeMember(Long planId, Long targetUserId, User requester) {
+        PlanMembership requesterMembership = getMembership(planId, requester);
+        planAuthorization.requireOwner(requesterMembership.getRole());
+
+        Plan plan = requesterMembership.getPlan();
+        PlanMembership targetMembership = membershipRepository.findByPlanAndUser_Id(plan, targetUserId)
+                .orElseThrow(() -> new PlanExceptions.MemberNotFoundException(planId, targetUserId));
+
+        if (targetMembership.getRole() == PlanRole.OWNER) {
+            requireNotLastOwner(plan);
+        }
+
+        membershipRepository.delete(targetMembership);
+    }
+
+    @Transactional
+    public void leavePlan(Long planId, User requester) {
+        PlanMembership requesterMembership = getMembership(planId, requester);
+
+        if (requesterMembership.getRole() == PlanRole.OWNER) {
+            throw new PlanExceptions.LastOwnerException();
+        }
+
+        requireNotLastPlan(requester);
+        membershipRepository.delete(requesterMembership);
+    }
+
+    @Transactional
+    public void transferOwnership(Long planId, Long targetUserId, PlanRole previousOwnerRole, User requester) {
+        if (targetUserId.equals(requester.getId())) {
+            throw new IllegalArgumentException("You cannot transfer ownership to yourself.");
+        }
+
+        PlanMembership requesterMembership = getMembership(planId, requester);
+        planAuthorization.requireOwner(requesterMembership.getRole());
+
+        Plan plan = requesterMembership.getPlan();
+        PlanMembership newOwnerMembership = membershipRepository.findByPlanAndUser_Id(plan, targetUserId)
+                .orElseThrow(() -> new PlanExceptions.MemberNotFoundException(planId, targetUserId));
+
+        PlanRole demotedRole = previousOwnerRole != null ? previousOwnerRole : PlanRole.EDITOR;
+
+        newOwnerMembership.setRole(PlanRole.OWNER);
+        requesterMembership.setRole(demotedRole);
+
+        membershipRepository.save(newOwnerMembership);
+        membershipRepository.save(requesterMembership);
+    }
+}
