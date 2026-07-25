@@ -15,7 +15,7 @@ on:
 # Portainer instance IDs/URL — not sensitive. Only the API token is a secret.
 env:
   PORTAINER_URL: http://72.60.1.97:9000
-  STACK_ID: "REPLACE_WITH_STACK_ID"
+  STACK_ID: "63"
   ENDPOINT_ID: "3"
 
 jobs:
