@@ -1,0 +1,186 @@
+import { useGetDashboardSummary } from "@/api/services/useDashboardService";
+import { useGetPlanMembers } from "@/api/services/usePlanService";
+import { usePlanContext } from "@/app/providers/PlanProvider";
+import { Button } from "@/components/button/Button";
+import { DateRangePicker } from "@/components/input/DatePicker";
+import { StandardCombobox } from "@/components/input/StandardCombobox";
+import { Skeleton } from "@/components/skeleton/Skeleton";
+import { cn } from "@/lib/mergeClasses";
+import {
+  differenceInCalendarMonths,
+  endOfMonth,
+  endOfYear,
+  format,
+  parseISO,
+  startOfMonth,
+  startOfYear,
+  subMonths,
+} from "date-fns";
+import { useMemo, useState } from "react";
+import type { DateRange } from "react-day-picker";
+import { CategorySpendingChart } from "./CategorySpendingChart";
+import { MonthlyTrendChart } from "./MonthlyTrendChart";
+import { PersonBreakdownList } from "./PersonBreakdownList";
+import { SummaryCards } from "./SummaryCards";
+
+type Period = "this-month" | "last-3m" | "last-6m" | "this-year";
+
+// StandardCombobox requires an `id`; PlanMember keys on `userId`, so members are adapted to this shape.
+type MemberOption = { id: number; name: string };
+
+const PERIOD_LABELS: Record<Period, string> = {
+  "this-month": "This month",
+  "last-3m": "Last 3M",
+  "last-6m": "Last 6M",
+  "this-year": "This year",
+};
+
+const getPeriodDates = (period: Period) => {
+  const now = new Date();
+  const fmt = (d: Date) => format(d, "yyyy-MM-dd");
+  switch (period) {
+    case "this-month":
+      return {
+        startDate: fmt(startOfMonth(now)),
+        endDate: fmt(endOfMonth(now)),
+      };
+    case "last-3m":
+      return {
+        startDate: fmt(startOfMonth(subMonths(now, 2))),
+        endDate: fmt(endOfMonth(now)),
+      };
+    case "last-6m":
+      return {
+        startDate: fmt(startOfMonth(subMonths(now, 5))),
+        endDate: fmt(endOfMonth(now)),
+      };
+    case "this-year":
+      return { startDate: fmt(startOfYear(now)), endDate: fmt(endOfYear(now)) };
+  }
+};
+
+export const OverviewTab = () => {
+  const [period, setPeriod] = useState<Period>("this-month");
+  const [customRange, setCustomRange] = useState<DateRange | undefined>();
+  const [selectedMember, setSelectedMember] = useState<MemberOption | null>(
+    null,
+  );
+
+  const { activePlanId } = usePlanContext();
+  const { data: members = [] } = useGetPlanMembers(activePlanId ?? undefined);
+  const memberOptions = useMemo<MemberOption[]>(
+    () => members.map((m) => ({ id: m.userId, name: m.name })),
+    [members],
+  );
+  const showMemberPicker = memberOptions.length > 1;
+
+  const isCustomActive = !!(customRange?.from && customRange?.to);
+
+  const filter = useMemo(() => {
+    const dates = isCustomActive
+      ? {
+          startDate: format(customRange!.from!, "yyyy-MM-dd"),
+          endDate: format(customRange!.to!, "yyyy-MM-dd"),
+        }
+      : getPeriodDates(period);
+    return selectedMember
+      ? { ...dates, memberId: selectedMember.id }
+      : dates;
+  }, [period, isCustomActive, customRange, selectedMember]);
+
+  const { data, isLoading } = useGetDashboardSummary(filter);
+
+  const monthCount = useMemo(() => {
+    const start = parseISO(filter.startDate);
+    const end = parseISO(filter.endDate);
+    return differenceInCalendarMonths(end, start) + 1;
+  }, [filter]);
+
+  const scaledCategoryBreakdown = useMemo(() => {
+    if (!data) return [];
+    // SPEC_DEVIATION: remaining/percentUsed/overLimit are recomputed here
+    // instead of using the backend values as-is, because the limit is
+    // scaled to the selected period (monthCount) client-side, so the
+    // backend's single-month evaluation would be inconsistent with the
+    // scaled limit shown in the UI.
+    return data.categoryBreakdown.map((entry) => {
+      const limit = entry.limit != null ? entry.limit * monthCount : undefined;
+      if (limit == null) {
+        return {
+          ...entry,
+          limit: undefined,
+          remaining: undefined,
+          percentUsed: undefined,
+          overLimit: undefined,
+        };
+      }
+      const remaining = limit - entry.spent;
+      const percentUsed =
+        limit === 0 ? 0 : Math.round((entry.spent / limit) * 10000) / 100;
+      const overLimit = entry.spent > limit;
+      return { ...entry, limit, remaining, percentUsed, overLimit };
+    });
+  }, [data, monthCount]);
+
+  const handlePeriodClick = (p: Period) => {
+    setPeriod(p);
+    setCustomRange(undefined);
+  };
+
+  return (
+    <div className="flex flex-col gap-6 px-4">
+      <div className="flex flex-wrap items-center gap-2">
+        {(Object.keys(PERIOD_LABELS) as Period[]).map((p) => (
+          <Button
+            key={p}
+            variant={period === p && !isCustomActive ? "default" : "outline"}
+            onClick={() => handlePeriodClick(p)}
+          >
+            {PERIOD_LABELS[p]}
+          </Button>
+        ))}
+        <DateRangePicker
+          value={customRange}
+          onChange={setCustomRange}
+          placeholder="Custom period"
+          className={cn(isCustomActive && "border-pink-400")}
+        />
+        {showMemberPicker && (
+          <div className="min-w-48">
+            <StandardCombobox
+              items={memberOptions}
+              value={selectedMember}
+              onValueChange={setSelectedMember}
+              itemLabel={(m) => m.name}
+              placeholder="All members"
+              clearable
+            />
+          </div>
+        )}
+      </div>
+
+      {isLoading || !data ? (
+        <div className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
+          </div>
+          <div className="flex flex-col gap-6">
+            <Skeleton className="h-80" />
+            <Skeleton className="h-80" />
+          </div>
+        </div>
+      ) : (
+        <>
+          <SummaryCards data={data} />
+          <div className="flex flex-col gap-6">
+            <CategorySpendingChart data={scaledCategoryBreakdown} />
+            <MonthlyTrendChart data={data.monthlyTrend} />
+            <PersonBreakdownList data={data.personBreakdown} />
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
