@@ -29,11 +29,11 @@
 - Current mitigation: Real `.env` files are gitignored and a sanitized `.env.example` documents required keys. A live `backend/.env` exists on disk but is untracked. No secrets are hardcoded in source.
 - Recommendations: Low residual risk. Keep secrets out of `docker-compose.yml` literals (currently interpolated from env — good). If a root git repo is later initialized (see below), re-confirm `.env` files are excluded before the first commit. Consider rotating any secret that has ever been shared outside the machine.
 
-**Secrets handling — frontend (`.env.*` not gitignored):**
+**Secrets handling — frontend (`.env.*` not gitignored) — LARGELY MOOT since 2026-07-25:**
 
-- Risk: `frontend/.env.development` and `.env.production` are **not** matched by `frontend/.gitignore` (it lists `*.local` but not `.env` / `.env.*`), so they would be committed once a git repo exists.
-- Files: `frontend/.gitignore`; `frontend/.env.development`, `frontend/.env.production`.
-- Current mitigation: These files currently hold only `VITE_FINSIGHT_API_URL` — a public API base URL that ships in the client bundle anyway, so no secret is exposed today.
+- Risk: `frontend/.env.development` is **not** matched by `frontend/.gitignore` (it lists `*.local` but not `.env` / `.env.*`), so it is committed. `.env.production` no longer exists — the production build takes its API base URL from a code-level default — and the root `.gitignore` now excludes `.env` / `.env.production` everywhere.
+- Files: `frontend/.gitignore`; `frontend/.env.development`.
+- Current mitigation: The file holds only `VITE_FINSIGHT_API_URL` — a public API base URL that ships in the client bundle anyway, so no secret is exposed today.
 - Recommendations: **LOW.** Add `.env` and `.env.*.local` handling to the frontend `.gitignore` and provide a `.env.example` before any secret-bearing var is ever introduced. Never place secrets in `VITE_`-prefixed vars (they are inlined into the browser bundle).
 
 ## Fragile Areas

@@ -61,8 +61,8 @@ from a GitHub Action with a Portainer access token — mindmap's
 The previous delivery path still exists on the VPS: the static bundle under
 `/var/www/finsight` and its web server. Bringing that back plus stopping the
 stack restores the old setup — but note the bundle now calls `/api/finsight`
-relative to its own origin, so a rollback also needs the frontend rebuilt with an
-absolute `VITE_FINSIGHT_API_URL`, or an equivalent `/api/` proxy on that server.
+relative to its own origin, so a rollback also needs an equivalent `/api/` proxy
+on that server, or a rebuild with `VITE_FINSIGHT_API_URL` set to an absolute URL.
 
 The scp-based `Deploy Frontend` workflow was removed when the container took over.
 It is recoverable from history under its pre-rename path:

@@ -82,7 +82,7 @@ Every backend request is scoped to the authenticated user; ownership is re-check
 
 **Location:** `api/clients/finsightApi.ts` + `api/services/*`.
 **Purpose:** Centralize HTTP access and cache management; components never call axios directly.
-**Implementation:** `finsightApi` sets `baseURL` from `VITE_FINSIGHT_API_URL` and a request interceptor injects the Bearer token. Service hooks (`useDashboardService.ts`, `useFinancialTransactionService.ts`, `useFinancialTransactionCategoryService.ts`, `useAuthService.ts`) wrap TanStack Query; mutations use `buildMutationOptions` for automatic toast + cache invalidation. Query keys follow `["entityName", params]`.
+**Implementation:** `finsightApi` sets `baseURL` from `VITE_FINSIGHT_API_URL`, defaulting to the same-origin `/api/finsight`, and a request interceptor injects the Bearer token. Service hooks (`useDashboardService.ts`, `useFinancialTransactionService.ts`, `useFinancialTransactionCategoryService.ts`, `useAuthService.ts`) wrap TanStack Query; mutations use `buildMutationOptions` for automatic toast + cache invalidation. Query keys follow `["entityName", params]`.
 **Example:** `api/services/useDashboardService.ts` → `useGetDashboardSummary` does `finsightApi.get("/dashboard", { params })` with key `["dashboardSummary", params]`.
 
 ### Provider Composition & Routing

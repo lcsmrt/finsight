@@ -99,7 +99,7 @@ finsight/
 **Configuration:**
 
 - BE routes: `utils/ApiRoutes.java` (all paths under `/api/finsight`)
-- FE base URL: `.env.development` / `.env.production`, consumed in `api/clients/finsightApi.ts`
+- FE base URL: `api/clients/finsightApi.ts` — same-origin `/api/finsight` by default; `.env.development` overrides it for the dev server
 
 ## Special Directories
 

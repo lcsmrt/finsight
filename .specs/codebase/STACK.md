@@ -57,4 +57,4 @@ Monorepo at `/home/lcs/dev/finsight` with two independent apps: `backend` (Sprin
 
 ## Backend Configuration (`.env`)
 
-`SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, `JWT_SECRET_KEY`. Frontend uses `VITE_FINSIGHT_API_URL` for the axios base URL.
+`SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, `JWT_SECRET_KEY`. Frontend needs no variables in production (the axios base URL defaults to the same-origin `/api/finsight`); `VITE_FINSIGHT_API_URL` overrides it for the dev server.

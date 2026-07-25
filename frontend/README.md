@@ -56,7 +56,7 @@ The dev server reads `.env.development` (already committed), which points at the
 VITE_FINSIGHT_API_URL=http://localhost:3000/api/finsight
 ```
 
-No extra env setup is needed for local development — just make sure the backend is up first. (Production build uses `.env.production`.)
+No extra env setup is needed for local development — just make sure the backend is up first. The production build needs no env file at all: without the variable the axios client falls back to the same-origin `/api/finsight`, which the nginx container proxies to the API.
 
 ### Other commands
 

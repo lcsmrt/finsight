@@ -53,7 +53,7 @@
 
 **Purpose:** The React SPA consumes the Spring Boot REST API.
 **Location:** `frontend/src/api/clients/finsightApi.ts` — an Axios instance.
-**Configuration:** `baseURL: import.meta.env.VITE_FINSIGHT_API_URL` (set in `frontend/.env.development` / `.env.production`).
+**Configuration:** `baseURL: import.meta.env.VITE_FINSIGHT_API_URL ?? "/api/finsight"`. Only development sets the variable (`frontend/.env.development`); the production build relies on the same-origin fallback, proxied by the nginx container.
 **Authentication:** request interceptor injects `Authorization: Bearer <token>`, where the token is read via a pluggable accessor (`getAccessToken` → `getItemFromStorage(STORAGE_KEYS.accessToken)`, overridable via `setAccessTokenAccessor`). A pass-through response interceptor is in place (no global 401/refresh handling yet).
 **Data layer:** TanStack Query (`@tanstack/react-query`) service hooks wrap the client (per `frontend/CLAUDE.md`); components never call Axios directly.
 **CORS:** backend allowed origins come from the `ALLOWED_ORIGINS` env var (`docker-compose.yml`).
