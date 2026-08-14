@@ -76,7 +76,7 @@ T11     (full-stack E2E against a throwaway copy DB)               ← depends T
 - [ ] `V9__drop_frequency_column.sql` created; `MigrationsIT` applies the full V1→V9 chain clean
 - [ ] `ddl-auto=validate` passes after the entity field is gone (entity ↔ schema consistent)
 - [ ] Existing `TransactionCrudIT` / `SeriesEditIT` / `DashboardPartitionIT` pass **unchanged** (proves no behavior change)
-- [ ] Gate check passes: `cd finsight-backend && export DOCKER_HOST=unix:///home/lcs/.docker/desktop/docker.raw.sock && export TESTCONTAINERS_RYUK_DISABLED=true && ./mvnw verify`
+- [ ] Gate check passes: `cd backend && ./mvnw verify` (DB tunnel up; empties `dev_finsight`)
 - [ ] Test count: unchanged from baseline (55 unit + ~59 integration), all green — no silent deletions
 
 **Tests**: integration (touches entity/DTO/service/migration — highest required type wins)
@@ -188,7 +188,7 @@ T11     (full-stack E2E against a throwaway copy DB)               ← depends T
 - [ ] POST series RECURRING **with** endDate → behavior unchanged (bounded), `generatedThrough` ≈ endDate
 - [ ] POST series INSTALLMENT with no parcelsNumber → still 400 (guard intact)
 - [ ] Open-ended occurrences appear in the dashboard look-ahead (assert via existing dashboard read)
-- [ ] Gate check passes: `cd finsight-backend && export DOCKER_HOST=... && export TESTCONTAINERS_RYUK_DISABLED=true && ./mvnw verify`
+- [ ] Gate check passes: `cd backend && ./mvnw verify` (DB tunnel up; empties `dev_finsight`)
 - [ ] Test count: IT suite gains ≥3 tests, all green
 
 **Tests**: integration (service + DB + HTTP)
@@ -222,7 +222,7 @@ T11     (full-stack E2E against a throwaway copy DB)               ← depends T
 - [ ] New occurrences reflect the definition's **current** amount/category/split (consistent with series-edit "all")
 - [ ] Bounded series (`endDate NOT NULL`) are never selected/touched (no backfill needed)
 - [ ] Time advanced via injected `Clock` in the IT (not `LocalDate.now()`)
-- [ ] Gate check passes: `cd finsight-backend && export DOCKER_HOST=... && export TESTCONTAINERS_RYUK_DISABLED=true && ./mvnw verify`
+- [ ] Gate check passes: `cd backend && ./mvnw verify` (DB tunnel up; empties `dev_finsight`)
 - [ ] Test count: IT suite gains ≥3 tests, all green
 
 **Tests**: integration (service + locked query + DB writes)
@@ -250,7 +250,7 @@ T11     (full-stack E2E against a throwaway copy DB)               ← depends T
 - [ ] `getSummary` calls `topUp` first, remains `readOnly=true` (writes isolated to the `REQUIRES_NEW` tx)
 - [ ] IT: an open-ended series with a stale `generatedThrough` → a dashboard GET refreshes the look-ahead (new future rows present in the response)
 - [ ] IT: the dashboard **partition invariant** (test-foundation `DashboardPartitionIT`) still holds after top-up
-- [ ] Gate check passes: `cd finsight-backend && export DOCKER_HOST=... && export TESTCONTAINERS_RYUK_DISABLED=true && ./mvnw verify`
+- [ ] Gate check passes: `cd backend && ./mvnw verify` (DB tunnel up; empties `dev_finsight`)
 - [ ] Test count: IT suite gains ≥1 test; partition invariant tests unchanged & green
 
 **Tests**: integration (HTTP read path + write side-effect)
@@ -279,7 +279,7 @@ T11     (full-stack E2E against a throwaway copy DB)               ← depends T
 - [ ] Edit a bounded series → clear endDate (RECURRING): becomes open-ended, extends to horizon, `generatedThrough` set (full-replace: null = open-ended, not "no change")
 - [ ] Delete an open-ended series → all occurrences + its `RecurrenceDefinition` removed (unchanged delete behavior)
 - [ ] Existing `SeriesEditIT` THIS_ONE/THIS_AND_FOLLOWING/ALL cases still green
-- [ ] Gate check passes: `cd finsight-backend && export DOCKER_HOST=... && export TESTCONTAINERS_RYUK_DISABLED=true && ./mvnw verify`
+- [ ] Gate check passes: `cd backend && ./mvnw verify` (DB tunnel up; empties `dev_finsight`)
 - [ ] Test count: `SeriesEditIT` gains ≥2 tests, all green
 
 **Tests**: integration
@@ -383,7 +383,7 @@ T11     (full-stack E2E against a throwaway copy DB)               ← depends T
 | T10 | T2 | T2→T10 | ✅ |
 | T11 | T1, T5, T7, T8, T9, T10 | all→T11 | ✅ |
 
-Parallel groups have no intra-group deps: {T1,T2,T3} disjoint ✅; {T5,T7} both depend only on T4, disjoint files ✅; {T8,T9} depend on T7 / T5 respectively, disjoint files ✅. **Note:** the committed IT suite is single-fork (not parallel) — but during Execute each `[P]` sub-agent runs its own `mvn verify` in its own JVM+Testcontainer, which TESTING.md's Parallelism Assessment marks parallel-safe for *development*. `[P]` is therefore valid here.
+Parallel groups have no intra-group deps: {T1,T2,T3} disjoint ✅; {T5,T7} both depend only on T4, disjoint files ✅; {T8,T9} depend on T7 / T5 respectively, disjoint files ✅. **Note:** the committed IT suite is single-fork (not parallel). **Superseded 2026-07-25:** the old rationale here — that each `[P]` sub-agent gets its own JVM+Testcontainer and is therefore dev-parallel-safe — no longer holds; Testcontainers is gone and all runs share `dev_finsight`. `[P]` still applies to writing the code, but `mvn verify` must be serialized.
 
 ### Check 3 — Test Co-location Validation
 
@@ -441,8 +441,8 @@ All Phase 1 + Phase 2 + Phase 3 code tasks executed via parallel sub-agents (per
 | T8 — dashboard on-read top-up trigger | `4a8c30d` (finsight-backend) | `mvnw verify` green — 62 unit + 71 integration (`DashboardPartitionIT` +1) |
 | T9 — `editSeries` bound/reopen (P3) | `8b96b74` (finsight-backend) | `mvnw verify` green — **62 unit + 72 integration, final backend count** (`SeriesEditIT` +3) |
 | T10 — FE open-ended form + ongoing indicator | `3981af8` (finsight-frontend) | `npm run test && lint && build` green — **42 tests, final frontend count** (`TransactionFormDrawer.series.test.ts` +7) |
-| T11 — full-stack E2E vs copy DB | _not run_ | **Deferred** — no DB reachable this session; resume when Postgres/tunnel is available |
+| T11 — full-stack E2E vs `dev_finsight` over SSH tunnel | API-driven runtime verification (2026-08-01) | **PASSED** — open-ended RECURRING series generated 13 occurrences (today through today+12mo), transaction list showed 13 rows, dashboard `totalExpenses` = 1300.00, bound via `editSeries` to `endDate=today+3mo` reduced to 4 rows. Rolling top-up idempotency over simulated time was not re-tested at runtime (no direct DB access); remains covered by `OpenEndedSeriesIT` + `OpenEndedTopUpIT`.
 
 **Bugs found and fixed during T10** (not pre-existing, introduced by making endDate optional, caught before commit): a `format(values.endDate!, ...)` non-null assertion in `toSeriesCreatePayload` would have thrown at runtime on an open-ended submit; both end-date `DatePicker`s discarded the clear action (`onChange` ignored `undefined`), making "ongoing" unreachable through the UI. Both fixed within T10's commit.
 
-**Next session**: run T11 once DB access is available (local Postgres up, or SSH tunnel reconnected — see L-003/L-005 in STATE.md). Checklist is unchanged from the Task Breakdown above. After T11 passes, close out per `handoff-execute.md`'s "After Execute" section (STATE.md Current Work, ROADMAP.md M3 → complete, B-001 → fixed, TESTING.md new IT classes).
+**Close-out** (2026-08-01): STATE.md updated (Current Work → roadmap enrichment; B-001 → fixed; Recurrence Model v2 + open-ended recurrence deferred items → done). ROADMAP.md updated (M3 → complete, Recurrence Model v2 → shipped).

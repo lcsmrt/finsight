@@ -17,13 +17,13 @@ this, but nothing uses it yet.
 
 ## Goals
 
-- [ ] Remove the legacy free-text `frequency` field entirely (entity + DTOs + generator + service +
+- [x] Remove the legacy free-text `frequency` field entirely (entity + DTOs + generator + service +
       SeriesRegenerator + dead frontend DTO line), backed by a Flyway `DROP COLUMN` migration, with **no
       behavior change** (the field is vestigial). Closes B-001.
-- [ ] Allow a **RECURRING** series to be open-ended (no end date), materializing occurrences up to a
+- [x] Allow a **RECURRING** series to be open-ended (no end date), materializing occurrences up to a
       bounded rolling look-ahead horizon tracked by `generatedThrough`, so open commitments appear in the
       existing dashboard look-ahead just like bounded ones.
-- [ ] Keep the model **MONTHLY-only** — no new intervals this round.
+- [x] Keep the model **MONTHLY-only** — no new intervals this round.
 
 ## Out of Scope
 
@@ -177,7 +177,7 @@ gone and no further top-up occurs.
 
 ## Success Criteria
 
-- [ ] No reference to a `frequency` field anywhere in backend or frontend; `V9` migration applied; suite green.
-- [ ] A user can create a recurring series with no end date and see H months of look-ahead in the dashboard.
-- [ ] After simulated time passage + trigger, the look-ahead is refreshed with no duplicate occurrences.
-- [ ] `ddl-auto=validate` passes (entity ↔ schema consistent after the column drop).
+- [x] No reference to a `frequency` field anywhere in backend or frontend; `V9` migration applied; suite green.
+- [x] A user can create a recurring series with no end date and see H months of look-ahead in the dashboard.
+- [x] After simulated time passage + trigger, the look-ahead is refreshed with no duplicate occurrences (covered by `OpenEndedTopUpIT`; T11 did not re-simulate time at runtime due to no direct DB access).
+- [x] `ddl-auto=validate` passes (entity ↔ schema consistent after the column drop).
