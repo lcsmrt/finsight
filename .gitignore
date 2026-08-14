@@ -2,6 +2,10 @@
 .env
 .env.production
 
+# Dependencies / build output
+node_modules/
+dist/
+
 # Editor / OS
 .idea/
 .vscode/

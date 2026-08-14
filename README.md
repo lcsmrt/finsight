@@ -16,16 +16,22 @@ The app needs a reachable **PostgreSQL** — it is not bundled here. Connect to 
 ```bash
 # 1. Make your PostgreSQL reachable (your own instance / tunnel).
 
-# 2. Backend — configure and run (Flyway applies the schema on boot)
+# 2. Install dependencies (pnpm workspace: frontend + backend)
+pnpm install
+
+# 3. Backend — configure env once (Flyway applies the schema on boot)
 cd backend
 cp .env.example .env        # fill SPRING_DATASOURCE_* + JWT_SECRET_KEY
-./mvnw spring-boot:run      # http://localhost:3000  (Swagger: /swagger-ui.html)
+cd ..
 
-# 3. Frontend — in another terminal
-cd frontend
-npm install
-npm run dev                 # reads .env.development → talks to localhost:3000
+# 4. Run both apps together (backend → http://localhost:3000, Swagger: /swagger-ui.html)
+pnpm dev
 ```
+
+`pnpm dev` runs every workspace package's `dev` script in parallel: `./mvnw
+spring-boot:run` in `backend/` and `vite` in `frontend/` (reads `.env.development` →
+talks to localhost:3000). Run them individually with `pnpm --filter finsight-backend dev`
+or `pnpm --filter finsight-frontend dev`.
 
 See each app's README for details:
 - [Backend README](./backend/README.md) — env vars, endpoints, tests

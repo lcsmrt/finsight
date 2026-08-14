@@ -1,0 +1,10 @@
+{
+  "name": "finsight-backend",
+  "private": true,
+  "version": "0.0.3-SNAPSHOT",
+  "scripts": {
+    "dev": "./mvnw spring-boot:run",
+    "build": "./mvnw -q -DskipTests package",
+    "test": "./mvnw test"
+  }
+}

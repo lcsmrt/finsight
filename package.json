@@ -1,0 +1,12 @@
+{
+  "name": "finsight",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm -r --parallel run dev",
+    "build": "pnpm -r run build",
+    "test": "pnpm -r run test",
+    "lint": "pnpm --filter finsight-frontend run lint"
+  }
+}

@@ -12,8 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
- * Proves T1-T5 end to end: no .env/tunnel, a real ephemeral Postgres, the full
- * Flyway chain, ddl-auto=validate, and an authenticated MockMvc round-trip.
+ * Proves the harness end to end: a real Postgres carrying the full Flyway chain,
+ * ddl-auto=validate, truncate-between-tests isolation, and an authenticated MockMvc
+ * round-trip.
  */
 class HarnessSmokeIT extends AbstractIntegrationTest {
 
@@ -21,7 +22,7 @@ class HarnessSmokeIT extends AbstractIntegrationTest {
     private DataSource dataSource;
 
     @Test
-    void bootsAgainstTestcontainersAndAppliesFlywayChain() {
+    void bootsAgainstTheDevDatabaseWithTheFlywayChainApplied() {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         Integer failedMigrations = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM flyway_schema_history WHERE success = false", Integer.class);

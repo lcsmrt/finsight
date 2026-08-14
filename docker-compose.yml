@@ -18,8 +18,8 @@ services:
 
   finsight-web:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: frontend/Dockerfile
     image: finsight-web
     container_name: finsight-web
     # The only publicly exposed port: nginx serves the SPA and proxies /api to

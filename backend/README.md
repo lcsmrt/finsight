@@ -86,9 +86,12 @@ Recurring/installment endpoints (base `/api/finsight/financial-transaction`):
 ### Tests
 
 ```bash
-./mvnw test                                         # full suite — NOTE: the @SpringBootTest context test needs a reachable DB + env vars
+./mvnw test                                         # *Test — NOTE: the @SpringBootTest context test needs a reachable DB + env vars
 ./mvnw test -Dtest=RecurringTransactionGeneratorTest   # pure unit test for series generation — needs NO database
+./mvnw verify                                       # adds the *IT integration suite + coverage gate
 ```
+
+⚠️ The `*IT` suite runs against the database `.env` points at and **truncates every table before each test** — a full `verify` leaves that database empty. It refuses to run against anything outside the `DISPOSABLE_DATABASES` allowlist in `AbstractIntegrationTest`. See [`../.specs/codebase/TESTING.md`](../.specs/codebase/TESTING.md).
 
 ## Spec-Driven Development
 

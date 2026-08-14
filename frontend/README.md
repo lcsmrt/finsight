@@ -45,9 +45,11 @@ src/
 
 ### Run locally
 
+From the repo root (pnpm workspace):
+
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm --filter finsight-frontend dev   # or just `pnpm dev` to start backend + frontend together
 ```
 
 The dev server reads `.env.development` (already committed), which points at the local backend:
@@ -61,10 +63,10 @@ No extra env setup is needed for local development — just make sure the backen
 ### Other commands
 
 ```bash
-npm run build       # type-check (tsc -b) + production build
-npm run lint        # eslint
-npm run storybook   # component workshop on :6006
-npx vitest run      # run story-based tests (headless Chromium)
+pnpm build            # type-check (tsc -b) + production build
+pnpm lint             # eslint
+pnpm storybook        # component workshop on :6006
+pnpm test             # run story-based tests (headless Chromium)
 ```
 
 ## Trying the recurring feature

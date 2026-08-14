@@ -21,22 +21,23 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 /**
- * Proves the FULL Flyway chain (V1..latest) applies successfully on the
- * Testcontainers Postgres instance and that no drift exists between the
- * Flyway-built schema and the JPA entity model under {@code ddl-auto=validate}.
+ * Proves the FULL Flyway chain (V1..latest) is applied on the test database and that
+ * no drift exists between the Flyway-built schema and the JPA entity model under
+ * {@code ddl-auto=validate}.
  *
- * <p>The container is a JVM-wide singleton (see {@code TestContainersConfig}), so
- * Flyway only ever runs its migrations once — the first time ANY {@code *IT}
- * boots a context against it — and that first run is always against a genuinely
- * empty database. {@code HarnessSmokeIT} already smoke-checks that run (zero
- * failures, at least one success). This test is independent of run order: it
- * inspects the resulting {@code flyway_schema_history}/{@link Flyway#info()}
- * state, whichever test happened to trigger the real migration, and asserts
- * something stronger — that the *exact* set of applied versions matches the
- * *exact* set of {@code V*.sql} files on disk, one-to-one, all in
- * {@link MigrationState#SUCCESS}. That catches a missing, skipped, or silently
- * renamed migration file, which HarnessSmokeIT's "at least one success" check
- * would not.
+ * <p>The suite runs against the long-lived {@code dev_finsight} database, so the
+ * migrations were almost certainly applied by an earlier run or by the app itself
+ * rather than by this one — {@code truncateAll()} empties the data but deliberately
+ * leaves {@code flyway_schema_history} and the schema itself alone. This test is
+ * therefore about the resulting state, not about the act of migrating: it inspects
+ * {@link Flyway#info()} and asserts that the *exact* set of applied versions matches
+ * the *exact* set of {@code V*.sql} files on disk, one-to-one, all in
+ * {@link MigrationState#SUCCESS}. That catches a missing, skipped, or silently renamed
+ * migration file, which {@code HarnessSmokeIT}'s "at least one success" check would not.
+ *
+ * <p>Note what this no longer covers: a from-scratch apply of the whole chain against a
+ * genuinely empty database. That guarantee came from the ephemeral container the suite
+ * used to run on; verifying it now means pointing a throwaway database at the app.
  */
 class MigrationsIT extends AbstractIntegrationTest {
 
@@ -65,7 +66,7 @@ class MigrationsIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void fullMigrationChainAppliesCleanOnGenuinelyEmptyDatabase() throws IOException {
+    void everyMigrationOnDiskIsAppliedAndSuccessful() throws IOException {
         List<String> versionsOnDisk = migrationVersionsOnDisk();
         assertThat(versionsOnDisk).as("sanity check: migration files must be discoverable on the classpath").isNotEmpty();
 
